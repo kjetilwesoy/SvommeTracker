@@ -7,7 +7,6 @@
   <style>
     :root {
       --primary: #0284c7;
-      --primary-hover: #0369a1;
       --bg: #f8fafc;
       --card-bg: #ffffff;
       --text: #0f172a;
@@ -26,82 +25,102 @@
       background-color: var(--bg);
       color: var(--text);
       padding: 20px;
-      max-width: 900px;
+      max-width: 1100px;
       margin: 0 auto;
     }
 
     header {
-      margin-bottom: 24px;
+      margin-bottom: 20px;
       text-align: center;
     }
 
     h1 {
-      font-size: 1.8rem;
+      font-size: 2rem;
       color: var(--primary);
-      margin-bottom: 8px;
+      margin-bottom: 6px;
+    }
+
+    .controls {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 20px;
     }
 
     .search-box {
-      width: 100%;
-      padding: 12px 16px;
+      flex: 1;
+      padding: 10px 14px;
       font-size: 1rem;
       border: 1px solid var(--border);
-      border-radius: 8px;
+      border-radius: 6px;
       outline: none;
-      margin-bottom: 20px;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
     }
 
     .search-box:focus {
       border-color: var(--primary);
-      box-shadow: 0 0 0 3px rgba(2, 132, 199, 0.15);
     }
 
-    .athlete-list {
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-    }
-
-    .athlete-card {
+    .table-container {
       background: var(--card-bg);
       border: 1px solid var(--border);
-      padding: 16px 20px;
       border-radius: 8px;
-      cursor: pointer;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      transition: all 0.15s ease;
+      overflow-x: auto;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
     }
 
-    .athlete-card:hover {
-      border-color: var(--primary);
-      transform: translateY(-1px);
-      box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      text-align: left;
     }
 
-    .athlete-info .name {
+    th, td {
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--border);
+      font-size: 0.95rem;
+    }
+
+    th {
+      background-color: #f1f5f9;
       font-weight: 600;
-      font-size: 1.1rem;
-    }
-
-    .athlete-info .details {
-      font-size: 0.875rem;
       color: var(--text-muted);
-      margin-top: 4px;
     }
 
-    .badge-count {
-      background: #e0f2fe;
-      color: var(--primary-hover);
+    tr:hover {
+      background-color: #f8fafc;
+    }
+
+    .athlete-link {
+      color: var(--primary);
       font-weight: 600;
-      font-size: 0.85rem;
-      padding: 6px 12px;
-      border-radius: 20px;
+      cursor: pointer;
+      text-decoration: none;
     }
 
-    /* Modal / Popup for Øvelser */
+    .athlete-link:hover {
+      text-decoration: underline;
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      background: #f1f5f9;
+      color: #475569;
+    }
+
+    .badge.m50 {
+      background: #fef3c7;
+      color: #92400e;
+    }
+
+    .wa-points {
+      font-weight: 600;
+      color: var(--primary);
+    }
+
+    /* Modal / Popup for detaljer */
     .modal-overlay {
       position: fixed;
       top: 0;
@@ -123,7 +142,7 @@
     .modal {
       background: var(--card-bg);
       width: 100%;
-      max-width: 600px;
+      max-width: 650px;
       max-height: 85vh;
       border-radius: 12px;
       display: flex;
@@ -138,6 +157,7 @@
       display: flex;
       justify-content: space-between;
       align-items: flex-start;
+      background: #f8fafc;
     }
 
     .modal-title {
@@ -157,50 +177,11 @@
       font-size: 1.5rem;
       cursor: pointer;
       color: var(--text-muted);
-      line-height: 1;
     }
 
     .modal-body {
-      padding: 20px;
+      padding: 0;
       overflow-y: auto;
-    }
-
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      text-align: left;
-    }
-
-    th, td {
-      padding: 12px;
-      border-bottom: 1px solid var(--border);
-      font-size: 0.95rem;
-    }
-
-    th {
-      font-weight: 600;
-      color: var(--text-muted);
-      background: #f8fafc;
-    }
-
-    .pool-badge {
-      display: inline-block;
-      padding: 2px 8px;
-      border-radius: 4px;
-      font-size: 0.75rem;
-      font-weight: 600;
-      background: #f1f5f9;
-      color: #475569;
-    }
-
-    .pool-badge.m50 {
-      background: #fef3c7;
-      color: #92400e;
-    }
-
-    .wa-points {
-      font-weight: 600;
-      color: var(--primary);
     }
 
     .empty-msg {
@@ -216,13 +197,30 @@
     <h1>SvømmeTracker</h1>
   </header>
 
-  <input type="text" id="searchInput" class="search-box" placeholder="Søk etter svømmer eller klubb...">
-
-  <div id="athleteList" class="athlete-list">
-    <div class="empty-msg">Laster svømmedata...</div>
+  <div class="controls">
+    <input type="text" id="searchInput" class="search-box" placeholder="Søk etter navn, klubb eller øvelse...">
   </div>
 
-  <!-- Modal for utøverens øvelser -->
+  <div class="table-container">
+    <table>
+      <thead>
+        <tr>
+          <th>Navn</th>
+          <th>Klubb</th>
+          <th>Født</th>
+          <th>Øvelser</th>
+          <th>Beste WA</th>
+        </tr>
+      </thead>
+      <tbody id="mainTableBody">
+        <tr>
+          <td colspan="5" class="empty-msg">Laster svømmedata...</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Modal for enkelt-svømmer -->
   <div id="modalOverlay" class="modal-overlay">
     <div class="modal">
       <div class="modal-header">
@@ -253,64 +251,71 @@
     let alleResultater = [];
     let unikeSvommere = [];
 
-    // Hent resultater fra JSON-filen
     async function lastData() {
       try {
         const response = await fetch('data/resultater.json');
         alleResultater = await response.json();
         behandleData();
-        visSvommere(unikeSvommere);
+        visHovedTabell(unikeSvommere);
       } catch (feil) {
-        document.getElementById('athleteList').innerHTML = 
-          '<div class="empty-msg">Kunne ikke laste svømmedata. Sjekk at data/resultater.json finnes.</div>';
+        document.getElementById('mainTableBody').innerHTML = 
+          '<tr><td colspan="5" class="empty-msg">Kunne ikke laste svømmedata (data/resultater.json).</td></tr>';
       }
     }
 
-    // Grupper unike svømmere
     function behandleData() {
       const svommerMap = new Map();
 
       alleResultater.forEach(item => {
+        const poeng = parseInt(item.fina) || 0;
         if (!svommerMap.has(item.navn)) {
           svommerMap.set(item.navn, {
             navn: item.navn,
             klubb: item.klubb,
             fodselsar: item.fodselsar,
-            antallOvelser: 0
+            antallOvelser: 0,
+            besteWa: poeng
           });
         }
-        svommerMap.get(item.navn).antallOvelser += 1;
+        
+        const elem = svommerMap.get(item.navn);
+        elem.antallOvelser += 1;
+        if (poeng > elem.besteWa) {
+          elem.besteWa = poeng;
+        }
       });
 
       unikeSvommere = Array.from(svommerMap.values())
         .sort((a, b) => a.navn.localeCompare(b.navn, 'no'));
     }
 
-    // Render listen på hovedsiden
-    function visSvommere(liste) {
-      const container = document.getElementById('athleteList');
+    function visHovedTabell(liste) {
+      const tbody = document.getElementById('mainTableBody');
       if (liste.length === 0) {
-        container.innerHTML = '<div class="empty-msg">Ingen svømmere funnet.</div>';
+        tbody.innerHTML = '<tr><td colspan="5" class="empty-msg">Ingen treff.</td></tr>';
         return;
       }
 
-      container.innerHTML = liste.map(s => `
-        <div class="athlete-card" onclick="openAthleteModal('${s.navn.replace(/'/g, "\\'")}')">
-          <div class="athlete-info">
-            <div class="name">${s.navn}</div>
-            <div class="details">${s.klubb} ${s.fodselsar ? '• Født ' + s.fodselsar : ''}</div>
-          </div>
-          <div class="badge-count">${s.antallOvelser} øvelse${s.antallOvelser > 1 ? 'r' : ''}</div>
-        </div>
+      tbody.innerHTML = liste.map(s => `
+        <tr>
+          <td>
+            <span class="athlete-link" onclick="openAthleteModal('${s.navn.replace(/'/g, "\\'")}')">
+              ${s.navn}
+            </span>
+          </td>
+          <td>${s.klubb}</td>
+          <td>${s.fodselsar || '-'}</td>
+          <td><span class="badge">${s.antallOvelser} øvelse${s.antallOvelser > 1 ? 'r' : ''}</span></td>
+          <td class="wa-points">${s.besteWa > 0 ? s.besteWa + ' p' : '-'}</td>
+        </tr>
       `).join('');
     }
 
-    // Åpne modal og vis alle øvelser sortert på WA-poeng
     function openAthleteModal(navn) {
       const svommerTider = alleResultater.filter(r => r.navn === navn);
       if (svommerTider.length === 0) return;
 
-      // Sorter etter WA-poeng (høyest først)
+      // Sorter alle øvelser for utøveren på WA-poeng (synkende)
       svommerTider.sort((a, b) => (parseInt(b.fina) || 0) - (parseInt(a.fina) || 0));
 
       const forste = svommerTider[0];
@@ -323,7 +328,7 @@
         return `
           <tr>
             <td><strong>${t.ovelse}</strong></td>
-            <td><span class="pool-badge ${is50m ? 'm50' : ''}">${t.basseng || '25m'}</span></td>
+            <td><span class="badge ${is50m ? 'm50' : ''}">${t.basseng || '25m'}</span></td>
             <td>${t.tid}</td>
             <td class="wa-points">${t.fina ? t.fina + ' p' : '-'}</td>
           </tr>
@@ -337,27 +342,23 @@
       document.getElementById('modalOverlay').classList.remove('active');
     }
 
-    // Søkefunksjon
     document.getElementById('searchInput').addEventListener('input', (e) => {
-      const sok = e.target.value.toLowerCase().strip();
+      const sok = e.target.value.toLowerCase().trim();
       const filtrert = unikeSvommere.filter(s => 
         s.navn.toLowerCase().includes(sok) || 
         s.klubb.toLowerCase().includes(sok)
       );
-      visSvommere(filtrert);
+      visHovedTabell(filtrert);
     });
 
-    // Lukk modal ved klikk utenfor
     document.getElementById('modalOverlay').addEventListener('click', (e) => {
       if (e.target.id === 'modalOverlay') lukkModal();
     });
 
-    // Lukk med ESC-tasten
     document.addEventListener('keydown', (e) => {
       if (e.key === 'Escape') lukkModal();
     });
 
-    // Start lasting
     lastData();
   </script>
 </body>
