@@ -6,13 +6,10 @@
   <title>SvømmeTracker AI - Region Sør</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://unpkg.com/lucide@latest"></script>
-  <style>
-    body { font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif; }
-  </style>
 </head>
 <body class="bg-slate-50 text-slate-800 antialiased min-h-screen flex">
 
-  <!-- PASSORD-SPERRE (Passord: 1234) -->
+  <!-- PASSORD-SPERRE -->
   <div id="auth-overlay" class="fixed inset-0 bg-slate-900/90 backdrop-blur-sm flex items-center justify-center z-50">
     <div class="bg-white p-8 rounded-2xl shadow-2xl max-w-sm w-full text-center border border-slate-100">
       <div class="w-12 h-12 bg-cyan-500 rounded-xl flex items-center justify-center text-white mx-auto mb-4">
@@ -26,10 +23,9 @@
     </div>
   </div>
 
-  <!-- VENSTRE MØRK SIDEFEIL-MENY -->
+  <!-- VENSTRE MENY -->
   <aside class="w-64 bg-[#0a192f] text-slate-300 flex flex-col justify-between p-4 min-h-screen shrink-0">
     <div>
-      <!-- LOGO -->
       <div class="flex items-center gap-3 px-2 py-3 mb-6">
         <div class="w-10 h-10 bg-cyan-400 rounded-xl flex items-center justify-center text-[#0a192f]">
           <i data-lucide="waves" class="w-6 h-6"></i>
@@ -40,7 +36,6 @@
         </div>
       </div>
 
-      <!-- NAVIGASJONSMENY -->
       <nav class="space-y-1">
         <button onclick="switchTab('oversikt')" id="nav-oversikt" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl font-medium text-sm transition bg-cyan-400 text-[#0a192f]">
           <i data-lucide="layout-grid" class="w-5 h-5"></i> Oversikt
@@ -57,12 +52,6 @@
         <button onclick="switchTab('lamoe')" id="nav-lamoe" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl font-medium text-sm text-slate-400 hover:text-white hover:bg-slate-800/50 transition">
           <i data-lucide="award" class="w-5 h-5"></i> LÅMØ Top 24
         </button>
-        <button onclick="switchTab('swimpion')" id="nav-swimpion" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl font-medium text-sm text-slate-400 hover:text-white hover:bg-slate-800/50 transition">
-          <i data-lucide="activity" class="w-5 h-5"></i> Swimpyion
-        </button>
-        <button onclick="switchTab('trenerteam')" id="nav-trenerteam" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl font-medium text-sm text-slate-400 hover:text-white hover:bg-slate-800/50 transition">
-          <i data-lucide="user-cog" class="w-5 h-5"></i> Trenerteam
-        </button>
       </nav>
     </div>
 
@@ -71,73 +60,33 @@
     </div>
   </aside>
 
-  <!-- HOVEDINNHOLD (LYS BAKGRUNN) -->
+  <!-- HOVEDINNHOLD -->
   <main class="flex-1 p-8 overflow-y-auto">
-    <div id="tab-oversikt">
-      <!-- HEADER OVERSIKT -->
+    <!-- OVERSIKT TAB -->
+    <div id="tab-oversikt" class="tab-content">
       <header class="mb-8">
         <p class="text-[11px] font-bold text-cyan-600 tracking-wider uppercase mb-1">SVØMMETRACKER AI</p>
         <h1 class="text-3xl font-extrabold text-slate-900 tracking-tight mb-1">God oversikt. Bedre utvikling.</h1>
         <p class="text-sm text-slate-500">Felles beslutningsgrunnlag for Varodd Svømmeklubb og Vågsbygd SLK.</p>
       </header>
 
-      <!-- 4 METRIKK-KORT -->
       <div class="grid grid-cols-1 md:grid-cols-2 gap-5 mb-6">
-        <!-- KORT 1 -->
         <div class="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm flex justify-between items-start">
-          <div>
-            <p class="text-sm font-medium text-slate-500 mb-4">Aktive svømmere</p>
-            <p id="stat-total" class="text-4xl font-extrabold text-slate-900">0</p>
-          </div>
-          <div class="p-2 bg-slate-50 text-slate-400 rounded-xl">
-            <i data-lucide="users" class="w-5 h-5"></i>
-          </div>
+          <div><p class="text-sm font-medium text-slate-500 mb-4">Aktive svømmere</p><p id="stat-total" class="text-4xl font-extrabold text-slate-900">0</p></div>
+          <div class="p-2 bg-slate-50 text-slate-400 rounded-xl"><i data-lucide="users" class="w-5 h-5"></i></div>
         </div>
-
-        <!-- KORT 2 -->
         <div class="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm flex justify-between items-start">
-          <div>
-            <p class="text-sm font-medium text-slate-500 mb-4">Resultater</p>
-            <p id="stat-resultater" class="text-4xl font-extrabold text-slate-900">0</p>
-          </div>
-          <div class="p-2 bg-slate-50 text-slate-400 rounded-xl">
-            <i data-lucide="timer" class="w-5 h-5"></i>
-          </div>
-        </div>
-
-        <!-- KORT 3 -->
-        <div class="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm flex justify-between items-start">
-          <div>
-            <p class="text-sm font-medium text-slate-500 mb-4">Treningsøkter</p>
-            <p id="stat-okter" class="text-4xl font-extrabold text-slate-900">0</p>
-          </div>
-          <div class="p-2 bg-slate-50 text-slate-400 rounded-xl">
-            <i data-lucide="activity" class="w-5 h-5"></i>
-          </div>
-        </div>
-
-        <!-- KORT 4 -->
-        <div class="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm flex justify-between items-start">
-          <div>
-            <p class="text-sm font-medium text-slate-500 mb-4">Regionslag klare</p>
-            <p id="stat-region" class="text-4xl font-extrabold text-slate-900">0</p>
-          </div>
-          <div class="p-2 bg-slate-50 text-slate-400 rounded-xl">
-            <i data-lucide="trophy" class="w-5 h-5"></i>
-          </div>
+          <div><p class="text-sm font-medium text-slate-500 mb-4">Resultater registrert</p><p id="stat-resultater" class="text-4xl font-extrabold text-slate-900">0</p></div>
+          <div class="p-2 bg-slate-50 text-slate-400 rounded-xl"><i data-lucide="timer" class="w-5 h-5"></i></div>
         </div>
       </div>
 
-      <!-- STORE REGIONSLAG KORT / TABELL -->
-      <div class="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm min-h-[220px]">
-        <div class="flex justify-between items-center mb-6">
-          <h2 class="font-bold text-slate-900 text-base">Regionslag Sør 2025/2026</h2>
-          <span class="text-xs text-slate-400">Live fra registrerte tider</span>
+      <div class="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm">
+        <div class="flex justify-between items-center mb-4">
+          <h2 class="font-bold text-slate-900 text-base">Regionslag Sør 2025/2026 Status</h2>
+          <span id="last-updated" class="text-xs text-slate-400">Sist oppdatert: Aldri</span>
         </div>
-        <div id="swimmer-empty-state" class="text-center py-12 text-slate-400 text-sm">
-          Importer Medley-data eller legg til svømmere for å starte.
-        </div>
-        <div id="swimmer-table-container" class="hidden overflow-x-auto">
+        <div id="swimmer-table-container" class="overflow-x-auto">
           <table class="w-full text-left text-sm text-slate-600">
             <thead class="text-xs uppercase text-slate-400 border-b border-slate-100 pb-2">
               <tr>
@@ -149,10 +98,39 @@
               </tr>
             </thead>
             <tbody id="swimmer-table-body" class="divide-y divide-slate-50">
+              <tr><td colspan="5" class="py-8 text-center text-slate-400">Ingen data lastet opp ennå. Kjør skraperen på GitHub for å hente fra Medley.no.</td></tr>
             </tbody>
           </table>
         </div>
       </div>
+    </div>
+
+    <!-- SVØMMERE TAB -->
+    <div id="tab-svommere" class="tab-content hidden">
+      <h1 class="text-2xl font-bold mb-4">Svømmerprofiler</h1>
+      <p class="text-sm text-slate-500">Oversikt over alle registrerte utøvere fra Varodd SK og Vågsbygd SLK.</p>
+    </div>
+
+    <!-- MEDLEY IMPORT TAB -->
+    <div id="tab-medley" class="tab-content hidden">
+      <h1 class="text-2xl font-bold mb-4">Medley.no & Filimport</h1>
+      <p class="text-sm text-slate-500 mb-6">Data oppdateres automatisk 1. og 15. hver måned via GitHub Actions.</p>
+      <div class="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm">
+        <h3 class="font-bold text-slate-800 mb-2">Manuell .RE / .SD3 Filimport</h3>
+        <input type="file" id="file-input" accept=".re,.sd3" class="block w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-sm file:font-semibold file:bg-cyan-50 file:text-cyan-700 hover:file:bg-cyan-100">
+      </div>
+    </div>
+
+    <!-- REGIONSLAG TAB -->
+    <div id="tab-regionslag" class="tab-content hidden">
+      <h1 class="text-2xl font-bold mb-4">Kvalifiseringskrav Regionslag Sør 2025/2026</h1>
+      <p class="text-sm text-slate-500">Evaluering basert på offisielle krav for Junior- og Utviklingsgruppe.</p>
+    </div>
+
+    <!-- LÅMØ TAB -->
+    <div id="tab-lamoe" class="tab-content hidden">
+      <h1 class="text-2xl font-bold mb-4">LÅMØ Top 24 Rangering</h1>
+      <p class="text-sm text-slate-500">Sammenlagt poengsum for de 5 LÅMØ-øvelsene per årsklasse.</p>
     </div>
   </main>
 
@@ -170,50 +148,48 @@
     }
 
     function switchTab(tabName) {
+      document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+      document.getElementById(`tab-${tabName}`).classList.remove('hidden');
+
       document.querySelectorAll('nav button').forEach(btn => {
         btn.className = "w-full flex items-center gap-3 px-3 py-2.5 rounded-xl font-medium text-sm text-slate-400 hover:text-white hover:bg-slate-800/50 transition";
       });
-      const activeBtn = document.getElementById(`nav-${tabName}`);
-      if (activeBtn) {
-        activeBtn.className = "w-full flex items-center gap-3 px-3 py-2.5 rounded-xl font-medium text-sm transition bg-cyan-400 text-[#0a192f]";
-      }
+      document.getElementById(`nav-${tabName}`).className = "w-full flex items-center gap-3 px-3 py-2.5 rounded-xl font-medium text-sm transition bg-cyan-400 text-[#0a192f]";
     }
 
     async function loadSwimmersData() {
       try {
         const response = await fetch("./data/swimmers.json?t=" + new Date().getTime());
-        if (!response.ok) throw new Error("Ingen data ennå");
+        if (!response.ok) return;
         const data = await response.json();
+        
+        document.getElementById("last-updated").innerText = "Sist oppdatert: " + (data.lastUpdated || "Nylig");
         renderData(data.swimmers || []);
       } catch (err) {
-        console.log("Empty state aktivert");
+        console.log("Ingen data-fil funnet ennå.");
       }
     }
 
     function renderData(swimmers) {
-      if (!swimmers.length) return;
-      document.getElementById("swimmer-empty-state").classList.add("hidden");
-      document.getElementById("swimmer-table-container").classList.remove("hidden");
-
       const tbody = document.getElementById("swimmer-table-body");
       tbody.innerHTML = "";
-      let regCount = 0;
 
+      let totalResults = 0;
       swimmers.forEach(s => {
-        if (s.qualifiedRegion) regCount++;
+        totalResults += (s.resultsCount || 1);
         const tr = document.createElement("tr");
         tr.innerHTML = `
           <td class="py-3 font-semibold text-slate-900">${s.name}</td>
           <td class="py-3">${s.club}</td>
           <td class="py-3">${s.birthYear} (${s.gender})</td>
-          <td class="py-3"><span class="px-2.5 py-1 rounded-full text-xs font-semibold ${s.qualifiedRegion ? 'bg-emerald-50 text-emerald-600' : 'bg-slate-100 text-slate-500'}">${s.qualifiedRegion ? 'Kvalifisert' : 'Ikke klar'}</span></td>
+          <td class="py-3"><span class="px-2.5 py-1 rounded-full text-xs font-semibold ${s.qualifiedRegion ? 'bg-emerald-50 text-emerald-600' : 'bg-slate-100 text-slate-500'}">${s.qualifiedRegion ? 'Kvalifisert (' + s.group + ')' : 'Ikke klar'}</span></td>
           <td class="py-3 font-bold text-cyan-600">${s.topWA || 0} WA</td>
         `;
         tbody.appendChild(tr);
       });
 
       document.getElementById("stat-total").innerText = swimmers.length;
-      document.getElementById("stat-region").innerText = regCount;
+      document.getElementById("stat-resultater").innerText = totalResults;
     }
 
     lucide.createIcons();
