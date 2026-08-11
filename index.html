@@ -3,15 +3,17 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>SvømmeTracker</title>
+  <title>SvømmeTracker - Varodd SK</title>
   <style>
     :root {
-      --primary: #0284c7;
-      --bg: #f8fafc;
+      --sidebar-bg: #0b1329;
+      --sidebar-hover: #16203d;
+      --accent-blue: #00a8e8;
+      --main-bg: #f8fafc;
       --card-bg: #ffffff;
-      --text: #0f172a;
+      --text-main: #0f172a;
       --text-muted: #64748b;
-      --border: #e2e8f0;
+      --border-color: #f1f5f9;
     }
 
     * {
@@ -22,49 +24,156 @@
     }
 
     body {
-      background-color: var(--bg);
-      color: var(--text);
-      padding: 20px;
-      max-width: 1100px;
-      margin: 0 auto;
-    }
-
-    header {
-      margin-bottom: 20px;
-      text-align: center;
-    }
-
-    h1 {
-      font-size: 2rem;
-      color: var(--primary);
-      margin-bottom: 6px;
-    }
-
-    .controls {
+      background-color: var(--main-bg);
+      color: var(--text-main);
       display: flex;
+      min-height: 100vh;
+    }
+
+    /* --- SIDEBAR --- */
+    .sidebar {
+      width: 260px;
+      background-color: var(--sidebar-bg);
+      color: #94a3b8;
+      display: flex;
+      flex-direction: column;
+      padding: 24px 16px;
+      flex-shrink: 0;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
       gap: 12px;
-      margin-bottom: 20px;
+      margin-bottom: 32px;
+      padding: 0 8px;
     }
 
-    .search-box {
-      flex: 1;
-      padding: 10px 14px;
-      font-size: 1rem;
-      border: 1px solid var(--border);
-      border-radius: 6px;
-      outline: none;
-    }
-
-    .search-box:focus {
-      border-color: var(--primary);
-    }
-
-    .table-container {
-      background: var(--card-bg);
-      border: 1px solid var(--border);
+    .brand-logo {
+      width: 36px;
+      height: 36px;
+      background: var(--accent-blue);
       border-radius: 8px;
-      overflow-x: auto;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-weight: bold;
+      font-size: 1.2rem;
+    }
+
+    .brand-title {
+      color: #ffffff;
+      font-size: 1.1rem;
+      font-weight: 700;
+      line-height: 1.2;
+    }
+
+    .brand-subtitle {
+      color: var(--accent-blue);
+      font-size: 0.75rem;
+      font-weight: 600;
+    }
+
+    .nav-section-title {
+      font-size: 0.7rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: #475569;
+      margin: 24px 8px 8px 8px;
+    }
+
+    .nav-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .nav-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 12px;
+      border-radius: 8px;
+      color: #94a3b8;
+      font-size: 0.9rem;
+      font-weight: 500;
+      text-decoration: none;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .nav-item:hover {
+      background-color: var(--sidebar-hover);
+      color: #ffffff;
+    }
+
+    .nav-item.active {
+      background-color: var(--accent-blue);
+      color: #ffffff;
+      font-weight: 600;
+    }
+
+    .nav-icon {
+      width: 18px;
+      height: 18px;
+      opacity: 0.8;
+    }
+
+    /* --- HOVEDINNHOLD --- */
+    .main-content {
+      flex: 1;
+      padding: 40px 48px;
+      overflow-y: auto;
+    }
+
+    .header-area {
+      margin-bottom: 28px;
+    }
+
+    .page-title {
+      font-size: 2rem;
+      font-weight: 800;
+      color: #0f172a;
+      letter-spacing: -0.02em;
+    }
+
+    .page-subtitle {
+      color: var(--text-muted);
+      font-size: 0.95rem;
+      margin-top: 4px;
+    }
+
+    .search-container {
+      margin-bottom: 24px;
+    }
+
+    .search-input {
+      width: 100%;
+      max-width: 360px;
+      padding: 10px 16px;
+      font-size: 0.9rem;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      outline: none;
+      background: #ffffff;
+      color: var(--text-main);
+    }
+
+    .search-input:focus {
+      border-color: var(--accent-blue);
+      box-shadow: 0 0 0 3px rgba(0, 168, 232, 0.15);
+    }
+
+    /* --- TABELL --- */
+    .table-card {
+      background: var(--card-bg);
+      border-radius: 12px;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02), 0 4px 12px rgba(0,0,0,0.03);
+      overflow: hidden;
+      border: 1px solid #f1f5f9;
     }
 
     table {
@@ -73,61 +182,56 @@
       text-align: left;
     }
 
-    th, td {
-      padding: 12px 16px;
-      border-bottom: 1px solid var(--border);
-      font-size: 0.95rem;
-    }
-
     th {
-      background-color: #f1f5f9;
-      font-weight: 600;
-      color: var(--text-muted);
+      font-size: 0.75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: #64748b;
+      padding: 16px 20px;
+      background-color: #fafafa;
+      border-bottom: 1px solid #edf2f7;
     }
 
-    tr:hover {
+    td {
+      padding: 16px 20px;
+      border-bottom: 1px solid #f1f5f9;
+      font-size: 0.92rem;
+      color: #334155;
+    }
+
+    tr:last-child td {
+      border-bottom: none;
+    }
+
+    tr:hover td {
       background-color: #f8fafc;
     }
 
-    .athlete-link {
-      color: var(--primary);
+    .athlete-name {
       font-weight: 600;
+      color: #0f172a;
       cursor: pointer;
-      text-decoration: none;
     }
 
-    .athlete-link:hover {
+    .athlete-name:hover {
+      color: var(--accent-blue);
       text-decoration: underline;
     }
 
-    .badge {
-      display: inline-block;
-      padding: 2px 8px;
-      border-radius: 4px;
-      font-size: 0.75rem;
-      font-weight: 600;
-      background: #f1f5f9;
-      color: #475569;
+    .text-muted-val {
+      color: #94a3b8;
     }
 
-    .badge.m50 {
-      background: #fef3c7;
-      color: #92400e;
-    }
-
-    .wa-points {
-      font-weight: 600;
-      color: var(--primary);
-    }
-
-    /* Modal / Popup for detaljer */
+    /* --- MODAL / POPUP --- */
     .modal-overlay {
       position: fixed;
       top: 0;
       left: 0;
       width: 100%;
       height: 100%;
-      background: rgba(15, 23, 42, 0.5);
+      background: rgba(15, 23, 42, 0.6);
+      backdrop-filter: blur(2px);
       display: none;
       justify-content: center;
       align-items: center;
@@ -144,29 +248,30 @@
       width: 100%;
       max-width: 650px;
       max-height: 85vh;
-      border-radius: 12px;
+      border-radius: 16px;
       display: flex;
       flex-direction: column;
       overflow: hidden;
-      box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
     }
 
     .modal-header {
-      padding: 20px;
-      border-bottom: 1px solid var(--border);
+      padding: 20px 24px;
+      border-bottom: 1px solid #f1f5f9;
       display: flex;
       justify-content: space-between;
       align-items: flex-start;
-      background: #f8fafc;
+      background: #fafafa;
     }
 
     .modal-title {
       font-size: 1.3rem;
       font-weight: 700;
+      color: #0f172a;
     }
 
     .modal-subtitle {
-      font-size: 0.9rem;
+      font-size: 0.85rem;
       color: var(--text-muted);
       margin-top: 2px;
     }
@@ -177,11 +282,27 @@
       font-size: 1.5rem;
       cursor: pointer;
       color: var(--text-muted);
+      line-height: 1;
     }
 
     .modal-body {
       padding: 0;
       overflow-y: auto;
+    }
+
+    .pool-badge {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      background: #f1f5f9;
+      color: #475569;
+    }
+
+    .pool-badge.m50 {
+      background: #fef3c7;
+      color: #92400e;
     }
 
     .empty-msg {
@@ -193,34 +314,81 @@
 </head>
 <body>
 
-  <header>
-    <h1>SvømmeTracker</h1>
-  </header>
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="brand-logo">≈</div>
+      <div>
+        <div class="brand-title">SvømmeTracker</div>
+        <div class="brand-subtitle">AI · Region Sør</div>
+      </div>
+    </div>
 
-  <div class="controls">
-    <input type="text" id="searchInput" class="search-box" placeholder="Søk etter navn, klubb eller øvelse...">
-  </div>
+    <ul class="nav-list">
+      <li class="nav-item">
+        <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
+        Oversikt (Felles)
+      </li>
+      <li class="nav-item active">
+        <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+        Varodd SK
+      </li>
+      <li class="nav-item">
+        <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 15a4 4 0 004 4h9a5 5 0 001-9.999 5.002 5.002 0 00-9.78 2.096A4.001 4.001 0 003 15z"></path></svg>
+        Vågsbygd SLK
+      </li>
+    </ul>
 
-  <div class="table-container">
-    <table>
-      <thead>
-        <tr>
-          <th>Navn</th>
-          <th>Klubb</th>
-          <th>Født</th>
-          <th>Øvelser</th>
-          <th>Beste WA</th>
-        </tr>
-      </thead>
-      <tbody id="mainTableBody">
-        <tr>
-          <td colspan="5" class="empty-msg">Laster svømmedata...</td>
-        </tr>
-      </tbody>
-    </table>
-  </div>
+    <div class="nav-section-title">Trenerverktøy</div>
 
-  <!-- Modal for enkelt-svømmer -->
+    <ul class="nav-list">
+      <li class="nav-item">
+        <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
+        Trenerhub (Import)
+      </li>
+      <li class="nav-item">
+        <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+        Treningsprogrammer
+      </li>
+      <li class="nav-item">
+        <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z"></path></svg>
+        Grafer & Målinger
+      </li>
+    </ul>
+  </aside>
+
+  <!-- MAIN CONTENT -->
+  <main class="main-content">
+    <div class="header-area">
+      <h1 class="page-title">Varodd Svømmeklubb</h1>
+      <p class="page-subtitle">Tropp og resultater for Varodd SK.</p>
+    </div>
+
+    <div class="search-container">
+      <input type="text" id="searchInput" class="search-input" placeholder="Søk på utøver eller øvelse...">
+    </div>
+
+    <div class="table-card">
+      <table>
+        <thead>
+          <tr>
+            <th>Navn</th>
+            <th>År / Kjønn</th>
+            <th>Beste Øvelse</th>
+            <th>Tid</th>
+            <th>Beste WA</th>
+          </tr>
+        </thead>
+        <tbody id="mainTableBody">
+          <tr>
+            <td colspan="5" class="empty-msg">Laster svømmedata...</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </main>
+
+  <!-- MODAL FOR DETALJER -->
   <div id="modalOverlay" class="modal-overlay">
     <div class="modal">
       <div class="modal-header">
@@ -259,8 +427,16 @@
         visHovedTabell(unikeSvommere);
       } catch (feil) {
         document.getElementById('mainTableBody').innerHTML = 
-          '<tr><td colspan="5" class="empty-msg">Kunne ikke laste svømmedata (data/resultater.json).</td></tr>';
+          '<tr><td colspan="5" class="empty-msg">Kunne ikke laste data/resultater.json. Sjekk at GitHub Action har kjørt.</td></tr>';
       }
+    }
+
+    function formaterKjonn(kjonn) {
+      if (!kjonn) return '';
+      const k = kjonn.toString().toUpperCase();
+      if (k === 'M' || k === 'GUTT' || k === '1') return 'Gutt';
+      if (k === 'F' || k === 'W' || k === 'JENTE' || k === '2') return 'Jente';
+      return kjonn;
     }
 
     function behandleData() {
@@ -268,20 +444,27 @@
 
       alleResultater.forEach(item => {
         const poeng = parseInt(item.fina) || 0;
+        
         if (!svommerMap.has(item.navn)) {
           svommerMap.set(item.navn, {
             navn: item.navn,
             klubb: item.klubb,
             fodselsar: item.fodselsar,
-            antallOvelser: 0,
-            besteWa: poeng
+            kjonn: formaterKjonn(item.kjonn),
+            besteOvelse: item.ovelse,
+            besteTid: item.tid,
+            besteWa: poeng,
+            besteObj: item
           });
-        }
-        
-        const elem = svommerMap.get(item.navn);
-        elem.antallOvelser += 1;
-        if (poeng > elem.besteWa) {
-          elem.besteWa = poeng;
+        } else {
+          const eksisterende = svommerMap.get(item.navn);
+          // Oppdater dersom dette resultatet har høyere WA-poeng
+          if (poeng > eksisterende.besteWa) {
+            eksisterende.besteWa = poeng;
+            eksisterende.besteOvelse = item.ovelse;
+            eksisterende.besteTid = item.tid;
+            eksisterende.besteObj = item;
+          }
         }
       });
 
@@ -292,23 +475,28 @@
     function visHovedTabell(liste) {
       const tbody = document.getElementById('mainTableBody');
       if (liste.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="5" class="empty-msg">Ingen treff.</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="5" class="empty-msg">Ingen treff på søket.</td></tr>';
         return;
       }
 
-      tbody.innerHTML = liste.map(s => `
-        <tr>
-          <td>
-            <span class="athlete-link" onclick="openAthleteModal('${s.navn.replace(/'/g, "\\'")}')">
-              ${s.navn}
-            </span>
-          </td>
-          <td>${s.klubb}</td>
-          <td>${s.fodselsar || '-'}</td>
-          <td><span class="badge">${s.antallOvelser} øvelse${s.antallOvelser > 1 ? 'r' : ''}</span></td>
-          <td class="wa-points">${s.besteWa > 0 ? s.besteWa + ' p' : '-'}</td>
-        </tr>
-      `).join('');
+      tbody.innerHTML = liste.map(s => {
+        const arKjonn = [s.fodselsar, s.kjonn ? `(${s.kjonn})` : ''].filter(Boolean).join(' ');
+        const waTekst = s.besteWa > 0 ? s.besteWa : '-';
+
+        return `
+          <tr>
+            <td>
+              <span class="athlete-name" onclick="openAthleteModal('${s.navn.replace(/'/g, "\\'")}')">
+                ${s.navn}
+              </span>
+            </td>
+            <td>${arKjonn || '-'}</td>
+            <td>${s.besteOvelse || '-'}</td>
+            <td>${s.besteTid || '-'}</td>
+            <td class="${waTekst === '-' ? 'text-muted-val' : ''}">${waTekst}</td>
+          </tr>
+        `;
+      }).join('');
     }
 
     function openAthleteModal(navn) {
@@ -319,8 +507,10 @@
       svommerTider.sort((a, b) => (parseInt(b.fina) || 0) - (parseInt(a.fina) || 0));
 
       const forste = svommerTider[0];
+      const kjonnTekst = formaterKjonn(forste.kjonn);
+      
       document.getElementById('modalName').textContent = forste.navn;
-      document.getElementById('modalClub').textContent = `${forste.klubb} ${forste.fodselsar ? '• Født ' + forste.fodselsar : ''}`;
+      document.getElementById('modalClub').textContent = `${forste.klubb} ${forste.fodselsar ? '• Født ' + forste.fodselsar : ''} ${kjonnTekst ? '(' + kjonnTekst + ')' : ''}`;
 
       const tbody = document.getElementById('modalTableBody');
       tbody.innerHTML = svommerTider.map(t => {
@@ -328,9 +518,9 @@
         return `
           <tr>
             <td><strong>${t.ovelse}</strong></td>
-            <td><span class="badge ${is50m ? 'm50' : ''}">${t.basseng || '25m'}</span></td>
+            <td><span class="pool-badge ${is50m ? 'm50' : ''}">${t.basseng || '25m'}</span></td>
             <td>${t.tid}</td>
-            <td class="wa-points">${t.fina ? t.fina + ' p' : '-'}</td>
+            <td><strong>${t.fina ? t.fina + ' p' : '-'}</strong></td>
           </tr>
         `;
       }).join('');
@@ -346,7 +536,7 @@
       const sok = e.target.value.toLowerCase().trim();
       const filtrert = unikeSvommere.filter(s => 
         s.navn.toLowerCase().includes(sok) || 
-        s.klubb.toLowerCase().includes(sok)
+        (s.besteOvelse && s.besteOvelse.toLowerCase().includes(sok))
       );
       visHovedTabell(filtrert);
     });
