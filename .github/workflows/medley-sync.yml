@@ -2,8 +2,11 @@ name: Automatisert Medley Oppdatering
 
 on:
   schedule:
-    - cron: '0 6 1,15 * *' # Kjører kl. 06:00 den 1. og 15. hver måned
-  workflow_dispatch: # Tillater manuell start fra Actions-fanen
+    - cron: '0 6 1,15 * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
 
 jobs:
   build-and-sync:
@@ -16,7 +19,7 @@ jobs:
       - name: Sett opp Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '22'
 
       - name: Installer avhengigheter
         run: npm install axios cheerio
@@ -24,7 +27,7 @@ jobs:
       - name: Kjør Medley-skraper
         run: node scraper.js
 
-      - name: Lagre endringer i repository
+      - name: Lagre og push oppdaterte data
         run: |
           git config --global user.name 'github-actions[bot]'
           git config --global user.email 'github-actions[bot]@users.noreply.github.com'
