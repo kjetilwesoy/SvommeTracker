@@ -1,12 +1,15 @@
 name: Oppdater Svømmedata fra LENEX
 
 on:
-  workflow_dispatch: # Lar deg starte kjøringen manuelt ved behov
+  workflow_dispatch: # Lar deg starte skriptet manuelt
   push:
     paths:
       - 'stevner.txt'
       - '.github/workflows/medley-sync.yml'
       - 'parse_lenex.py'
+
+permissions:
+  contents: write # Gir boten lov til å lagre resultater.json
 
 jobs:
   build:
