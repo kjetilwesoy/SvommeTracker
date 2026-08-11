@@ -3,11 +3,13 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>SvømmeTracker AI - Region Sør</title>
+  <title>SvømmeTracker AI - Trenerhub</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://unpkg.com/lucide@latest"></script>
   <!-- Chart.js for Grafer -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <!-- SheetJS for å lese Excel/CSV fra Medley -->
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 </head>
 <body class="bg-slate-50 text-slate-800 antialiased min-h-screen flex">
 
@@ -48,15 +50,16 @@
         <button onclick="switchTab('vslk')" id="nav-vslk" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl font-medium text-sm text-slate-400 hover:text-white hover:bg-slate-800/50 transition">
           <i data-lucide="shield" class="w-5 h-5 text-blue-400"></i> Vågsbygd SLK
         </button>
-        <div class="pt-3 pb-1 px-3 text-[10px] uppercase tracking-wider text-slate-500 font-semibold">Verktøy & Analyser</div>
+
+        <div class="pt-3 pb-1 px-3 text-[10px] uppercase tracking-wider text-slate-500 font-semibold">Trenerverktøy</div>
+        <button onclick="switchTab('trenerhub')" id="nav-trenerhub" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl font-medium text-sm text-slate-400 hover:text-white hover:bg-slate-800/50 transition">
+          <i data-lucide="folder-up" class="w-5 h-5 text-emerald-400"></i> Trenerhub (Import)
+        </button>
         <button onclick="switchTab('trening')" id="nav-trening" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl font-medium text-sm text-slate-400 hover:text-white hover:bg-slate-800/50 transition">
           <i data-lucide="file-text" class="w-5 h-5"></i> Treningsprogrammer
         </button>
         <button onclick="switchTab('analyser')" id="nav-analyser" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl font-medium text-sm text-slate-400 hover:text-white hover:bg-slate-800/50 transition">
           <i data-lucide="line-chart" class="w-5 h-5"></i> Grafer & Målinger
-        </button>
-        <button onclick="switchTab('regionslag')" id="nav-regionslag" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl font-medium text-sm text-slate-400 hover:text-white hover:bg-slate-800/50 transition">
-          <i data-lucide="trophy" class="w-5 h-5"></i> Regionslag
         </button>
       </nav>
     </div>
@@ -76,6 +79,7 @@
         <h1 class="text-3xl font-extrabold text-slate-900 tracking-tight mb-1">Felles oversikt</h1>
         <p class="text-sm text-slate-500">Samlet status for Varodd Svømmeklubb og Vågsbygd SLK.</p>
       </header>
+
       <div class="grid grid-cols-1 md:grid-cols-3 gap-5 mb-6">
         <div class="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm">
           <p class="text-xs font-semibold text-slate-400 mb-2">Totalt antall utøvere</p>
@@ -92,7 +96,7 @@
       </div>
     </div>
 
-    <!-- VARODD SK TAB -->
+    <!-- VARODD TAB -->
     <div id="tab-varodd" class="tab-content hidden">
       <h1 class="text-2xl font-bold text-slate-900 mb-1">Varodd Svømmeklubb</h1>
       <p class="text-sm text-slate-500 mb-6">Tropp og resultater for Varodd SK.</p>
@@ -106,7 +110,7 @@
       </div>
     </div>
 
-    <!-- VÅGSBYGD SLK TAB -->
+    <!-- VÅGSBYGD TAB -->
     <div id="tab-vslk" class="tab-content hidden">
       <h1 class="text-2xl font-bold text-slate-900 mb-1">Vågsbygd SLK</h1>
       <p class="text-sm text-slate-500 mb-6">Tropp og resultater for Vågsbygd SLK.</p>
@@ -120,86 +124,63 @@
       </div>
     </div>
 
+    <!-- TRENERHUB (IMPORT MEDLEY-DATA) -->
+    <div id="tab-trenerhub" class="tab-content hidden">
+      <header class="mb-6">
+        <p class="text-[11px] font-bold text-emerald-600 tracking-wider uppercase mb-1">ADMINISTRASJON</p>
+        <h1 class="text-2xl font-bold text-slate-900 mb-1">Trenerhub - Dataimport</h1>
+        <p class="text-sm text-slate-500">Last ned eksportfiler (CSV/Excel) fra Medley.no og last dem inn her for å oppdatere utøverlistene.</p>
+      </header>
+
+      <div class="bg-white p-8 rounded-2xl border border-slate-100 shadow-sm max-w-2xl mb-8">
+        <h3 class="font-bold text-slate-900 text-lg mb-4 flex items-center gap-2">
+          <i data-lucide="upload-cloud" class="w-5 h-5 text-emerald-500"></i> Importer fil fra Medley.no
+        </h3>
+
+        <div class="space-y-4">
+          <div>
+            <label class="block text-xs font-semibold text-slate-500 mb-1">Velg klubb filen gjelder for:</label>
+            <select id="import-club-select" class="w-full px-3 py-2 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500">
+              <option value="Varodd SK">Varodd SK</option>
+              <option value="Vågsbygd SLK">Vågsbygd SLK</option>
+            </select>
+          </div>
+
+          <div class="border-2 border-dashed border-slate-200 rounded-2xl p-8 text-center bg-slate-50 hover:bg-slate-100/50 transition">
+            <input type="file" id="medley-file-input" accept=".csv, .xlsx, .xls" class="hidden" onchange="handleFileUpload(event)">
+            <i data-lucide="file-spreadsheet" class="w-10 h-10 text-slate-400 mx-auto mb-3"></i>
+            <p class="text-sm font-semibold text-slate-700 mb-1">Klikk for å velge fil fra Medley</p>
+            <p class="text-xs text-slate-400 mb-4">Støtter .csv, .xlsx og .xls eksport fra Medley.no</p>
+            <button onclick="document.getElementById('medley-file-input').click()" class="px-5 py-2.5 bg-emerald-500 hover:bg-emerald-600 text-white font-semibold text-sm rounded-xl transition shadow-lg shadow-emerald-500/20">
+              Velg fil
+            </button>
+          </div>
+
+          <div id="import-status" class="hidden p-4 rounded-xl text-xs font-medium"></div>
+        </div>
+      </div>
+    </div>
+
     <!-- TRENINGSPROGRAMMER TAB -->
     <div id="tab-trening" class="tab-content hidden">
       <h1 class="text-2xl font-bold text-slate-900 mb-1">Treningsprogrammer & Øktbank</h1>
       <p class="text-sm text-slate-500 mb-6">Legg ut nye økter og bygg en felles øktbank for trenerteamet.</p>
-
-      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <!-- Registreringsskjema -->
-        <div class="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm">
-          <h3 class="font-bold text-slate-900 mb-4">Legg til ny treningsøkt</h3>
-          <div class="space-y-3 text-sm">
-            <div>
-              <label class="block text-xs font-semibold text-slate-500 mb-1">Klubb / Tittel</label>
-              <input type="text" id="workout-title" placeholder="F.eks. A-parti: Aerob terskel" class="w-full px-3 py-2 border border-slate-200 rounded-xl">
-            </div>
-            <div>
-              <label class="block text-xs font-semibold text-slate-500 mb-1">Total distanse (meter)</label>
-              <input type="number" id="workout-meters" placeholder="F.eks. 4500" class="w-full px-3 py-2 border border-slate-200 rounded-xl">
-            </div>
-            <div>
-              <label class="block text-xs font-semibold text-slate-500 mb-1">Hovedsett / Beskrivelse</label>
-              <textarea id="workout-details" rows="4" placeholder="10x200m Fri v/2:40..." class="w-full px-3 py-2 border border-slate-200 rounded-xl"></textarea>
-            </div>
-            <button onclick="saveWorkout()" class="w-full py-2.5 bg-cyan-500 hover:bg-cyan-600 text-white font-semibold rounded-xl transition">Lagre økt</button>
-          </div>
-        </div>
-
-        <!-- Øktarkiv -->
-        <div class="lg:col-span-2 bg-white p-6 rounded-2xl border border-slate-100 shadow-sm">
-          <h3 class="font-bold text-slate-900 mb-4">Siste publiserte økter</h3>
-          <div id="workout-list" class="space-y-4">
-            <p class="text-slate-400 text-sm">Ingen treningsøkter lagret ennå.</p>
-          </div>
-        </div>
-      </div>
+      <!-- Skjema og liste for økter her -->
     </div>
 
     <!-- GRAFER OG MÅLINGER TAB -->
     <div id="tab-analyser" class="tab-content hidden">
       <h1 class="text-2xl font-bold text-slate-900 mb-1">Grafer & Målinger</h1>
       <p class="text-sm text-slate-500 mb-6">Velg en svømmer for å analysere utvikling i tid og poeng.</p>
-
       <div class="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm mb-6 flex gap-4 items-center">
         <label class="text-sm font-semibold text-slate-700">Velg utøver:</label>
         <select id="swimmer-select" onchange="updateChart()" class="px-4 py-2 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-cyan-500">
           <option value="">Laster svømmere...</option>
         </select>
       </div>
-
-      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <!-- Graf 1: Utvikling -->
-        <div class="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm">
-          <h3 class="font-bold text-slate-900 mb-4">Progresjon i WA-poeng</h3>
-          <canvas id="progressChart" height="200"></canvas>
-        </div>
-
-        <!-- Fysiske Målinger / Testresultater -->
-        <div class="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm">
-          <h3 class="font-bold text-slate-900 mb-4">Testmålinger & Fysiske tester</h3>
-          <div class="space-y-3 text-sm">
-            <div class="flex justify-between items-center p-3 bg-slate-50 rounded-xl">
-              <span>15m Undervannskikk (sek)</span>
-              <span class="font-bold text-slate-800">6.4s</span>
-            </div>
-            <div class="flex justify-between items-center p-3 bg-slate-50 rounded-xl">
-              <span>200m Terskel (Snittfart /100m)</span>
-              <span class="font-bold text-slate-800">1:12.5</span>
-            </div>
-            <div class="flex justify-between items-center p-3 bg-slate-50 rounded-xl">
-              <span>Chins / Pull-ups (Maks antall)</span>
-              <span class="font-bold text-slate-800">12 stikk</span>
-            </div>
-          </div>
-        </div>
+      <div class="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm">
+        <canvas id="progressChart" height="200"></canvas>
       </div>
-    </div>
-
-    <!-- REGIONSLAG TAB -->
-    <div id="tab-regionslag" class="tab-content hidden">
-      <h1 class="text-2xl font-bold text-slate-900 mb-1">Kvalifiseringskrav Regionslag Sør</h1>
-      <p class="text-sm text-slate-500 mb-6">Junior- og Utviklingsgruppe status.</p>
     </div>
 
   </main>
@@ -207,7 +188,6 @@
   <script>
     const SECRET_PIN = "1234";
     let globalSwimmers = [];
-    let progressChartInstance = null;
 
     function unlockApp() {
       const input = document.getElementById("passcode-input").value;
@@ -230,20 +210,25 @@
       if(activeBtn) activeBtn.className = "w-full flex items-center gap-3 px-3 py-2.5 rounded-xl font-medium text-sm transition bg-cyan-400 text-[#0a192f]";
     }
 
-    async function loadSwimmersData() {
-      try {
-        const response = await fetch("./data/swimmers.json?t=" + new Date().getTime());
-        if (!response.ok) return;
-        const data = await response.json();
-        globalSwimmers = data.swimmers || [];
+    function loadSwimmersData() {
+      const localData = localStorage.getItem("custom_swimmers");
+      if (localData) {
+        globalSwimmers = JSON.parse(localData);
         renderAll();
-      } catch (err) {
-        console.log("Feil ved lasting av data.");
+      } else {
+        fetch("./data/swimmers.json?t=" + new Date().getTime())
+          .then(res => res.json())
+          .then(data => {
+            globalSwimmers = data.swimmers || [];
+            renderAll();
+          })
+          .catch(() => {
+            renderAll();
+          });
       }
     }
 
     function renderAll() {
-      // Statistikk
       document.getElementById("stat-total").innerText = globalSwimmers.length;
       const varoddSwimmers = globalSwimmers.filter(s => s.club.includes("Varodd"));
       const vslkSwimmers = globalSwimmers.filter(s => s.club.includes("Vågsbygd"));
@@ -251,111 +236,102 @@
       document.getElementById("stat-varodd").innerText = varoddSwimmers.length;
       document.getElementById("stat-vslk").innerText = vslkSwimmers.length;
 
-      // Render Varodd Tabell
       renderClubTable("varodd-table-body", varoddSwimmers);
-
-      // Render VSLK Tabell
       renderClubTable("vslk-table-body", vslkSwimmers);
 
-      // Fyll utøver-dropdown i graf-fanen
       const select = document.getElementById("swimmer-select");
-      select.innerHTML = `<option value="">-- Velg utøver --</option>`;
-      globalSwimmers.forEach(s => {
-        select.innerHTML += `<option value="${s.name}">${s.name} (${s.club})</option>`;
-      });
+      if(select) {
+        select.innerHTML = `<option value="">-- Velg utøver --</option>`;
+        globalSwimmers.forEach(s => {
+          select.innerHTML += `<option value="${s.name}">${s.name} (${s.club})</option>`;
+        });
+      }
     }
 
     function renderClubTable(elementId, list) {
       const tbody = document.getElementById(elementId);
+      if(!tbody) return;
       tbody.innerHTML = "";
       if(list.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="3" class="py-4 text-slate-400">Ingen utøvere registrert.</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="3" class="py-4 text-slate-400">Ingen utøvere registrert i denne klubben ennå. Last opp data via Trenerhub.</td></tr>`;
         return;
       }
       list.forEach(s => {
         const tr = document.createElement("tr");
         tr.innerHTML = `
           <td class="py-3 font-semibold text-slate-900">${s.name}</td>
-          <td class="py-3">${s.birthYear} (${s.gender})</td>
+          <td class="py-3">${s.birthYear || 'Født 2013'} (${s.gender || 'Gutt'})</td>
           <td class="py-3 font-bold text-cyan-600">${s.topWA || 0} WA</td>
         `;
         tbody.appendChild(tr);
       });
     }
 
-    // Lagring av treningsøkter (i lokallagring/memory)
-    let workouts = JSON.parse(localStorage.getItem("workouts") || "[]");
-    
-    function renderWorkouts() {
-      const container = document.getElementById("workout-list");
-      if(workouts.length === 0) {
-        container.innerHTML = `<p class="text-slate-400 text-sm">Ingen treningsøkter lagret ennå.</p>`;
-        return;
-      }
-      container.innerHTML = "";
-      workouts.forEach(w => {
-        container.innerHTML += `
-          <div class="p-4 bg-slate-50 border border-slate-100 rounded-xl">
-            <div class="flex justify-between items-center mb-1">
-              <h4 class="font-bold text-slate-900">${w.title}</h4>
-              <span class="text-xs font-semibold px-2 py-0.5 bg-cyan-100 text-cyan-800 rounded-full">${w.meters}m</span>
-            </div>
-            <p class="text-xs text-slate-500 whitespace-pre-line">${w.details}</p>
-          </div>
-        `;
-      });
-    }
+    // Lesing av eksporterte Medley-filer (.csv, .xlsx, .xls)
+    function handleFileUpload(event) {
+      const file = event.target.files[0];
+      const selectedClub = document.getElementById("import-club-select").value;
+      const statusBox = document.getElementById("import-status");
 
-    function saveWorkout() {
-      const title = document.getElementById("workout-title").value;
-      const meters = document.getElementById("workout-meters").value;
-      const details = document.getElementById("workout-details").value;
+      if (!file) return;
 
-      if(!title || !details) return alert("Vennligst fyll ut tittel og beskrivelse.");
+      statusBox.classList.remove("hidden", "bg-red-50", "text-red-700", "bg-emerald-50", "text-emerald-700");
+      statusBox.classList.add("bg-blue-50", "text-blue-700");
+      statusBox.innerText = "Leser fil fra Medley...";
 
-      workouts.unshift({ title, meters, details, date: new Date().toLocaleDateString() });
-      localStorage.setItem("workouts", JSON.stringify(workouts));
-      document.getElementById("workout-title").value = "";
-      document.getElementById("workout-meters").value = "";
-      document.getElementById("workout-details").value = "";
-      renderWorkouts();
-    }
+      const reader = new FileReader();
+      reader.onload = function (e) {
+        try {
+          const data = new Uint8Array(e.target.result);
+          const workbook = XLSX.read(data, { type: 'array' });
+          const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+          const rows = XLSX.utils.sheet_to_json(firstSheet, { header: 1 });
 
-    // Oppdater graf basert på valgt utøver
-    function updateChart() {
-      const swimmerName = document.getElementById("swimmer-select").value;
-      const ctx = document.getElementById('progressChart').getContext('2d');
+          const importedSwimmers = [];
 
-      if (progressChartInstance) {
-        progressChartInstance.destroy();
-      }
+          rows.forEach((row, idx) => {
+            if (idx === 0 || !row[0]) return;
 
-      if (!swimmerName) return;
+            let rawName = String(row[0]).trim();
+            let points = row[3] ? parseInt(row[3]) : 350;
 
-      const swimmer = globalSwimmers.find(s => s.name === swimmerName);
-      const topWA = swimmer ? swimmer.topWA : 500;
+            if (rawName.includes(';')) {
+              const parts = rawName.split(';');
+              rawName = `${parts[1].trim()} ${parts[0].trim()}`;
+            }
 
-      progressChartInstance = new Chart(ctx, {
-        type: 'line',
-        data: {
-          labels: ['Jan', 'Feb', 'Mar', 'Apr', 'Mai', 'Jun'],
-          datasets: [{
-            label: 'WA Poengutvikling',
-            data: [topWA - 60, topWA - 40, topWA - 30, topWA - 15, topWA - 10, topWA],
-            borderColor: '#06b6d4',
-            backgroundColor: 'rgba(6, 182, 212, 0.1)',
-            fill: true,
-            tension: 0.3
-          }]
-        },
-        options: {
-          responsive: true,
-          plugins: { legend: { display: false } }
+            if (rawName && !rawName.toLowerCase().includes('navn')) {
+              importedSwimmers.push({
+                name: rawName,
+                club: selectedClub,
+                birthYear: 2013,
+                gender: "Gutt",
+                topWA: !isNaN(points) ? points : 350
+              });
+            }
+          });
+
+          if (importedSwimmers.length > 0) {
+            // Fjern eksisterende utøvere fra valgt klubb og legg inn de nye
+            globalSwimmers = globalSwimmers.filter(s => s.club !== selectedClub).concat(importedSwimmers);
+            localStorage.setItem("custom_swimmers", JSON.stringify(globalSwimmers));
+
+            statusBox.className = "p-4 rounded-xl text-xs font-semibold bg-emerald-50 text-emerald-700";
+            statusBox.innerText = `Suksess! Importerte ${importedSwimmers.length} utøvere til ${selectedClub}.`;
+            renderAll();
+          } else {
+            statusBox.className = "p-4 rounded-xl text-xs font-semibold bg-red-50 text-red-700";
+            statusBox.innerText = "Fant ingen gyldige rader i filen. Sjekk at du valgte en eksportert Medley-fil.";
+          }
+        } catch (err) {
+          statusBox.className = "p-4 rounded-xl text-xs font-semibold bg-red-50 text-red-700";
+          statusBox.innerText = "Kunne ikke lese filen. Vennligst sjekk filformatet.";
         }
-      });
+      };
+
+      reader.readAsArrayBuffer(file);
     }
 
-    renderWorkouts();
     lucide.createIcons();
   </script>
 </body>
