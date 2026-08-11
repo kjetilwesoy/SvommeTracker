@@ -16,7 +16,8 @@ if os.path.exists(STEVNER_FIL):
 
 print(f"Fant {len(urls)} stevne-lenke(r) i {STEVNER_FIL}.")
 
-alle_resultater = []
+# Nøkkel: (navn, klubb, ovelse_navn, basseng) -> Best result dict
+beste_resultater = {}
 
 headers = {
     'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)'
@@ -29,25 +30,16 @@ for url in urls:
         res.raise_for_status()
 
         xml_raw = None
-
-        # Try ZIP first
         try:
             with zipfile.ZipFile(io.BytesIO(res.content)) as z:
                 xml_files = [f for f in z.namelist() if f.lower().endswith('.xml') or f.lower().endswith('.lef')]
-                if xml_files:
-                    xml_raw = z.read(xml_files[0])
-                elif len(z.namelist()) > 0:
-                    xml_raw = z.read(z.namelist()[0])
-            print("  -> Decompressed ZIP file successfully.")
+                xml_raw = z.read(xml_files[0]) if xml_files else z.read(z.namelist()[0])
         except zipfile.BadZipFile:
-            print("  -> Not a ZIP file, treating response directly as XML.")
             xml_raw = res.content
 
         if not xml_raw:
-            print("  -> Could not extract XML content.")
             continue
 
-        # Decode XML safely
         try:
             xml_str = xml_raw.decode('utf-8')
         except UnicodeDecodeError:
@@ -55,13 +47,30 @@ for url in urls:
 
         root = ET.fromstring(xml_str)
 
-        # Map Events
+        # Finn bassenglengde (SCM = 25m, LCM = 50m)
+        default_course = "25m"
+        for elem in root.iter():
+            tag = elem.tag.upper()
+            if tag in ['MEET', 'SESSION', 'CONSTRUCTION']:
+                course = elem.attrib.get('course') or elem.attrib.get('COURSE') or ''
+                if course.upper() == 'LCM':
+                    default_course = "50m"
+                    break
+                elif course.upper() == 'SCM':
+                    default_course = "25m"
+                    break
+
+        # Kartlegg Øvelser
         ovelser = {}
         for elem in root.iter():
             if elem.tag.upper() == 'EVENT':
                 event_id = elem.attrib.get('eventid') or elem.attrib.get('EVENTID') or ''
                 number = elem.attrib.get('number') or elem.attrib.get('NUMBER') or ''
                 
+                # Sjekk om øvelsen har spesifisert bane/course
+                event_course = elem.attrib.get('course') or elem.attrib.get('COURSE') or default_course
+                course_str = "50m" if str(event_course).upper() == 'LCM' else "25m"
+
                 dist, stroke = '', ''
                 for child in elem.iter():
                     if child.tag.upper() == 'SWIMSTYLE':
@@ -69,13 +78,13 @@ for url in urls:
                         stroke = child.attrib.get('stroke') or child.attrib.get('STROKE') or ''
                         break
                 
-                if dist and stroke:
-                    ovelser[event_id] = f"{dist}m {stroke}"
-                else:
-                    ovelser[event_id] = f"Øvelse {number}"
+                ovelse_navn = f"{dist}m {stroke}".strip() if dist and stroke else f"Øvelse {number}"
+                ovelser[event_id] = {
+                    "navn": ovelse_navn,
+                    "basseng": course_str
+                }
 
-        # Parse Athletes and Results
-        count = 0
+        # Les Utøvere og Resultater
         for club in root.iter():
             if club.tag.upper() == 'CLUB':
                 club_name = club.attrib.get('name') or club.attrib.get('NAME') or 'Ukjent klubb'
@@ -93,29 +102,44 @@ for url in urls:
                         for result in athlete.iter():
                             if result.tag.upper() == 'RESULT':
                                 tid = result.attrib.get('swimtime') or result.attrib.get('SWIMTIME') or ''
-                                fina = result.attrib.get('points') or result.attrib.get('POINTS') or ''
+                                fina_raw = result.attrib.get('points') or result.attrib.get('POINTS') or '0'
                                 event_id = result.attrib.get('eventid') or result.attrib.get('EVENTID') or ''
 
-                                if tid and tid != "00:00.00":
-                                    alle_resultater.append({
+                                try:
+                                    fina = int(fina_raw)
+                                except ValueError:
+                                    fina = 0
+
+                                if tid and tid != "00:00.00" and fullt_navn:
+                                    ovelse_info = ovelser.get(event_id, {"navn": "Ukjent øvelse", "basseng": default_course})
+                                    ovelse_navn = ovelse_info["navn"]
+                                    basseng = ovelse_info["basseng"]
+
+                                    # Unik nøkkel per utøver, øvelse og bassenglengde
+                                    key = (fullt_navn, ovelse_navn, basseng)
+
+                                    nytt_resultat = {
                                         "navn": fullt_navn,
                                         "klubb": club_name,
                                         "fodselsar": fodselsar,
                                         "kjonn": kjonn,
-                                        "ovelse": ovelser.get(event_id, "Øvelse"),
+                                        "ovelse": ovelse_navn,
+                                        "basseng": basseng,
                                         "tid": tid,
                                         "fina": fina
-                                    })
-                                    count += 1
+                                    }
 
-        print(f"  -> Successfully extracted {count} results.")
+                                    # Behold kun resultatet dersom det har høyere WA/FINA-poeng
+                                    if key not in beste_resultater or fina > beste_resultater[key]["fina"]:
+                                        beste_resultater[key] = nytt_resultat
 
     except Exception as e:
-        print(f"  -> Error processing {url}: {e}")
+        print(f"Feil ved lesing av {url}: {e}")
 
-# Always save output
+resultat_liste = list(beste_resultater.values())
+
 os.makedirs(json_dir, exist_ok=True)
 with open(json_path, "w", encoding="utf-8") as f:
-    json.dump(alle_resultater, f, ensure_ascii=False, indent=2)
+    json.dump(resultat_liste, f, ensure_ascii=False, indent=2)
 
-print(f"\nDone! Total results saved: {len(alle_resultater)} to {json_path}")
+print(f"Lagret {len(resultat_liste)} unike beste-tider i {json_path}.")
