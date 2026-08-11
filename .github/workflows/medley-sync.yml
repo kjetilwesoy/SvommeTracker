@@ -1,7 +1,7 @@
 name: Oppdater Svømmedata fra LENEX
 
 on:
-  workflow_dispatch: # Lar deg starte skriptet manuelt
+  workflow_dispatch:
   push:
     paths:
       - 'stevner.txt'
@@ -9,7 +9,7 @@ on:
       - 'parse_lenex.py'
 
 permissions:
-  contents: write # Gir boten lov til å lagre resultater.json
+  contents: write
 
 jobs:
   build:
@@ -36,4 +36,5 @@ jobs:
           git config --global user.email "bot@github.com"
           git add data/resultater.json
           git commit -m "Auto-oppdatert svømmedata fra LENEX" || exit 0
+          git pull --rebase origin main
           git push
