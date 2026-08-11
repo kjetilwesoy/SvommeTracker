@@ -22,7 +22,7 @@ jobs:
           node-version: '22'
 
       - name: Installer avhengigheter
-        run: npm install axios cheerio
+        run: npm install puppeteer cheerio
 
       - name: Kjør Medley-skraper
         run: node scraper.js
