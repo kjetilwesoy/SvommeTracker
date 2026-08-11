@@ -1,39 +1,12 @@
 {
-  "lastUpdated": "11.8.2026, 17:23:20",
+  "lastUpdated": "11.8.2026, 17:32:17",
   "swimmers": [
     {
-      "name": "Alexander Lorentzen",
+      "name": "Mio Wesøy-Danielsen",
       "club": "Varodd SK",
-      "birthYear": 2007,
+      "birthYear": 2013,
       "gender": "Gutt",
-      "topWA": 520,
-      "group": "Juniorgruppe",
-      "qualifiedRegion": true
-    },
-    {
-      "name": "Mia Foldnes",
-      "club": "Varodd SK",
-      "birthYear": 2009,
-      "gender": "Jente",
-      "topWA": 485,
-      "group": "Juniorgruppe",
-      "qualifiedRegion": true
-    },
-    {
-      "name": "Jonas Olsen",
-      "club": "Vågsbygd SLK",
-      "birthYear": 2008,
-      "gender": "Gutt",
-      "topWA": 510,
-      "group": "Juniorgruppe",
-      "qualifiedRegion": true
-    },
-    {
-      "name": "Sofie Hansen",
-      "club": "Vågsbygd SLK",
-      "birthYear": 2011,
-      "gender": "Jente",
-      "topWA": 430,
+      "topWA": 380,
       "group": "Utviklingsgruppe",
       "qualifiedRegion": true
     }
