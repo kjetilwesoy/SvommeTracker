@@ -1,36 +1,69 @@
-name: Automatisert Medley Oppdatering
+import io
+import json
+import os
+import requests
+import zipfile
+import xml.etree.ElementTree as ET
 
-on:
-  schedule:
-    - cron: '0 6 1,15 * *'
-  workflow_dispatch:
+# Liste over LENEX (.lef) URL-er du vil prosessere
+URLS = [
+    "https://livetiming.medley.no/ltdok/lt5612/lenex20.lef"
+]
 
-permissions:
-  contents: write
+alle_resultater = []
 
-jobs:
-  build-and-sync:
-    runs-on: ubuntu-latest
+for url in URLS:
+    try:
+        res = requests.get(url, timeout=30)
+        with zipfile.ZipFile(io.BytesIO(res.content)) as z:
+            xml_name = [f for f in z.namelist() if f.endswith('.xml')][0]
+            xml_content = z.read(xml_name)
 
-    steps:
-      - name: Sjekk ut kildekode
-        uses: actions/checkout@v4
+        root = ET.fromstring(xml_content)
 
-      - name: Sett opp Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '22'
+        # Kartlegg øvelser
+        ovelser = {}
+        for event in root.findall('.//EVENT'):
+            event_id = event.attrib.get('eventid', '')
+            number = event.attrib.get('number', '')
+            sweep = event.find('.//SWIMSTYLE')
+            if sweep is not None:
+                dist = sweep.attrib.get('distance', '')
+                stroke = sweep.attrib.get('stroke', '')
+                ovelser[event_id] = f"{dist}m {stroke}"
+            else:
+                ovelser[event_id] = f"Øvelse {number}"
 
-      - name: Installer avhengigheter
-        run: npm install puppeteer cheerio
+        # Les utøvere og resultater fra alle klubber
+        for club in root.findall('.//CLUB'):
+            club_name = club.attrib.get('name', 'Ukjent klubb')
+            for athlete in club.findall('.//ATHLETE'):
+                fornavn = athlete.attrib.get('firstname', '')
+                etternavn = athlete.attrib.get('lastname', '')
+                fullt_navn = f"{fornavn} {etternavn}".strip()
+                fodselsar = athlete.attrib.get('birthdate', '')[:4]
+                kjonn = athlete.attrib.get('gender', '')
 
-      - name: Kjør Medley-skraper
-        run: node scraper.js
+                for result in athlete.findall('.//RESULT'):
+                    tid = result.attrib.get('swimtime', '')
+                    fina = result.attrib.get('points', '')
+                    event_id = result.attrib.get('eventid', '')
 
-      - name: Lagre og push oppdaterte data
-        run: |
-          git config --global user.name 'github-actions[bot]'
-          git config --global user.email 'github-actions[bot]@users.noreply.github.com'
-          git add data/swimmers.json || true
-          git commit -m "Auto-oppdatert svømmedata fra Medley.no" || exit 0
-          git push
+                    alle_resultater.append({
+                        "navn": fullt_navn,
+                        "klubb": club_name,
+                        "fodselsar": fodselsar,
+                        "kjonn": kjonn,
+                        "ovelse": ovelser.get(event_id, "Ukjent"),
+                        "tid": tid,
+                        "fina": fina
+                    })
+    except Exception as e:
+        print(f"Feil ved henting/parsing av {url}: {e}")
+
+# Lagre til data/resultater.json
+os.makedirs("data", exist_ok=True)
+with open("data/resultater.json", "w", encoding="utf-8") as f:
+    json.dump(alle_resultater, f, ensure_ascii=False, indent=2)
+
+print(f"Suksess! Lagret {len(alle_resultater)} resultater i data/resultater.json")
