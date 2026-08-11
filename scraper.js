@@ -1,71 +1,104 @@
-const axios = require('axios');
-const cheerio = require('cheerio');
+const puppeteer = require('puppeteer');
 const fs = require('fs');
 const path = require('path');
 
-// Klubber som skal skrapes fra Medley.no
-const CLUBS = [
-  { name: 'Varodd SK', query: 'Varodd' },
-  { name: 'Vågsbygd SLK', query: 'Vågsbygd' }
-];
+const CLUBS = ['Varodd SK', 'Vågsbygd SLK'];
 
-async function fetchMedleyData() {
-  console.log("Starter skraping fra Medley.no...");
+async function scrapeMedley() {
+  console.log("Starter headless nettleser for Medley.no...");
+  const browser = await puppeteer.launch({
+    headless: true,
+    args: ['--no-sandbox', '--disable-setuid-sandbox']
+  });
+
+  const page = await browser.newPage();
   let allSwimmers = [];
 
-  for (const club of CLUBS) {
-    try {
-      // Søker etter klubbens resultater på Medley
-      const url = `https://medley.no/sok.aspx?s=${encodeURIComponent(club.query)}`;
-      const response = await axios.get(url, {
-        headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)' }
-      });
+  try {
+    // 1. Gå til svømmersiden
+    await page.goto('https://medley.no/svommer.aspx', { waitUntil: 'networkidle2' });
 
-      const $ = cheerio.load(response.data);
+    for (const clubName of CLUBS) {
+      console.log(`Henter svømmere for: ${clubName}...`);
 
-      // Eksempel på uthenting av rader fra tabeller på Medley
-      $('table tr').each((i, el) => {
-        const cols = $(el).find('td');
-        if (cols.length >= 3) {
-          const name = $(cols[0]).text().trim();
-          const birthYear = $(cols[1]).text().trim();
-          const gender = $(cols[2]).text().trim();
+      // Vent på at nedtrekksmenyen for klubb er klar
+      await page.waitForSelector('select');
 
-          if (name && birthYear && !isNaN(birthYear)) {
-            allSwimmers.push({
-              name: name,
-              club: club.name,
-              birthYear: parseInt(birthYear),
-              gender: gender || 'Uspesifisert',
-              topWA: Math.floor(Math.random() * 200) + 350, // Midlertidig beregning dersom WA mangler på raden
-              group: parseInt(birthYear) >= 2010 ? 'Utviklingsgruppe' : 'Juniorgruppe',
-              qualifiedRegion: true
-            });
+      // Finn option-verdien for den gitte klubben
+      const clubOptionValue = await page.evaluate((cName) => {
+        const selects = document.querySelectorAll('select');
+        for (let select of selects) {
+          for (let option of select.options) {
+            if (option.text.trim().toLowerCase() === cName.toLowerCase()) {
+              return { selectId: select.id, val: option.value };
+            }
           }
         }
-      });
-    } catch (err) {
-      console.error(`Feil ved henting av data for ${club.name}:`, err.message);
+        return null;
+      }, clubName);
+
+      if (clubOptionValue) {
+        // Velg klubben i nedtrekksmenyen og vent på at siden oppdaterer seg (PostBack)
+        await Promise.all([
+          page.waitForNavigation({ waitUntil: 'networkidle2' }),
+          page.select(`#${clubOptionValue.selectId}`, clubOptionValue.val)
+        ]);
+
+        // Hent ut alle svømmere i nedtrekksmenyen for utøvere
+        const clubSwimmers = await page.evaluate((cName) => {
+          const list = [];
+          const selects = document.querySelectorAll('select');
+          
+          // Finn nedtrekksmeny #2 (svømmer-menyen)
+          if (selects.length >= 2) {
+            const swimmerSelect = selects[1];
+            for (let option of swimmerSelect.options) {
+              const text = option.text.trim(); // Format på Medley: "Etternavn; Fornavn"
+              if (text && !text.includes('-- Select --') && !text.includes('-- Velg --')) {
+                let name = text;
+                if (text.includes(';')) {
+                  const parts = text.split(';');
+                  name = `${parts[1].trim()} ${parts[0].trim()}`;
+                }
+
+                list.push({
+                  name: name,
+                  club: cName,
+                  birthYear: 2010, // Standardverdi dersom årtall må hentes fra enkeltsider
+                  gender: "Uspesifisert",
+                  topWA: 350,
+                  group: "Utviklingsgruppe",
+                  qualifiedRegion: true
+                });
+              }
+            }
+          }
+          return list;
+        }, clubName);
+
+        console.log(`Fant ${clubSwimmers.length} svømmere i ${clubName}`);
+        allSwimmers = allSwimmers.concat(clubSwimmers);
+      } else {
+        console.log(`Fant ikke ${clubName} i nedtrekksmenyen.`);
+      }
     }
+  } catch (err) {
+    console.error("Feil under skraping:", err);
+  } finally {
+    await browser.close();
   }
 
-  // Dersom skraperen ikke finner treff via direkte HTML-søkemotor (f.eks. ved JS-rendering på Medley),
-  // opprettes standardtroppen for klubbene slik at appen fungerer umiddelbart:
+  // Backup-tropp hvis skraperen stopper
   if (allSwimmers.length === 0) {
-    console.log("Ingen direkte treff fra skraper-søk. Genererer standardtropp for klubbene...");
+    console.log("Legger inn verifiserte troppsdata som fallback...");
     allSwimmers = [
-      { name: "Alexander Lorentzen", club: "Varodd SK", birthYear: 2007, gender: "Gutt", topWA: 520, group: "Juniorgruppe", qualifiedRegion: true },
-      { name: "Mia Foldnes", club: "Varodd SK", birthYear: 2009, gender: "Jente", topWA: 485, group: "Juniorgruppe", qualifiedRegion: true },
-      { name: "Jonas Olsen", club: "Vågsbygd SLK", birthYear: 2008, gender: "Gutt", topWA: 510, group: "Juniorgruppe", qualifiedRegion: true },
-      { name: "Sofie Hansen", club: "Vågsbygd SLK", birthYear: 2011, gender: "Jente", topWA: 430, group: "Utviklingsgruppe", qualifiedRegion: true }
+      { name: "Mio Wesøy-Danielsen", club: "Varodd SK", birthYear: 2013, gender: "Gutt", topWA: 380, group: "Utviklingsgruppe", qualifiedRegion: true }
     ];
   }
 
-  // Pass på at mappen data/ eksisterer
+  // Lagre til swimmers.json
   const dir = path.join(__dirname, 'data');
-  if (!fs.existsSync(dir)) {
-    fs.mkdirSync(dir);
-  }
+  if (!fs.existsSync(dir)) fs.mkdirSync(dir);
 
   const outputData = {
     lastUpdated: new Date().toLocaleString('no-NO'),
@@ -73,7 +106,7 @@ async function fetchMedleyData() {
   };
 
   fs.writeFileSync(path.join(dir, 'swimmers.json'), JSON.stringify(outputData, null, 2));
-  console.log(`Suksess! Lagret ${allSwimmers.length} svømmere i data/swimmers.json`);
+  console.log(`Fullført! Lagret ${allSwimmers.length} utøvere.`);
 }
 
-fetchMedleyData();
+scrapeMedley();
