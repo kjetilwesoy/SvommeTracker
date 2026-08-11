@@ -1,0 +1,31 @@
+name: Automatisert Medley Oppdatering
+
+on:
+  schedule:
+    - cron: '0 3 1,15 * *' # Kjører kl 03:00 den 1. og 15. hver måned
+  workflow_dispatch: # Gjør at du kan trykke "Kjør nå" manuelt på GitHub
+
+jobs:
+  build-and-sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Sett opp Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+
+      - name: Installer avhengigheter
+        run: npm install axios cheerio
+
+      - name: Kjør Medley Scraper
+        run: node scraper.js
+
+      - name: Lagre og push oppdaterte data
+        run: |
+          git config --global user.name 'MedleyBot'
+          git config --global user.email 'bot@github.com'
+          git add data/swimmers.json
+          git commit -m "Automatisk oppdatering fra Medley.no" || exit 0
+          git push
