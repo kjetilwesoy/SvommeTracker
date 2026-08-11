@@ -9,6 +9,15 @@ STEVNER_FIL = "stevner.txt"
 json_dir = "data"
 json_path = os.path.join(json_dir, "resultater.json")
 
+# Kun svømmere fra denne klubben blir med i resultater.json
+MAL_KLUBB = "Varodd Svømmeklubb"
+
+# Svømmere som automatisk endres til Varodd Svømmeklubb uansett hva som står i LENEX-filen
+OVERSTYR_TIL_VARODD = [
+    "mio wesøy-danielsen",
+    "luca wesøy-danielsen"
+]
+
 urls = []
 if os.path.exists(STEVNER_FIL):
     with open(STEVNER_FIL, "r", encoding="utf-8") as f:
@@ -16,7 +25,6 @@ if os.path.exists(STEVNER_FIL):
 
 print(f"Fant {len(urls)} stevne-lenke(r) i {STEVNER_FIL}.")
 
-# Nøkkel: (navn, klubb, ovelse_navn, basseng) -> Best result dict
 beste_resultater = {}
 
 headers = {
@@ -67,7 +75,6 @@ for url in urls:
                 event_id = elem.attrib.get('eventid') or elem.attrib.get('EVENTID') or ''
                 number = elem.attrib.get('number') or elem.attrib.get('NUMBER') or ''
                 
-                # Sjekk om øvelsen har spesifisert bane/course
                 event_course = elem.attrib.get('course') or elem.attrib.get('COURSE') or default_course
                 course_str = "50m" if str(event_course).upper() == 'LCM' else "25m"
 
@@ -87,7 +94,7 @@ for url in urls:
         # Les Utøvere og Resultater
         for club in root.iter():
             if club.tag.upper() == 'CLUB':
-                club_name = club.attrib.get('name') or club.attrib.get('NAME') or 'Ukjent klubb'
+                original_club_name = club.attrib.get('name') or club.attrib.get('NAME') or 'Ukjent klubb'
                 
                 for athlete in club.iter():
                     if athlete.tag.upper() == 'ATHLETE':
@@ -95,6 +102,15 @@ for url in urls:
                         etternavn = (athlete.attrib.get('lastname') or athlete.attrib.get('LASTNAME') or '').strip()
                         fullt_navn = f"{fornavn} {etternavn}".strip()
                         
+                        # Overstyr klubb til Varodd Svømmeklubb for Mio og Luca
+                        aktuelt_klubbnavn = original_club_name
+                        if fullt_navn.lower() in OVERSTYR_TIL_VARODD:
+                            aktuelt_klubbnavn = MAL_KLUBB
+
+                        # HOPP OVER hvis utøveren ikke tilhører Varodd Svømmeklubb
+                        if aktuelt_klubbnavn != MAL_KLUBB:
+                            continue
+
                         bday = athlete.attrib.get('birthdate') or athlete.attrib.get('BIRTHDATE') or ''
                         fodselsar = bday[:4] if bday else ''
                         kjonn = athlete.attrib.get('gender') or athlete.attrib.get('GENDER') or ''
@@ -115,12 +131,11 @@ for url in urls:
                                     ovelse_navn = ovelse_info["navn"]
                                     basseng = ovelse_info["basseng"]
 
-                                    # Unik nøkkel per utøver, øvelse og bassenglengde
                                     key = (fullt_navn, ovelse_navn, basseng)
 
                                     nytt_resultat = {
                                         "navn": fullt_navn,
-                                        "klubb": club_name,
+                                        "klubb": aktuelt_klubbnavn,
                                         "fodselsar": fodselsar,
                                         "kjonn": kjonn,
                                         "ovelse": ovelse_navn,
@@ -129,7 +144,6 @@ for url in urls:
                                         "fina": fina
                                     }
 
-                                    # Behold kun resultatet dersom det har høyere WA/FINA-poeng
                                     if key not in beste_resultater or fina > beste_resultater[key]["fina"]:
                                         beste_resultater[key] = nytt_resultat
 
@@ -142,4 +156,4 @@ os.makedirs(json_dir, exist_ok=True)
 with open(json_path, "w", encoding="utf-8") as f:
     json.dump(resultat_liste, f, ensure_ascii=False, indent=2)
 
-print(f"Lagret {len(resultat_liste)} unike beste-tider i {json_path}.")
+print(f"Lagret {len(resultat_liste)} unike beste-tider for {MAL_KLUBB} i {json_path}.")
