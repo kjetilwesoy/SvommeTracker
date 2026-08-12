@@ -1002,5 +1002,3 @@ def beregn_statistikk(
             forbedring,
             2
         )
-
-    FULL FILE CONTENT WITH MODIFICATIONS]
