@@ -1,0 +1,92 @@
+/* Mobile-first stacked table (card) layout for tables with class="responsive" */
+
+/* Keep base table styles intact on larger viewports */
+.table-responsive-helper { }
+
+@media (min-width: 641px) {
+  table.responsive thead { display: table-header-group; }
+  table.responsive tr { display: table-row; }
+  table.responsive td, table.responsive th {
+    display: table-cell;
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid rgba(203,213,225,1);
+  }
+}
+
+/* Small screens: stacked rows */
+@media (max-width: 640px) {
+  table.responsive thead {
+    position: absolute !important;
+    height: 1px; width: 1px;
+    overflow: hidden;
+    clip: rect(1px, 1px, 1px, 1px);
+    white-space: nowrap;
+  }
+
+  table.responsive, table.responsive tbody, table.responsive tr, table.responsive td {
+    display: block;
+    width: 100%;
+  }
+
+  table.responsive tr {
+    margin-bottom: 0.9rem;
+    border: 1px solid rgba(203,213,225,1);
+    border-radius: 8px;
+    padding: 0.4rem;
+    background: #fff;
+  }
+
+  table.responsive td {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.6rem 0.75rem;
+    border: 0;
+    border-bottom: 1px dashed #f0f2f5;
+    white-space: normal;
+    word-break: break-word;
+  }
+
+  /* Final cell in a card: remove bottom border */
+  table.responsive tr td:last-child {
+    border-bottom: 0;
+  }
+
+  /* Show the column name from data-label */
+  table.responsive td::before {
+    content: attr(data-label);
+    font-weight: 600;
+    color: #3b4a5a;
+    margin-right: 0.5rem;
+    flex: 0 0 45%;
+    max-width: 45%;
+  }
+
+  /* Value area */
+  table.responsive td > .value {
+    flex: 1 1 55%;
+    text-align: right;
+    color: #1f2937;
+    white-space: normal;
+  }
+
+  /* If a cell contains multiple elements (like badges), allow wrap */
+  table.responsive td .pool-badge,
+  table.responsive td .badge-fina,
+  table.responsive td .pill {
+    white-space: normal;
+    display: inline-block;
+    vertical-align: middle;
+    padding: .25rem .5rem;
+  }
+
+  /* Make long label/value wrap nicely on very small screens */
+  @media (max-width: 380px) {
+    table.responsive td::before { flex-basis: 40%; max-width: 40%; font-size: 0.95rem; }
+    table.responsive td > .value { text-align: left; padding-left: 0.75rem; }
+    table.responsive td { flex-wrap: wrap; }
+  }
+}
+
+/* Optional visual polish */
+table.responsive tr + tr { margin-top: 0.5rem; }
