@@ -1,99 +1,366 @@
-import json
-import os
+import re
 import requests
 from bs4 import BeautifulSoup
+from datetime import datetime, timedelta
+from urllib.parse import urljoin
 
-# Liste over stevne-URL-er du ønsker å hente data fra
-STEVNE_URLER = [
-    "https://livetiming.medley.no/rapport.aspx?stevnenr=1234&rs=R"  # Bytt ut/legg til URL-er
-]
 
-JSON_FILSTI = "data/resultater.json"
+MEDLEY_BASE = "https://livetiming.medley.no"
 
-def last_eksisterende_data():
-    if os.path.exists(JSON_FILSTI):
-        try:
-            with open(JSON_FILSTI, 'r', encoding='utf-8') as f:
-                return json.load(f)
-        except Exception:
-            return []
-    return []
+STEVNEOVERSIKT = (
+    "https://livetiming.medley.no/default.aspx"
+)
 
-def skrap_stevne(url):
-    headers = {"User-Agent": "Mozilla/5.0"}
+STEVNER_FIL = "stevner.txt"
+
+HEADERS = {
+    "User-Agent": (
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+        "AppleWebKit/537.36 Chrome/124.0 Safari/537.36"
+    )
+}
+
+
+def hent(url):
+
+    response = requests.get(
+        url,
+        headers=HEADERS,
+        timeout=60
+    )
+
+    response.raise_for_status()
+
+    response.encoding = "utf-8"
+
+    return response.text
+
+
+def normaliser_dato(value):
+
+    if not value:
+        return ""
+
+    value = value.strip()
+
+    match = re.search(
+        r"(\d{1,2})[./-](\d{1,2})[./-](20\d{2})",
+        value
+    )
+
+    if not match:
+        return ""
+
     try:
-        resp = requests.get(url, headers=headers)
-        resp.encoding = 'utf-8'
-        if resp.status_code != 200:
-            return []
-    except Exception as e:
-        print(f"Feil ved henting av {url}: {e}")
-        return []
 
-    soup = BeautifulSoup(resp.text, 'html.parser')
-    nye_resultater = []
-    nuvaerende_ovelse = "Ukjent øvelse"
-    nuvaerende_basseng = "25m"
+        dato = datetime(
+            int(match.group(3)),
+            int(match.group(2)),
+            int(match.group(1))
+        )
 
-    for tr in soup.find_all('tr'):
-        tekst = tr.get_text().strip()
-        
-        if "Øvelse" in tekst:
-            nuvaerende_ovelse = tekst.split('\n')[0].strip()
-            nuvaerende_basseng = "50m" if "50m" in tekst.lower() and "bane" in tekst.lower() else "25m"
+        return dato.strftime("%Y-%m-%d")
+
+    except Exception:
+        return ""
+
+
+def finn_stevne_id(url):
+
+    match = re.search(
+        r"stevnenr=(\d+)",
+        url,
+        re.IGNORECASE
+    )
+
+    return (
+        match.group(1)
+        if match
+        else ""
+    )
+
+
+def finn_stevner():
+
+    print()
+    print("=" * 60)
+    print("MEDLEY – finner stevner")
+    print("=" * 60)
+
+    html = hent(STEVNEOVERSIKT)
+
+    soup = BeautifulSoup(
+        html,
+        "html.parser"
+    )
+
+    today = datetime.now().date()
+
+    cutoff = today - timedelta(
+        days=365
+    )
+
+    funnet = {}
+
+    # Finn alle lenker som inneholder stevnenr
+    for link in soup.find_all("a"):
+
+        href = link.get("href", "")
+
+        if "stevnenr=" not in href.lower():
             continue
 
-        tds = tr.find_all('td')
-        if len(tds) >= 5:
-            kol = [td.get_text().strip() for td in tds]
-            if kol[0].isdigit():
-                navn = kol[1]
-                klubb = kol[3] if len(kol) > 3 else ""
-                tid = kol[-2] if len(kol) >= 6 else kol[-1]
-                
-                fina_poeng = 0
-                for item in kol:
-                    if item.isdigit() and 50 <= int(item) <= 1200:
-                        fina_poeng = int(item)
+        stevne_id = finn_stevne_id(href)
 
-                nye_resultater.append({
-                    "dato": "2026-08-12",
-                    "navn": navn,
-                    "klubb": klubb,
-                    "ovelse": nuvaerende_ovelse,
-                    "basseng": nuvaerende_basseng,
-                    "tid": tid,
-                    "fina": fina_poeng
+        if not stevne_id:
+            continue
+
+        absolute = urljoin(
+            MEDLEY_BASE,
+            href
+        )
+
+        # Vi vil ha selve detaljsiden
+        if (
+            "stevnedetaljer.aspx"
+            not in absolute.lower()
+        ):
+            continue
+
+        funnet[stevne_id] = absolute
+
+    print(
+        f"Fant {len(funnet)} stevner/lenker "
+        "i Medley-oversikten."
+    )
+
+    aktuelle = []
+
+    for stevne_id, detail_url in funnet.items():
+
+        try:
+
+            detail_html = hent(
+                detail_url
+            )
+
+            detail_soup = BeautifulSoup(
+                detail_html,
+                "html.parser"
+            )
+
+            text = detail_soup.get_text(
+                " ",
+                strip=True
+            )
+
+            # Dato
+            match = re.search(
+                r"Fra dato:\s*(\d{2}\.\d{2}\.\d{4})",
+                text,
+                re.IGNORECASE
+            )
+
+            if not match:
+                continue
+
+            start_date = normaliser_dato(
+                match.group(1)
+            )
+
+            if not start_date:
+                continue
+
+            date_obj = datetime.strptime(
+                start_date,
+                "%Y-%m-%d"
+            ).date()
+
+            # Ikke fremtidige stevner
+            if date_obj > today:
+                continue
+
+            # Ikke eldre enn 12 måneder
+            if date_obj < cutoff:
+                continue
+
+            # Stevnenavn
+            name = ""
+
+            h1 = detail_soup.find("h1")
+
+            if h1:
+                name = h1.get_text(
+                    " ",
+                    strip=True
+                )
+
+            if not name and detail_soup.title:
+                name = detail_soup.title.get_text(
+                    " ",
+                    strip=True
+                )
+
+            # Basseng
+            course = "25m"
+
+            if re.search(
+                r"Bassenglengde:\s*50m",
+                text,
+                re.IGNORECASE
+            ):
+                course = "50m"
+
+            # Finn best mulig resultatkilde
+            result_urls = finn_resultatkilder(
+                detail_soup
+            )
+
+            if not result_urls:
+                print(
+                    f"  ADVARSEL: Ingen resultatkilde "
+                    f"funnet for {name} ({stevne_id})"
+                )
+
+                continue
+
+            for result_url in result_urls:
+
+                aktuelle.append({
+                    "id": stevne_id,
+                    "navn": name,
+                    "dato": start_date,
+                    "basseng": course,
+                    "url": result_url,
                 })
-    return nye_resultater
+
+            print(
+                f"  OK {start_date} | "
+                f"{name} | "
+                f"{course} | "
+                f"{len(result_urls)} kilde(r)"
+            )
+
+        except Exception as exc:
+
+            print(
+                f"  FEIL ved stevne "
+                f"{stevne_id}: {exc}"
+            )
+
+    return aktuelle
+
+
+def finn_resultatkilder(soup):
+
+    resultater = []
+
+    for link in soup.find_all("a"):
+
+        text = link.get_text(
+            " ",
+            strip=True
+        )
+
+        href = link.get(
+            "href",
+            ""
+        )
+
+        if not href:
+            continue
+
+        combined = (
+            f"{text} {href}"
+        ).lower()
+
+        absolute = urljoin(
+            MEDLEY_BASE,
+            href
+        )
+
+        # Førstevalg: LENEX-resultater
+        if (
+            "lenex" in combined
+            and "result" in combined
+        ):
+            resultater.append(
+                absolute
+            )
+            continue
+
+        # Klubbeksport kan også inneholde resultatdata
+        if "klubbeksport" in combined:
+
+            resultater.append(
+                absolute
+            )
+
+    # Fjern duplikater
+    unike = []
+
+    for url in resultater:
+
+        if url not in unike:
+            unike.append(url)
+
+    return unike
+
+
+def skriv_stevner(stevner):
+
+    # Vi skriver kun resultatkildene.
+    # parse_lenex.py bruker disse.
+    urls = []
+
+    for stevne in stevner:
+
+        url = stevne["url"]
+
+        if url not in urls:
+            urls.append(url)
+
+    with open(
+        STEVNER_FIL,
+        "w",
+        encoding="utf-8"
+    ) as file:
+
+        file.write(
+            "# Automatisk generert av hent_medley.py\n"
+        )
+
+        file.write(
+            "# Resultatkilder fra Medley siste 12 måneder\n"
+        )
+
+        for url in urls:
+            file.write(
+                url + "\n"
+            )
+
+    print()
+    print(
+        f"Skrev {len(urls)} resultatkilder "
+        f"til {STEVNER_FIL}"
+    )
+
 
 def main():
-    eksisterende = last_eksisterende_data()
-    
-    # Bruk en 'set' for å unngå duplikater basert på unik nøkkel
-    eksisterende_nokler = {
-        (r.get('navn'), r.get('ovelse'), r.get('tid'), r.get('dato')) 
-        for r in eksisterende
-    }
 
-    totalt_nye = 0
-    for url in STEVNE_URLER:
-        hentet = skrap_stevne(url)
-        for res in hentet:
-            nokkel = (res['navn'], res['ovelse'], res['tid'], res['dato'])
-            if nokkel not in eksisterende_nokler:
-                eksisterende.append(res)
-                eksisterende_nokler.add(nokkel)
-                totalt_nye += 1
+    stevner = finn_stevner()
 
-    if totalt_nye > 0:
-        os.makedirs(os.path.dirname(JSON_FILSTI), exist_ok=True)
-        with open(JSON_FILSTI, 'w', encoding='utf-8') as f:
-            json.dump(eksisterende, f, ensure_ascii=False, indent=2)
-        print(f"Lagt til {totalt_nye} nye resultater i {JSON_FILSTI}")
-    else:
-        print("Ingen nye resultater å legge til.")
+    skriv_stevner(
+        stevner
+    )
+
+    print()
+    print("=" * 60)
+    print(
+        f"Aktuelle stevner: {len(stevner)}"
+    )
+    print("=" * 60)
+
 
 if __name__ == "__main__":
     main()
-          
