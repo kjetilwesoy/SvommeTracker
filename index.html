@@ -287,6 +287,7 @@
       }
     }
   </style>
+  <link rel="stylesheet" href="assets/responsive-table.css">
 </head>
 <body>
 
@@ -305,7 +306,7 @@
         </div>
 
         <div class="table-card">
-          <table>
+          <table class="responsive">
             <thead>
               <tr>
                 <th>Dato</th>
@@ -331,7 +332,7 @@
         </div>
 
         <div class="table-card">
-          <table>
+          <table class="responsive">
             <thead>
               <tr>
                 <th>Dato</th>
@@ -362,7 +363,7 @@
         </div>
 
         <div class="table-card">
-          <table>
+          <table class="responsive">
             <thead>
               <tr>
                 <th style="width: 30px;"></th>
@@ -497,6 +498,13 @@
           <td><span class="badge-fina">${r.fina || 0} p</span></td>
         </tr>
       `).join('');
+
+      // Inject data-labels for the newly created rows (retry until helper is available)
+      (function tryInject(){
+        const table = document.getElementById(tbodyId).closest('table');
+        if (window.svtInjectLabels) { window.svtInjectLabels(table); }
+        else { setTimeout(tryInject, 50); }
+      })();
     }
 
     function visGrafer() {
@@ -545,7 +553,7 @@
             <td colspan="5">
               <div class="details-container">
                 <strong>Øvelser og forbedring for ${u.navn}:</strong>
-                <table style="margin-top: 0.5rem; background: #fff;">
+                <table class="responsive" style="margin-top: 0.5rem; background: #fff;">
                   <thead>
                     <tr>
                       <th>Øvelse</th>
@@ -572,6 +580,13 @@
           </tr>
         `;
       }).join('');
+
+      // Inject data-labels for the grafer table and any nested responsive tables
+      (function tryInjectGrafer(){
+        const table = document.getElementById('graferTableBody').closest('table');
+        if (window.svtInjectLabels) { window.svtInjectLabels(table); }
+        else { setTimeout(tryInjectGrafer, 50); }
+      })();
     }
 
     function toggleDetails(rowId) {
@@ -581,5 +596,6 @@
 
     window.addEventListener('DOMContentLoaded', lastData);
   </script>
+  <script src="assets/auto-data-label.js" defer></script>
 </body>
 </html>
