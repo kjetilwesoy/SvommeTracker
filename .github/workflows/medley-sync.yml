@@ -1,43 +1,139 @@
-name: Oppdater Svømmedata fra LENEX/PDF/HTML
+name: Hent svømmeresultater fra Medley
 
 on:
   workflow_dispatch:
+
+  schedule:
+    # Kjører hver dag kl. 06:00 UTC
+    # = 08:00 norsk sommertid
+    - cron: "0 6 * * *"
+
   push:
     paths:
-      - 'stevner.txt'
-      - '.github/workflows/medley-sync.yml'
-      - 'parse_lenex.py'
+      - "hent_medley.py"
+      - "parse_lenex.py"
+      - ".github/workflows/medley-sync.yml"
 
 permissions:
   contents: write
 
 jobs:
-  build:
+
+  hent-resultater:
+
     runs-on: ubuntu-latest
 
     steps:
-      - name: Sjekk ut koden
+
+      # --------------------------------------------------
+      # Hent repoet
+      # --------------------------------------------------
+
+      - name: Sjekk ut repo
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+
+      # --------------------------------------------------
+      # Python
+      # --------------------------------------------------
 
       - name: Sett opp Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.10'
+          python-version: "3.11"
 
-      - name: Installer pakker
+
+      # --------------------------------------------------
+      # Installer biblioteker
+      # --------------------------------------------------
+
+      - name: Installer Python-pakker
         run: |
           python -m pip install --upgrade pip
-          pip install requests pdfplumber beautifulsoup4
+          pip install requests beautifulsoup4 pdfplumber
 
-      - name: Kjøre LENEX-parser
-        run: python parse_lenex.py
 
-      - name: Lagre og push oppdaterte data
+      # --------------------------------------------------
+      # Finn alle Medley-stevner siste 12 måneder
+      # --------------------------------------------------
+
+      - name: Finn Medley-stevner
         run: |
-          git config --global user.name "GitHub Action Bot"
-          git config --global user.email "bot@github.com"
+          python hent_medley.py
+
+
+      # --------------------------------------------------
+      # Hent og behandle resultatene
+      # --------------------------------------------------
+
+      - name: Parse resultater
+        run: |
+          python parse_lenex.py
+
+
+      # --------------------------------------------------
+      # Vis litt informasjon i Actions-loggen
+      # --------------------------------------------------
+
+      - name: Vis resultatstatistikk
+        run: |
+          python - <<'PY'
+          import json
+          import os
+
+          path = "data/resultater.json"
+
+          if not os.path.exists(path):
+              print("FEIL: resultater.json finnes ikke")
+              raise SystemExit(1)
+
+          with open(path, encoding="utf-8") as f:
+              data = json.load(f)
+
+          print("")
+          print("========================================")
+          print("SVØMMETRACKER RESULTATSTATISTIKK")
+          print("========================================")
+          print(f"Antall resultater: {len(data)}")
+
+          klubber = {}
+
+          for r in data:
+              klubb = r.get("klubb", "Ukjent")
+              klubber[klubb] = klubber.get(klubb, 0) + 1
+
+          for klubb, antall in sorted(klubber.items()):
+              print(f"{klubb}: {antall}")
+
+          personer = set()
+
+          for r in data:
+              navn = r.get("navn")
+
+              if navn:
+                  personer.add(navn)
+
+          print(f"Antall svømmere: {len(personer)}")
+          print("========================================")
+          PY
+
+
+      # --------------------------------------------------
+      # Lagre resultatene i GitHub
+      # --------------------------------------------------
+
+      - name: Lagre oppdaterte data
+        run: |
+          git config user.name "GitHub Action Bot"
+          git config user.email "actions@github.com"
+
+          git add stevner.txt
           git add data/resultater.json
-          git commit -m "Auto-oppdatert svømmedata fra LENEX/PDF/HTML" || exit 0
+
+          git diff --cached --quiet || git commit -m "Oppdater svømmeresultater fra Medley"
+
           git pull --rebase origin main
+
           git push
-          
