@@ -3,18 +3,27 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Svømmeresultater & Forbedring</title>
+  <title>Trenerhub & Svømmeresultater</title>
   <style>
     :root {
-      --bg-color: #f8fafc;
+      --bg-color: #0f172a;
+      --content-bg: #f8fafc;
       --card-bg: #ffffff;
       --text-main: #0f172a;
       --text-muted: #64748b;
-      --primary: #2563eb;
-      --border-color: #e2e8f0;
+      --border-color: #cbd5e1;
+      
+      /* Svømmetema & Klubb farger */
+      --water-primary: #0284c7;
+      --water-dark: #0369a1;
+      --varodd-blue: #2563eb;
+      --varodd-blue-hover: #1d4ed8;
+      --vagsbygd-red: #dc2626;
+      --vagsbygd-red-hover: #b91c1c;
+      
       --success: #10b981;
-      --badge-25m: #3b82f6;
-      --badge-50m: #8b5cf6;
+      --badge-25m: #0284c7;
+      --badge-50m: #7c3aed;
     }
 
     * {
@@ -26,68 +35,127 @@
     body {
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
       background-color: var(--bg-color);
+      /* Bølgemønster i bakgrunnen for svømmetema */
+      background-image: radial-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 0);
+      background-size: 24px 24px;
       color: var(--text-main);
-      line-height: 1.5;
-      padding-bottom: 3rem;
-    }
-
-    header {
-      background-color: var(--card-bg);
-      border-bottom: 1px solid var(--border-color);
-      padding: 1rem 2rem;
+      min-height: 100vh;
       display: flex;
-      justify-content: space-between;
-      align-items: center;
-      flex-wrap: wrap;
-      gap: 1rem;
-      box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+      flex-direction: column;
     }
 
-    .brand {
-      font-size: 1.25rem;
+    /* Hoved-layout: Innhold til venstre, Meny til høyre */
+    .app-layout {
+      display: flex;
+      flex-direction: row;
+      min-height: 100vh;
+      width: 100%;
+    }
+
+    /* Venstre side: Innhold */
+    .main-content {
+      flex: 1;
+      background-color: var(--content-bg);
+      padding: 2rem;
+      overflow-y: auto;
+    }
+
+    /* Høyre side: Meny */
+    .right-sidebar {
+      width: 280px;
+      background-color: #1e293b;
+      border-left: 2px solid #334155;
+      padding: 1.5rem 1rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
+      box-shadow: -4px 0 15px rgba(0,0,0,0.3);
+    }
+
+    .brand-header {
+      color: #ffffff;
+      font-size: 1.2rem;
       font-weight: 700;
-      color: var(--text-main);
+      text-align: center;
+      padding-bottom: 1rem;
+      border-bottom: 1px solid #334155;
       display: flex;
       align-items: center;
+      justify-content: center;
       gap: 0.5rem;
     }
 
-    nav {
+    .nav-menu {
       display: flex;
-      gap: 0.5rem;
+      flex-direction: column;
+      gap: 0.75rem;
     }
 
+    /* Generell knapp-styling i menyen */
     .nav-btn {
-      background: transparent;
-      border: none;
-      padding: 0.5rem 1rem;
+      width: 100%;
+      padding: 0.85rem 1rem;
       font-size: 0.95rem;
       font-weight: 600;
-      color: var(--text-muted);
+      color: #f1f5f9;
+      background-color: #334155;
+      border: 1px solid #475569;
+      border-radius: 0.5rem;
       cursor: pointer;
-      border-radius: 0.375rem;
-      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      justify-content: flex-start;
+      gap: 0.75rem;
+      transition: all 0.2s ease;
+      text-align: left;
     }
 
     .nav-btn:hover {
-      background-color: #f1f5f9;
-      color: var(--text-main);
+      background-color: #475569;
+      transform: translateX(-3px);
     }
 
     .nav-btn.active {
-      background-color: var(--primary);
+      border-left: 4px solid var(--water-primary);
+      background-color: #0f172a;
       color: #ffffff;
     }
 
-    .container {
-      max-width: 1200px;
-      margin: 2rem auto;
-      padding: 0 1rem;
+    /* Spesifikk klubbknapp - Varodd (Blå) */
+    .btn-varodd {
+      background-color: var(--varodd-blue);
+      border-color: #3b82f6;
+      color: #ffffff;
+    }
+    .btn-varodd:hover {
+      background-color: var(--varodd-blue-hover);
     }
 
+    /* Spesifikk klubbknapp - Vågsbygd (Rød) */
+    .btn-vagsbygd {
+      background-color: var(--vagsbygd-red);
+      border-color: #ef4444;
+      color: #ffffff;
+    }
+    .btn-vagsbygd:hover {
+      background-color: var(--vagsbygd-red-hover);
+    }
+
+    /* Logo i knappene */
+    .club-logo {
+      width: 24px;
+      height: 24px;
+      object-fit: contain;
+      border-radius: 3px;
+      background: white;
+      padding: 2px;
+    }
+
+    /* Tabell & Innholds-elementer */
     .page-title {
       font-size: 1.75rem;
       font-weight: 700;
+      color: #0f172a;
       margin-bottom: 0.25rem;
     }
 
@@ -102,7 +170,6 @@
       gap: 1rem;
       margin-bottom: 1.5rem;
       flex-wrap: wrap;
-      align-items: center;
     }
 
     .search-input, .select-input {
@@ -116,20 +183,15 @@
 
     .search-input {
       flex: 1;
-      min-width: 250px;
-    }
-
-    .search-input:focus, .select-input:focus {
-      border-color: var(--primary);
-      box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+      min-width: 220px;
     }
 
     .table-card {
       background-color: var(--card-bg);
       border: 1px solid var(--border-color);
       border-radius: 0.5rem;
-      overflow: hidden;
-      box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
+      overflow-x: auto;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
     }
 
     table {
@@ -140,7 +202,7 @@
     }
 
     th {
-      background-color: #f8fafc;
+      background-color: #f1f5f9;
       padding: 0.75rem 1rem;
       font-weight: 600;
       color: var(--text-muted);
@@ -155,15 +217,12 @@
 
     tr.clickable-row {
       cursor: pointer;
-      transition: background-color 0.15s;
     }
-
     tr.clickable-row:hover {
       background-color: #f1f5f9;
     }
 
     .pool-badge {
-      display: inline-block;
       padding: 0.15rem 0.5rem;
       border-radius: 0.25rem;
       font-size: 0.75rem;
@@ -189,43 +248,13 @@
       display: none;
       background-color: #f8fafc;
     }
-
     .details-row.open {
       display: table-row;
     }
 
     .details-container {
-      padding: 1rem 1.5rem;
-      border-left: 4px solid var(--primary);
-    }
-
-    .details-table {
-      margin-top: 0.5rem;
-      background-color: #ffffff;
-      border-radius: 0.375rem;
-      border: 1px solid var(--border-color);
-    }
-
-    .details-table th {
-      background-color: #f1f5f9;
-      font-size: 0.85rem;
-    }
-
-    .details-table td {
-      font-size: 0.875rem;
-      padding: 0.625rem 0.75rem;
-    }
-
-    .chevron {
-      display: inline-block;
-      transition: transform 0.2s;
-      font-size: 0.8rem;
-      margin-right: 0.5rem;
-      color: var(--text-muted);
-    }
-
-    .chevron.rotated {
-      transform: rotate(90deg);
+      padding: 1rem;
+      border-left: 4px solid var(--water-primary);
     }
 
     .empty-state {
@@ -233,93 +262,169 @@
       text-align: center;
       color: var(--text-muted);
     }
+
+    /* MOBILTILPASSING (Responsivt) */
+    @media (max-width: 768px) {
+      .app-layout {
+        flex-direction: column-reverse; /* Meny på topp ved mobil */
+      }
+
+      .right-sidebar {
+        width: 100%;
+        border-left: none;
+        border-bottom: 2px solid #334155;
+        padding: 1rem;
+      }
+
+      .nav-menu {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 0.5rem;
+      }
+
+      .main-content {
+        padding: 1rem;
+      }
+    }
   </style>
 </head>
 <body>
 
-  <header>
-    <div class="brand">
-      🏊‍♂️ SvømmeResultater
-    </div>
-    <nav>
-      <button class="nav-btn active" onclick="byttFane('resultater', event)">Alle Resultater</button>
-      <button class="nav-btn" onclick="byttFane('grafer', event)">Grafer & Målinger</button>
-    </nav>
-  </header>
+  <div class="app-layout">
 
-  <div class="container">
+    <!-- HOVEDINNHOLD (ÅPNES TIL VENSTRE FOR MENYEN) -->
+    <main class="main-content">
 
-    <!-- FANE 1: ALLE RESULTATER -->
-    <div id="view-resultater">
-      <h1 class="page-title">Stevneresultater</h1>
-      <p class="page-subtitle">Oversikt over alle registrerte tider fra siste stevner.</p>
+      <!-- FANE 1: VARODD SVØMMEKLUBB -->
+      <div id="view-varodd">
+        <h1 class="page-title">Varodd Svømmeklubb</h1>
+        <p class="page-subtitle">Resultater og oversikt for utøvere i Varodd SK.</p>
+        
+        <div class="controls">
+          <input type="text" id="searchVarodd" class="search-input" placeholder="Søk utøver eller øvelse..." oninput="oppdaterVisning()">
+        </div>
 
-      <div class="controls">
-        <input type="text" id="searchResultater" class="search-input" placeholder="Søk på navnet til svømmer eller øvelse..." oninput="oppdaterVisning()">
-        <select id="klubbFilterResultater" class="select-input" onchange="oppdaterVisning()">
-          <option value="alle">Klubb: Alle</option>
-          <option value="Varodd Svømmeklubb">Varodd Svømmeklubb</option>
-          <option value="Vågsbygd SLK">Vågsbygd SLK</option>
-        </select>
+        <div class="table-card">
+          <table>
+            <thead>
+              <tr>
+                <th>Dato</th>
+                <th>Navn</th>
+                <th>Øvelse</th>
+                <th>Bane</th>
+                <th>Tid</th>
+                <th>FINA</th>
+              </tr>
+            </thead>
+            <tbody id="varoddTableBody"></tbody>
+          </table>
+        </div>
       </div>
 
-      <div class="table-card">
-        <table>
-          <thead>
-            <tr>
-              <th>Dato</th>
-              <th>Navn</th>
-              <th>Klubb</th>
-              <th>Øvelse</th>
-              <th>Bane</th>
-              <th>Tid</th>
-              <th>FINA</th>
-            </tr>
-          </thead>
-          <tbody id="resultaterTableBody">
-            <!-- Fylles med JS -->
-          </tbody>
-        </table>
-      </div>
-    </div>
+      <!-- FANE 2: VÅGSBYGD SLK -->
+      <div id="view-vagsbygd" style="display: none;">
+        <h1 class="page-title">Vågsbygd SLK</h1>
+        <p class="page-subtitle">Resultater og oversikt for utøvere i Vågsbygd SLK.</p>
+        
+        <div class="controls">
+          <input type="text" id="searchVagsbygd" class="search-input" placeholder="Søk utøver eller øvelse..." oninput="oppdaterVisning()">
+        </div>
 
-    <!-- FANE 2: GRAFER & MÅLINGER -->
-    <div id="view-grafer" style="display: none;">
-      <h1 class="page-title">Grafer & Målinger (12 mnd)</h1>
-      <p class="page-subtitle">Klikk på en svømmer for å se alle øvelser og beregnet forbedringsprosent.</p>
-
-      <div class="controls">
-        <input type="text" id="searchGrafer" class="search-input" placeholder="Søk på svømmer..." oninput="oppdaterVisning()">
-        <select id="klubbFilterGrafer" class="select-input" onchange="oppdaterVisning()">
-          <option value="alle">Klubb: Alle</option>
-          <option value="Varodd Svømmeklubb">Varodd Svømmeklubb</option>
-          <option value="Vågsbygd SLK">Vågsbygd SLK</option>
-        </select>
+        <div class="table-card">
+          <table>
+            <thead>
+              <tr>
+                <th>Dato</th>
+                <th>Navn</th>
+                <th>Øvelse</th>
+                <th>Bane</th>
+                <th>Tid</th>
+                <th>FINA</th>
+              </tr>
+            </thead>
+            <tbody id="vagsbygdTableBody"></tbody>
+          </table>
+        </div>
       </div>
 
-      <div class="table-card">
-        <table>
-          <thead>
-            <tr>
-              <th style="width: 30px;"></th>
-              <th>Svømmer</th>
-              <th>Klubb</th>
-              <th>Antall øvelser</th>
-              <th>Beste forbedring (12 mnd)</th>
-            </tr>
-          </thead>
-          <tbody id="graferTableBody">
-            <!-- Fylles med JS -->
-          </tbody>
-        </table>
+      <!-- FANE 3: GRAFER & MÅLINGER -->
+      <div id="view-grafer" style="display: none;">
+        <h1 class="page-title">Grafer & Målinger (12 mnd)</h1>
+        <p class="page-subtitle">Klikk på en svømmer for å se alle øvelser og beregnet forbedringsprosent.</p>
+
+        <div class="controls">
+          <input type="text" id="searchGrafer" class="search-input" placeholder="Søk på svømmer..." oninput="oppdaterVisning()">
+          <select id="klubbFilterGrafer" class="select-input" onchange="oppdaterVisning()">
+            <option value="alle">Klubb: Alle</option>
+            <option value="Varodd Svømmeklubb">Varodd Svømmeklubb</option>
+            <option value="Vågsbygd SLK">Vågsbygd SLK</option>
+          </select>
+        </div>
+
+        <div class="table-card">
+          <table>
+            <thead>
+              <tr>
+                <th style="width: 30px;"></th>
+                <th>Svømmer</th>
+                <th>Klubb</th>
+                <th>Antall øvelser</th>
+                <th>Beste forbedring (12 mnd)</th>
+              </tr>
+            </thead>
+            <tbody id="graferTableBody"></tbody>
+          </table>
+        </div>
       </div>
-    </div>
+
+      <!-- FANE 4: TRENINGSPROGRAMMER -->
+      <div id="view-programmer" style="display: none;">
+        <h1 class="page-title">Treningsprogrammer</h1>
+        <p class="page-subtitle">Planlagte økter, serier og treningsuker.</p>
+        
+        <div class="table-card" style="padding: 1.5rem;">
+          <p>Her kan du legge inn øktplaner, pacer-skjemaer og treningsfokus framover.</p>
+        </div>
+      </div>
+
+    </main>
+
+    <!-- HØYRE MENY -->
+    <aside class="right-sidebar">
+      <div class="brand-header">
+        🏊‍♂️ SvømmeHub
+      </div>
+
+      <nav class="nav-menu">
+        <!-- VARODD (BLÅ KNAPP) -->
+        <button class="nav-btn btn-varodd active" onclick="byttFane('varodd', event)">
+          <img src="assets/varodd-logo.png" alt="Varodd Logo" class="club-logo" onerror="this.style.display='none'">
+          <span>Varodd SK</span>
+        </button>
+
+        <!-- VÅGSBYGD (RØD KNAPP) -->
+        <button class="nav-btn btn-vagsbygd" onclick="byttFane('vagsbygd', event)">
+          <img src="assets/vagsbygd-logo.png" alt="Vågsbygd Logo" class="club-logo" onerror="this.style.display='none'">
+          <span>Vågsbygd SLK</span>
+        </button>
+
+        <!-- GRAFER KNAPP -->
+        <button class="nav-btn" onclick="byttFane('grafer', event)">
+          📊 Grafer & Målinger
+        </button>
+
+        <!-- TRENINGSPROGRAMMER KNAPP -->
+        <button class="nav-btn" onclick="byttFane('programmer', event)">
+          📋 Treningsprogrammer
+        </button>
+      </nav>
+    </aside>
 
   </div>
 
   <script>
     let alleResultater = [];
-    let aktivFane = 'resultater';
+    let aktivFane = 'varodd';
 
     async function lastData() {
       try {
@@ -329,53 +434,56 @@
         oppdaterVisning();
       } catch (err) {
         console.error(err);
-        document.getElementById('resultaterTableBody').innerHTML = `
-          <tr><td colspan="7" class="empty-state">Kunne ikke laste data. Sjekk at data/resultater.json eksisterer.</td></tr>
-        `;
+        const feilMelding = `<tr><td colspan="6" class="empty-state">Kunne ikke laste data. Sjekk at data/resultater.json eksisterer.</td></tr>`;
+        document.getElementById('varoddTableBody').innerHTML = feilMelding;
+        document.getElementById('vagsbygdTableBody').innerHTML = feilMelding;
       }
     }
 
     function byttFane(fane, evt) {
       aktivFane = fane;
+      
+      // Oppdater aktiv-klasse på knappene
       document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'));
-      document.getElementById('view-resultater').style.display = 'none';
+      if (evt && evt.currentTarget) {
+        evt.currentTarget.classList.add('active');
+      }
+
+      // Skjul alle visninger
+      document.getElementById('view-varodd').style.display = 'none';
+      document.getElementById('view-vagsbygd').style.display = 'none';
       document.getElementById('view-grafer').style.display = 'none';
+      document.getElementById('view-programmer').style.display = 'none';
 
-      if (evt && evt.target) {
-        evt.target.classList.add('active');
-      }
+      // Vis valgt fane
+      document.getElementById(`view-${fane}`).style.display = 'block';
 
-      if (fane === 'resultater') {
-        document.getElementById('view-resultater').style.display = 'block';
-      } else {
-        document.getElementById('view-grafer').style.display = 'block';
-      }
       oppdaterVisning();
     }
 
     function oppdaterVisning() {
-      if (aktivFane === 'resultater') {
-        visResultater();
-      } else {
+      if (aktivFane === 'varodd') {
+        visKlubbResultater('Varodd Svømmeklubb', 'searchVarodd', 'varoddTableBody');
+      } else if (aktivFane === 'vagsbygd') {
+        visKlubbResultater('Vågsbygd SLK', 'searchVagsbygd', 'vagsbygdTableBody');
+      } else if (aktivFane === 'grafer') {
         visGrafer();
       }
     }
 
-    function visResultater() {
-      const sok = document.getElementById('searchResultater').value.toLowerCase();
-      const klubbFilter = document.getElementById('klubbFilterResultater').value;
-      const tbody = document.getElementById('resultaterTableBody');
+    function visKlubbResultater(klubbNavn, inputId, tbodyId) {
+      const sok = document.getElementById(inputId).value.toLowerCase();
+      const tbody = document.getElementById(tbodyId);
 
       const filtrert = alleResultater.filter(r => {
+        const matchetKlubb = r.klubb === klubbNavn;
         const matchetSok = (r.navn && r.navn.toLowerCase().includes(sok)) ||
-                           (r.klubb && r.klubb.toLowerCase().includes(sok)) ||
                            (r.ovelse && r.ovelse.toLowerCase().includes(sok));
-        const matchetKlubb = klubbFilter === 'alle' || r.klubb === klubbFilter;
-        return matchetSok && matchetKlubb;
+        return matchetKlubb && matchetSok;
       });
 
       if (filtrert.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="7" class="empty-state">Ingen resultater funnet.</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="6" class="empty-state">Ingen resultater funnet for ${klubbNavn}.</td></tr>`;
         return;
       }
 
@@ -383,7 +491,6 @@
         <tr>
           <td>${r.dato || '-'}</td>
           <td><strong>${r.navn}</strong></td>
-          <td>${r.klubb || '-'}</td>
           <td>${r.ovelse}</td>
           <td><span class="pool-badge ${r.basseng === '50m' ? 'm50' : ''}">${r.basseng}</span></td>
           <td><strong>${r.tid}</strong></td>
@@ -397,24 +504,16 @@
       const klubbFilter = document.getElementById('klubbFilterGrafer').value;
       const tbody = document.getElementById('graferTableBody');
 
-      // Grupper per svømmer
       const utoverMap = {};
       alleResultater.forEach(r => {
         if (!utoverMap[r.navn]) {
-          utoverMap[r.navn] = {
-            navn: r.navn,
-            klubb: r.klubb,
-            ovelser: []
-          };
+          utoverMap[r.navn] = { navn: r.navn, klubb: r.klubb, ovelser: [] };
         }
         utoverMap[r.navn].ovelser.push(r);
       });
 
-      let utovere = Object.values(utoverMap);
-
-      // Filtrer på søk og valgt klubb
-      utovere = utovere.filter(u => {
-        const matchetSok = u.navn.toLowerCase().includes(sok) || (u.klubb && u.klubb.toLowerCase().includes(sok));
+      let utovere = Object.values(utoverMap).filter(u => {
+        const matchetSok = u.navn.toLowerCase().includes(sok);
         const matchetKlubb = klubbFilter === 'alle' || u.klubb === klubbFilter;
         return matchetSok && matchetKlubb;
       });
@@ -424,21 +523,17 @@
         return;
       }
 
-      // Finn høyeste forbedring per utøver
       utovere.forEach(u => {
         const forbedringer = u.ovelser.map(o => o.forbedring || 0);
         u.maxForbedring = Math.max(...forbedringer, 0);
       });
       utovere.sort((a, b) => b.maxForbedring - a.maxForbedring);
 
-      let html = '';
-      utovere.forEach((u, index) => {
+      tbody.innerHTML = utovere.map((u, index) => {
         const rowId = `details-${index}`;
-        const chevronId = `chevron-${index}`;
-
-        html += `
-          <tr class="clickable-row" onclick="toggleDetails('${rowId}', '${chevronId}')">
-            <td><span id="${chevronId}" class="chevron">▶</span></td>
+        return `
+          <tr class="clickable-row" onclick="toggleDetails('${rowId}')">
+            <td>▶</td>
             <td><strong>${u.navn}</strong></td>
             <td>${u.klubb || '-'}</td>
             <td>${u.ovelser.length} øvelse(r)</td>
@@ -449,14 +544,13 @@
           <tr id="${rowId}" class="details-row">
             <td colspan="5">
               <div class="details-container">
-                <strong>Øvelser og forbedring siste 12 mnd for ${u.navn}:</strong>
-                <table class="details-table">
+                <strong>Øvelser og forbedring for ${u.navn}:</strong>
+                <table style="margin-top: 0.5rem; background: #fff;">
                   <thead>
                     <tr>
                       <th>Øvelse</th>
                       <th>Bane</th>
-                      <th>Dårligste (siste 12 mnd)</th>
-                      <th>Beste (siste 12 mnd)</th>
+                      <th>Beste tid</th>
                       <th>Forbedring</th>
                     </tr>
                   </thead>
@@ -465,7 +559,6 @@
                       <tr>
                         <td><strong>${o.ovelse}</strong></td>
                         <td><span class="pool-badge ${o.basseng === '50m' ? 'm50' : ''}">${o.basseng}</span></td>
-                        <td>${o.daarligste_tid || o.tid}</td>
                         <td><strong>${o.beste_tid || o.tid}</strong></td>
                         <td style="color: ${o.forbedring > 0 ? 'var(--success)' : 'var(--text-muted)'}; font-weight: bold;">
                           ${o.forbedring ? '+' + o.forbedring + '%' : '0%'}
@@ -478,26 +571,15 @@
             </td>
           </tr>
         `;
-      });
-
-      tbody.innerHTML = html;
+      }).join('');
     }
 
-    function toggleDetails(rowId, chevronId) {
+    function toggleDetails(rowId) {
       const row = document.getElementById(rowId);
-      const chevron = document.getElementById(chevronId);
-
-      if (row.classList.contains('open')) {
-        row.classList.remove('open');
-        chevron.classList.remove('rotated');
-      } else {
-        row.classList.add('open');
-        chevron.classList.add('rotated');
-      }
+      row.classList.toggle('open');
     }
 
     window.addEventListener('DOMContentLoaded', lastData);
   </script>
 </body>
-  </html>
-  
+</html>
