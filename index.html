@@ -3,313 +3,72 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>SvømmeTracker - Varodd SK</title>
+  <title>SvømmeTracker</title>
   <style>
     :root {
       --sidebar-bg: #0b1329;
       --sidebar-hover: #16203d;
-      --accent-blue: #00a8e8;
+      --varodd-blue: #00a8e8;
+      --vagsbygd-red: #ef4444;
       --main-bg: #f8fafc;
       --card-bg: #ffffff;
       --text-main: #0f172a;
       --text-muted: #64748b;
-      --border-color: #f1f5f9;
     }
 
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-    }
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+    body { background-color: var(--main-bg); color: var(--text-main); display: flex; min-height: 100vh; }
 
-    body {
-      background-color: var(--main-bg);
-      color: var(--text-main);
-      display: flex;
-      min-height: 100vh;
-    }
+    /* SIDEBAR */
+    .sidebar { width: 260px; background-color: var(--sidebar-bg); color: #94a3b8; display: flex; flex-direction: column; padding: 24px 16px; flex-shrink: 0; }
+    .brand { display: flex; align-items: center; gap: 12px; margin-bottom: 32px; padding: 0 8px; }
+    .brand-logo { width: 36px; height: 36px; background: var(--varodd-blue); border-radius: 8px; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; font-size: 1.2rem; }
+    .brand-title { color: #ffffff; font-size: 1.1rem; font-weight: 700; }
+    .brand-subtitle { color: var(--varodd-blue); font-size: 0.75rem; font-weight: 600; }
 
-    /* --- SIDEBAR --- */
-    .sidebar {
-      width: 260px;
-      background-color: var(--sidebar-bg);
-      color: #94a3b8;
-      display: flex;
-      flex-direction: column;
-      padding: 24px 16px;
-      flex-shrink: 0;
-    }
+    .nav-section-title { font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: #475569; margin: 24px 8px 8px 8px; }
+    .nav-list { list-style: none; display: flex; flex-direction: column; gap: 4px; }
+    .nav-item { display: flex; align-items: center; gap: 12px; padding: 10px 12px; border-radius: 8px; color: #94a3b8; font-size: 0.9rem; font-weight: 500; cursor: pointer; transition: all 0.15s ease; }
+    .nav-item:hover { background-color: var(--sidebar-hover); color: #ffffff; }
+    
+    /* Fargede menyvalg */
+    .nav-item.active-all { background-color: #334155; color: #ffffff; font-weight: 600; }
+    .nav-item.varodd-btn { color: var(--varodd-blue); }
+    .nav-item.varodd-btn.active { background-color: var(--varodd-blue); color: #ffffff; font-weight: 600; }
+    .nav-item.vagsbygd-btn { color: var(--vagsbygd-red); }
+    .nav-item.vagsbygd-btn.active { background-color: var(--vagsbygd-red); color: #ffffff; font-weight: 600; }
 
-    .brand {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      margin-bottom: 32px;
-      padding: 0 8px;
-    }
+    /* HOVEDINNHOLD */
+    .main-content { flex: 1; padding: 40px 48px; overflow-y: auto; }
+    .page-title { font-size: 2rem; font-weight: 800; color: #0f172a; }
+    .page-subtitle { color: var(--text-muted); font-size: 0.95rem; margin-top: 4px; margin-bottom: 24px; }
 
-    .brand-logo {
-      width: 36px;
-      height: 36px;
-      background: var(--accent-blue);
-      border-radius: 8px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: white;
-      font-weight: bold;
-      font-size: 1.2rem;
-    }
+    .search-input { width: 100%; max-width: 360px; padding: 10px 16px; font-size: 0.9rem; border: 1px solid #e2e8f0; border-radius: 8px; outline: none; margin-bottom: 20px; }
 
-    .brand-title {
-      color: #ffffff;
-      font-size: 1.1rem;
-      font-weight: 700;
-      line-height: 1.2;
-    }
+    /* TABELLER */
+    .table-card { background: var(--card-bg); border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.03); overflow: hidden; border: 1px solid #f1f5f9; }
+    table { width: 100%; border-collapse: collapse; text-align: left; }
+    th { font-size: 0.75rem; font-weight: 700; text-transform: uppercase; color: #64748b; padding: 16px 20px; background-color: #fafafa; border-bottom: 1px solid #edf2f7; }
+    td { padding: 16px 20px; border-bottom: 1px solid #f1f5f9; font-size: 0.92rem; color: #334155; }
+    tr:hover td { background-color: #f8fafc; }
 
-    .brand-subtitle {
-      color: var(--accent-blue);
-      font-size: 0.75rem;
-      font-weight: 600;
-    }
+    .athlete-name { font-weight: 600; color: #0f172a; cursor: pointer; }
+    .athlete-name:hover { color: var(--varodd-blue); text-decoration: underline; }
 
-    .nav-section-title {
-      font-size: 0.7rem;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 0.08em;
-      color: #475569;
-      margin: 24px 8px 8px 8px;
-    }
+    /* TRENINGSPROGRAM BYGGER */
+    .program-builder { background: white; padding: 24px; border-radius: 12px; border: 1px solid #e2e8f0; max-width: 700px; }
+    .program-input { width: 100%; height: 160px; padding: 12px; border: 1px solid #cbd5e1; border-radius: 8px; font-family: monospace; font-size: 1rem; margin-top: 8px; margin-bottom: 16px; }
+    .total-badge { font-size: 1.2rem; font-weight: 700; color: var(--varodd-blue); background: #e0f2fe; padding: 8px 16px; border-radius: 8px; display: inline-block; }
 
-    .nav-list {
-      list-style: none;
-      display: flex;
-      flex-direction: column;
-      gap: 4px;
-    }
-
-    .nav-item {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      padding: 10px 12px;
-      border-radius: 8px;
-      color: #94a3b8;
-      font-size: 0.9rem;
-      font-weight: 500;
-      text-decoration: none;
-      cursor: pointer;
-      transition: all 0.15s ease;
-    }
-
-    .nav-item:hover {
-      background-color: var(--sidebar-hover);
-      color: #ffffff;
-    }
-
-    .nav-item.active {
-      background-color: var(--accent-blue);
-      color: #ffffff;
-      font-weight: 600;
-    }
-
-    .nav-icon {
-      width: 18px;
-      height: 18px;
-      opacity: 0.8;
-    }
-
-    /* --- HOVEDINNHOLD --- */
-    .main-content {
-      flex: 1;
-      padding: 40px 48px;
-      overflow-y: auto;
-    }
-
-    .header-area {
-      margin-bottom: 28px;
-    }
-
-    .page-title {
-      font-size: 2rem;
-      font-weight: 800;
-      color: #0f172a;
-      letter-spacing: -0.02em;
-    }
-
-    .page-subtitle {
-      color: var(--text-muted);
-      font-size: 0.95rem;
-      margin-top: 4px;
-    }
-
-    .search-container {
-      margin-bottom: 24px;
-    }
-
-    .search-input {
-      width: 100%;
-      max-width: 360px;
-      padding: 10px 16px;
-      font-size: 0.9rem;
-      border: 1px solid #e2e8f0;
-      border-radius: 8px;
-      outline: none;
-      background: #ffffff;
-      color: var(--text-main);
-    }
-
-    .search-input:focus {
-      border-color: var(--accent-blue);
-      box-shadow: 0 0 0 3px rgba(0, 168, 232, 0.15);
-    }
-
-    /* --- TABELL --- */
-    .table-card {
-      background: var(--card-bg);
-      border-radius: 12px;
-      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02), 0 4px 12px rgba(0,0,0,0.03);
-      overflow: hidden;
-      border: 1px solid #f1f5f9;
-    }
-
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      text-align: left;
-    }
-
-    th {
-      font-size: 0.75rem;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-      color: #64748b;
-      padding: 16px 20px;
-      background-color: #fafafa;
-      border-bottom: 1px solid #edf2f7;
-    }
-
-    td {
-      padding: 16px 20px;
-      border-bottom: 1px solid #f1f5f9;
-      font-size: 0.92rem;
-      color: #334155;
-    }
-
-    tr:last-child td {
-      border-bottom: none;
-    }
-
-    tr:hover td {
-      background-color: #f8fafc;
-    }
-
-    .athlete-name {
-      font-weight: 600;
-      color: #0f172a;
-      cursor: pointer;
-    }
-
-    .athlete-name:hover {
-      color: var(--accent-blue);
-      text-decoration: underline;
-    }
-
-    .text-muted-val {
-      color: #94a3b8;
-    }
-
-    /* --- MODAL / POPUP --- */
-    .modal-overlay {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background: rgba(15, 23, 42, 0.6);
-      backdrop-filter: blur(2px);
-      display: none;
-      justify-content: center;
-      align-items: center;
-      padding: 20px;
-      z-index: 1000;
-    }
-
-    .modal-overlay.active {
-      display: flex;
-    }
-
-    .modal {
-      background: var(--card-bg);
-      width: 100%;
-      max-width: 650px;
-      max-height: 85vh;
-      border-radius: 16px;
-      display: flex;
-      flex-direction: column;
-      overflow: hidden;
-      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
-    }
-
-    .modal-header {
-      padding: 20px 24px;
-      border-bottom: 1px solid #f1f5f9;
-      display: flex;
-      justify-content: space-between;
-      align-items: flex-start;
-      background: #fafafa;
-    }
-
-    .modal-title {
-      font-size: 1.3rem;
-      font-weight: 700;
-      color: #0f172a;
-    }
-
-    .modal-subtitle {
-      font-size: 0.85rem;
-      color: var(--text-muted);
-      margin-top: 2px;
-    }
-
-    .close-btn {
-      background: none;
-      border: none;
-      font-size: 1.5rem;
-      cursor: pointer;
-      color: var(--text-muted);
-      line-height: 1;
-    }
-
-    .modal-body {
-      padding: 0;
-      overflow-y: auto;
-    }
-
-    .pool-badge {
-      display: inline-block;
-      padding: 2px 8px;
-      border-radius: 4px;
-      font-size: 0.75rem;
-      font-weight: 600;
-      background: #f1f5f9;
-      color: #475569;
-    }
-
-    .pool-badge.m50 {
-      background: #fef3c7;
-      color: #92400e;
-    }
-
-    .empty-msg {
-      text-align: center;
-      color: var(--text-muted);
-      padding: 40px;
-    }
+    /* MODAL */
+    .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.6); display: none; justify-content: center; align-items: center; z-index: 1000; }
+    .modal-overlay.active { display: flex; }
+    .modal { background: white; width: 100%; max-width: 650px; max-height: 85vh; border-radius: 16px; overflow: hidden; display: flex; flex-direction: column; }
+    .modal-header { padding: 20px; border-bottom: 1px solid #f1f5f9; display: flex; justify-content: space-between; background: #fafafa; }
+    .modal-body { padding: 0; overflow-y: auto; }
+    .close-btn { background: none; border: none; font-size: 1.5rem; cursor: pointer; color: var(--text-muted); }
+    .pool-badge { padding: 2px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: 600; background: #f1f5f9; }
+    .pool-badge.m50 { background: #fef3c7; color: #92400e; }
   </style>
 </head>
 <body>
@@ -325,16 +84,13 @@
     </div>
 
     <ul class="nav-list">
-      <li class="nav-item">
-        <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
+      <li class="nav-item active-all" id="btn-felles" onclick="velgVisning('felles')">
         Oversikt (Felles)
       </li>
-      <li class="nav-item active">
-        <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+      <li class="nav-item varodd-btn" id="btn-varodd" onclick="velgVisning('varodd')">
         Varodd SK
       </li>
-      <li class="nav-item">
-        <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 15a4 4 0 004 4h9a5 5 0 001-9.999 5.002 5.002 0 00-9.78 2.096A4.001 4.001 0 003 15z"></path></svg>
+      <li class="nav-item vagsbygd-btn" id="btn-vagsbygd" onclick="velgVisning('vagsbygd')">
         Vågsbygd SLK
       </li>
     </ul>
@@ -342,16 +98,10 @@
     <div class="nav-section-title">Trenerverktøy</div>
 
     <ul class="nav-list">
-      <li class="nav-item">
-        <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
-        Trenerhub (Import)
-      </li>
-      <li class="nav-item">
-        <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+      <li class="nav-item" id="btn-prog" onclick="velgVisning('program')">
         Treningsprogrammer
       </li>
-      <li class="nav-item">
-        <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z"></path></svg>
+      <li class="nav-item" id="btn-grafer" onclick="velgVisning('grafer')">
         Grafer & Målinger
       </li>
     </ul>
@@ -359,42 +109,78 @@
 
   <!-- MAIN CONTENT -->
   <main class="main-content">
-    <div class="header-area">
-      <h1 class="page-title">Varodd Svømmeklubb</h1>
-      <p class="page-subtitle">Tropp og resultater for Varodd SK.</p>
-    </div>
+    <div id="view-tropp">
+      <div class="header-area">
+        <h1 class="page-title" id="pageTitle">Alle Svømmere</h1>
+        <p class="page-subtitle" id="pageSubtitle">Samlet oversikt for alle klubber.</p>
+      </div>
 
-    <div class="search-container">
       <input type="text" id="searchInput" class="search-input" placeholder="Søk på utøver eller øvelse...">
+
+      <div class="table-card">
+        <table>
+          <thead>
+            <tr>
+              <th>Navn</th>
+              <th>Klubb</th>
+              <th>År / Kjønn</th>
+              <th>Beste Øvelse</th>
+              <th>Tid</th>
+              <th>Beste WA / FINA</th>
+            </tr>
+          </thead>
+          <tbody id="mainTableBody">
+            <tr><td colspan="6">Laster svømmedata...</td></tr>
+          </tbody>
+        </table>
+      </div>
     </div>
 
-    <div class="table-card">
-      <table>
-        <thead>
-          <tr>
-            <th>Navn</th>
-            <th>År / Kjønn</th>
-            <th>Beste Øvelse</th>
-            <th>Tid</th>
-            <th>Beste WA</th>
-          </tr>
-        </thead>
-        <tbody id="mainTableBody">
-          <tr>
-            <td colspan="5" class="empty-msg">Laster svømmedata...</td>
-          </tr>
-        </tbody>
-      </table>
+    <!-- TRENINGSPROGRAM BYGGER -->
+    <div id="view-program" style="display: none;">
+      <h1 class="page-title">Treningsprogrammer</h1>
+      <p class="page-subtitle">Skriv inn økten. Total distanse regnes ut automatisk.</p>
+
+      <div class="program-builder">
+        <label><strong>Skriv inn program (f.eks. 400m innsvøm, 4x100m cr, 8x50m driller, 200m ut):</strong></label>
+        <textarea id="programText" class="program-input" oninput="beregnProgram D()"></textarea>
+        <div>
+          <span>Beregnet totallengde:</span>
+          <div class="total-badge" id="totalMeters">0 meter</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- GRAFER & MÅLINGER -->
+    <div id="view-grafer" style="display: none;">
+      <h1 class="page-title">Grafer & Målinger</h1>
+      <p class="page-subtitle">Forbedringsprosent basert på eldste stevnetid siste 12 måneder mot nyeste pers.</p>
+
+      <div class="table-card">
+        <table>
+          <thead>
+            <tr>
+              <th>Navn</th>
+              <th>Klubb</th>
+              <th>Øvelse</th>
+              <th>Bane</th>
+              <th>Siste Forbedring (12mnd)</th>
+            </tr>
+          </thead>
+          <tbody id="graferTableBody">
+          </tbody>
+        </table>
+      </div>
     </div>
   </main>
 
-  <!-- MODAL FOR DETALJER -->
+  <!-- MODAL -->
   <div id="modalOverlay" class="modal-overlay">
     <div class="modal">
       <div class="modal-header">
         <div>
-          <div id="modalName" class="modal-title"></div>
-          <div id="modalClub" class="modal-subtitle"></div>
+          <div id="modalName" style="font-size: 1.3rem; font-weight:700;"></div>
+          <div id="modalClub" style="font-size: 0.85rem; color: #64748b;"></div>
         </div>
         <button class="close-btn" onclick="lukkModal()">&times;</button>
       </div>
@@ -405,11 +191,10 @@
               <th>Øvelse</th>
               <th>Bane</th>
               <th>Tid</th>
-              <th>WA Poeng</th>
+              <th>WA / FINA Poeng</th>
             </tr>
           </thead>
-          <tbody id="modalTableBody">
-          </tbody>
+          <tbody id="modalTableBody"></tbody>
         </table>
       </div>
     </div>
@@ -417,6 +202,174 @@
 
   <script>
     let alleResultater = [];
+    let aktivVisning = 'felles';
+
+    async function lastData() {
+      try {
+        const response = await fetch('data/resultater.json');
+        alleResultater = await response.json();
+        oppdaterVisning();
+      } catch (feil) {
+        document.getElementById('mainTableBody').innerHTML = '<tr><td colspan="6">Kunne ikke laste data/resultater.json.</td></tr>';
+      }
+    }
+
+    function velgVisning(type) {
+      aktivVisning = type;
+      
+      // Nullstill knappe-klasser
+      document.getElementById('btn-felles').className = 'nav-item' + (type === 'felles' ? ' active-all' : '');
+      document.getElementById('btn-varodd').className = 'nav-item varodd-btn' + (type === 'varodd' ? ' active' : '');
+      document.getElementById('btn-vagsbygd').className = 'nav-item vagsbygd-btn' + (type === 'vagsbygd' ? ' active' : '');
+      document.getElementById('btn-prog').className = 'nav-item' + (type === 'program' ? ' active-all' : '');
+      document.getElementById('btn-grafer').className = 'nav-item' + (type === 'grafer' ? ' active-all' : '');
+
+      document.getElementById('view-tropp').style.display = (type === 'felles' || type === 'varodd' || type === 'vagsbygd') ? 'block' : 'none';
+      document.getElementById('view-program').style.display = (type === 'program') ? 'block' : 'none';
+      document.getElementById('view-grafer').style.display = (type === 'grafer') ? 'block' : 'none';
+
+      oppdaterVisning();
+    }
+
+    function oppdaterVisning() {
+      if (aktivVisning === 'grafer') {
+        visGrafer();
+        return;
+      }
+      if (aktivVisning === 'program') return;
+
+      const titleMap = {
+        felles: { title: "Alle Svømmere", sub: "Samlet oversikt for Varodd SK og Vågsbygd SLK." },
+        varodd: { title: "Varodd Svømmeklubb", sub: "Tropp og resultater for Varodd SK." },
+        vagsbygd: { title: "Vågsbygd SLK", sub: "Tropp og resultater for Vågsbygd SLK." }
+      };
+
+      document.getElementById('pageTitle').textContent = titleMap[aktivVisning].title;
+      document.getElementById('pageSubtitle').textContent = titleMap[aktivVisning].sub;
+
+      // Filtrer utøvere basert på klubb
+      let filtrert = alleResultater;
+      if (aktivVisning === 'varodd') filtrert = alleResultater.filter(r => r.klubb === 'Varodd Svømmeklubb');
+      if (aktivVisning === 'vagsbygd') filtrert = alleResultater.filter(r => r.klubb === 'Vågsbygd SLK');
+
+      // Grupper per utøver for å finne deres absolutt beste FINA/WA-poeng
+      const utoverMap = new Map();
+      filtrert.forEach(item => {
+        const poeng = parseInt(item.fina) || 0;
+        if (!utoverMap.has(item.navn)) {
+          utoverMap.set(item.navn, { ...item, besteWa: poeng });
+        } else {
+          if (poeng > utoverMap.get(item.navn).besteWa) {
+            utoverMap.set(item.navn, { ...item, besteWa: poeng });
+          }
+        }
+      });
+
+      const unike = Array.from(utoverMap.values()).sort((a, b) => a.navn.localeCompare(b.navn, 'no'));
+      visHovedTabell(unike);
+    }
+
+    function visHovedTabell(liste) {
+      const tbody = document.getElementById('mainTableBody');
+      if (liste.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="6">Ingen svømmere funnet.</td></tr>';
+        return;
+      }
+
+      tbody.innerHTML = liste.map(s => `
+        <tr>
+          <td><span class="athlete-name" onclick="openAthleteModal('${s.navn.replace(/'/g, "\\'")}')">${s.navn}</span></td>
+          <td><strong>${s.klubb}</strong></td>
+          <td>${s.fodselsar || ''} ${s.kjonn ? '(' + s.kjonn + ')' : ''}</td>
+          <td>${s.ovelse}</td>
+          <td>${s.tid}</td>
+          <td><strong>${s.fina ? s.fina + ' p' : '-'}</strong></td>
+        </tr>
+      `).join('');
+    }
+
+    function openAthleteModal(navn) {
+      const svommerTider = alleResultater.filter(r => r.navn === navn);
+      if (svommerTider.length === 0) return;
+
+      // Sorter ALLE øvelser for utøveren fra HØYEST til LAVEST WA/FINA-poeng
+      svommerTider.sort((a, b) => (parseInt(b.fina) || 0) - (parseInt(a.fina) || 0));
+
+      const forste = svommerTider[0];
+      document.getElementById('modalName').textContent = forste.navn;
+      document.getElementById('modalClub').textContent = `${forste.klubb} • Født ${forste.fodselsar || '-'}`;
+
+      const tbody = document.getElementById('modalTableBody');
+      tbody.innerHTML = svommerTider.map(t => `
+        <tr>
+          <td><strong>${t.ovelse}</strong></td>
+          <td><span class="pool-badge ${t.basseng === '50m' ? 'm50' : ''}">${t.basseng}</span></td>
+          <td>${t.tid}</td>
+          <td><strong>${t.fina ? t.fina + ' p' : '-'}</strong></td>
+        </tr>
+      `).join('');
+
+      document.getElementById('modalOverlay').classList.add('active');
+    }
+
+    function lukkModal() {
+      document.getElementById('modalOverlay').classList.remove('active');
+    }
+
+    // BEREGN TRENINGSPROGRAM TOTALLENGDE
+    function beregnProgramD() {
+      const text = document.getElementById('programText').value;
+      const lines = text.split('\n');
+      let totalt = 0;
+
+      lines.forEach(line => {
+        // Matcher mønstre som "4x100m", "8x50", "400m"
+        const multMatch = line.match(/(\d+)\s*x\s*(\d+)/i);
+        const singleMatch = line.match(/(\d+)\s*m/i);
+
+        if (multMatch) {
+          totalt += parseInt(multMatch[1]) * parseInt(multMatch[2]);
+        } else if (singleMatch) {
+          totalt += parseInt(singleMatch[1]);
+        }
+      });
+
+      document.getElementById('totalMeters').textContent = totalt + " meter";
+    }
+
+    // VIS GRAFER & FORBEDRING
+    function visGrafer() {
+      const tbody = document.getElementById('graferTableBody');
+      const sortert = [...alleResultater].sort((a, b) => (b.forbedring || 0) - (a.forbedring || 0));
+
+      tbody.innerHTML = sortert.map(s => `
+        <tr>
+          <td><strong>${s.navn}</strong></td>
+          <td>${s.klubb}</td>
+          <td>${s.ovelse}</td>
+          <td><span class="pool-badge ${s.basseng === '50m' ? 'm50' : ''}">${s.basseng}</span></td>
+          <td style="color: ${s.forbedring > 0 ? '#10b981' : '#64748b'}; font-weight: bold;">
+            ${s.forbedring ? '+' + s.forbedring + '%' : '0%'}
+          </td>
+        </tr>
+      `).join('');
+    }
+
+    document.getElementById('searchInput').addEventListener('input', (e) => {
+      const sok = e.target.value.toLowerCase().trim();
+      let filtrert = alleResultater;
+      if (aktivVisning === 'varodd') filtrert = alleResultater.filter(r => r.klubb === 'Varodd Svømmeklubb');
+      if (aktivVisning === 'vagsbygd') filtrert = alleResultater.filter(r => r.klubb === 'Vågsbygd SLK');
+
+      const treff = filtrert.filter(s => s.navn.toLowerCase().includes(sok) || s.ovelse.toLowerCase().includes(sok));
+      visHovedTabell(treff);
+    });
+
+    lastData();
+  </script>
+</body>
+</html>
+ultater = [];
     let unikeSvommere = [];
 
     async function lastData() {
