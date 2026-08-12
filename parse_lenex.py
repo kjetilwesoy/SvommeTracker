@@ -37,7 +37,6 @@ def parse_time_to_seconds(time_str):
         return None
 
 def extract_date_from_text(text):
-    # Forsøker å finne dato i format YYYY-MM-DD eller DD.MM.YYYY i teksten
     match_iso = re.search(r'\b(20\d{2})[-/.](0[1-9]|1[0-2])[-/.](0[1-9]|[12]\d|3[01])\b', text)
     if match_iso:
         return f"{match_iso.group(1)}-{match_iso.group(2)}-{match_iso.group(3)}"
@@ -48,35 +47,47 @@ def extract_date_from_text(text):
         
     return datetime.now().strftime("%Y-%m-%d")
 
+def is_long_course(course_str):
+    if not course_str:
+        return False
+    c = str(course_str).strip().upper()
+    return c in ['LCM', '50M', '50', 'LCM50', 'LANGBANE']
+
 for url in urls:
     try:
         res = requests.get(url, headers=headers, timeout=30)
         res.raise_for_status()
 
         # -------------------------------------------------------------
-        # 1. PARSING AV PDF-FILER
+        # 1. PARSING AV PDF-FILER (LIVETIMING)
         # -------------------------------------------------------------
         if url.lower().endswith('.pdf') or 'pdf' in url.lower():
             with pdfplumber.open(io.BytesIO(res.content)) as pdf:
-                current_event = "Ukjent øvelse"
-                current_course = "25m"
-                meet_date = datetime.now().strftime("%Y-%m-%d")
+                # Sjekk hele PDF-teksten for global banelengde (kortbane vs langbane)
+                full_text = "".join([page.extract_text() or "" for page in pdf.pages[:3]]).lower()
+                
+                global_course = "25m"
+                if "langbane" in full_text or "50m-bane" in full_text or "50m basseng" in full_text or "bane: 50" in full_text or "lcm" in full_text:
+                    global_course = "50m"
 
-                # Hent dato fra første side dersom det finnes
-                if len(pdf.pages) > 0:
-                    first_page_text = pdf.pages[0].extract_text() or ""
-                    meet_date = extract_date_from_text(first_page_text)
+                meet_date = extract_date_from_text(full_text)
+                current_event = "Ukjent øvelse"
+                current_course = global_course
 
                 for page in pdf.pages:
                     text = page.extract_text()
                     if text:
                         for line in text.split('\n'):
-                            if "øvelse" in line.lower() or "event" in line.lower():
+                            line_lower = line.lower()
+                            if "øvelse" in line_lower or "event" in line_lower:
                                 current_event = line.strip()
-                                if "50m" in line.lower() or "langbane" in line.lower() or "lcm" in line.lower():
+                                # Sjekk om øvelsesoverskriften spesifikt nevner banetype
+                                if "langbane" in line_lower or "(50m)" in line_lower or "50m bane" in line_lower:
                                     current_course = "50m"
-                                else:
+                                elif "kortbane" in line_lower or "(25m)" in line_lower or "25m bane" in line_lower:
                                     current_course = "25m"
+                                else:
+                                    current_course = global_course
 
                     tables = page.extract_tables()
                     for table in tables:
@@ -96,16 +107,37 @@ for url in urls:
                                 elif "vågsbygd" in row_text or "vagsbygd" in row_text:
                                     club_name = "Vågsbygd SLK"
 
+                                # Identifiser felt basert på mønster (Tid, Poeng, Fødselsår)
                                 for cell in row_clean:
-                                    if len(cell) == 4 and cell.isdigit() and 1990 <= int(cell) <= 2026:
-                                        bday_year = cell
-                                    elif ":" in cell or ("." in cell and any(char.isdigit() for char in cell) and len(cell) <= 8):
-                                        if cell.isdigit() and int(cell) > 10:
-                                            fina_pts = int(cell)
-                                        else:
-                                            swim_time = cell
+                                    cell_str = cell.strip()
+                                    if not cell_str:
+                                        continue
 
-                                non_empty = [c for c in row_clean if c and "varodd" not in c.lower() and "vågsbygd" not in c.lower() and "vagsbygd" not in c.lower() and c != swim_time and c != str(fina_pts) and c != bday_year]
+                                    # Fødselsår (4 siffer mellom 1990 og 2026)
+                                    if cell_str.isdigit() and 1990 <= int(cell_str) <= 2026 and not bday_year:
+                                        bday_year = cell_str
+
+                                    # FINA / WA Poeng (Reelt poengtall mellom 10 og 1100, ikke fødselsår)
+                                    elif cell_str.isdigit():
+                                        val = int(cell_str)
+                                        if 10 <= val <= 1100 and val != int(bday_year or 0):
+                                            fina_pts = val
+
+                                    # Svømmetid (f.eks. 24.50 eller 1:02.15)
+                                    elif re.match(r'^(\d{1,2}:)?\d{1,2}\.\d{2}$', cell_str):
+                                        swim_time = cell_str
+
+                                # Hent utøvernavn
+                                non_empty = [
+                                    c for c in row_clean 
+                                    if c and "varodd" not in c.lower() 
+                                    and "vågsbygd" not in c.lower() 
+                                    and "vagsbygd" not in c.lower() 
+                                    and c != swim_time 
+                                    and c != str(fina_pts) 
+                                    and c != bday_year 
+                                    and not re.match(r'^\d+\.?$', c)
+                                ]
                                 if non_empty:
                                     athlete_name = non_empty[0]
 
@@ -150,25 +182,26 @@ for url in urls:
             root = ET.fromstring(xml_str)
 
             meet_date_str = ""
+            meet_course = "25m"
+
             for meet in root.iter():
                 if meet.tag.upper() == 'MEET':
                     meet_date_str = meet.attrib.get('citydate') or meet.attrib.get('date') or ''
+                    if is_long_course(meet.attrib.get('course')):
+                        meet_course = "50m"
                     break
-
-            default_course = "25m"
-            for elem in root.iter():
-                if elem.tag.upper() in ['MEET', 'SESSION', 'CONSTRUCTION']:
-                    course = elem.attrib.get('course') or ''
-                    if course.upper() == 'LCM':
-                        default_course = "50m"
-                        break
 
             ovelser = {}
             for elem in root.iter():
                 if elem.tag.upper() == 'EVENT':
                     event_id = elem.attrib.get('eventid') or ''
-                    event_course = elem.attrib.get('course') or default_course
-                    course_str = "50m" if str(event_course).upper() == 'LCM' else "25m"
+                    
+                    # Sjekk event-nivå, ellers fall tilbake på stevne-nivå
+                    event_course_raw = elem.attrib.get('course')
+                    if event_course_raw:
+                        course_str = "50m" if is_long_course(event_course_raw) else "25m"
+                    else:
+                        course_str = meet_course
 
                     dist, stroke = '', ''
                     for child in elem.iter():
@@ -208,12 +241,16 @@ for url in urls:
                             for result in athlete.iter():
                                 if result.tag.upper() == 'RESULT':
                                     tid = result.attrib.get('swimtime') or ''
-                                    fina = int(result.attrib.get('points') or 0)
+                                    
+                                    # Les poeng fra 'points' eller 'fina' attributt
+                                    raw_pts = result.attrib.get('points') or result.attrib.get('fina') or 0
+                                    fina = int(raw_pts) if str(raw_pts).isdigit() else 0
+
                                     event_id = result.attrib.get('eventid') or ''
                                     res_date = result.attrib.get('date') or meet_date_str
 
                                     if tid and tid != "00:00.00" and fullt_navn:
-                                        info = ovelser.get(event_id, {"navn": "Ukjent øvelse", "basseng": default_course})
+                                        info = ovelser.get(event_id, {"navn": "Ukjent øvelse", "basseng": meet_course})
                                         sec = parse_time_to_seconds(tid)
 
                                         raw_results.append({
@@ -232,10 +269,8 @@ for url in urls:
         print(f"Feil ved lesing av {url}: {e}")
 
 # -------------------------------------------------------------
-# 3. KRONOLOGISK SORTERING OG BEREGNING AV BARE DE NYESTE RESULTATENE
+# 3. KRONOLOGISK SORTERING OG BEHANDLING
 # -------------------------------------------------------------
-
-# Grupper alle tider per utøver + øvelse + basseng
 utover_map = {}
 for r in raw_results:
     key = (r["navn"], r["ovelse"], r["basseng"])
@@ -247,16 +282,13 @@ endelige_resultater = []
 to_years_ago = (datetime.now() - timedelta(days=730)).strftime("%Y-%m-%d")
 
 for key, tider in utover_map.items():
-    # Sorter alle tider for denne øvelsen etter DATO (nyeste først)
+    # Sorterer etter dato slik at nyeste registrering blir valgt som hovedresultat
     tider.sort(key=lambda x: str(x["dato"]), reverse=True)
-
-    # Den nyeste registrerte tiden/stevnet blir hovedresultatet
     nyeste = tider[0].copy()
 
-    # Beregn forbedringsprosent dersom det finnes eldre tider
+    # Forbedringsberegning
     gyldige_tider = [t for t in tider if t["sekunder"] is not None]
     if len(gyldige_tider) > 1:
-        # Sorter fra eldste til nyeste for forbedringsberegning
         gyldige_tider.sort(key=lambda x: str(x["dato"]))
         siste_to_ar = [t for t in gyldige_tider if str(t["dato"]) >= to_years_ago]
         bruk_tider = siste_to_ar if len(siste_to_ar) >= 2 else gyldige_tider
@@ -274,13 +306,12 @@ for key, tider in utover_map.items():
 
     endelige_resultater.append(nyeste)
 
-# Sorter den endelige listen slik at de nyeste stevneresultatene ligger øverst
+# Sorterer den ferdige JSON-strukturen med nyeste stevner og flest FINA-poeng øverst
 endelige_resultater.sort(key=lambda x: (str(x["dato"]), int(x["fina"] or 0)), reverse=True)
 
-# Lagre til JSON
 os.makedirs(json_dir, exist_ok=True)
 with open(json_path, "w", encoding="utf-8") as f:
     json.dump(endelige_resultater, f, ensure_ascii=False, indent=2)
 
-print(f"Suksess! Lagret {len(endelige_resultater)} resultater sortert etter nyeste dato til {json_path}")
+print(f"Fullført! Lagret {len(endelige_resultater)} resultater til {json_path}")
         
