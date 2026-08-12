@@ -11,7 +11,6 @@
       --text-main: #0f172a;
       --text-muted: #64748b;
       --primary: #2563eb;
-      --primary-hover: #1d4ed8;
       --border-color: #e2e8f0;
       --success: #10b981;
       --badge-25m: #3b82f6;
@@ -103,11 +102,10 @@
       gap: 1rem;
       margin-bottom: 1.5rem;
       flex-wrap: wrap;
+      align-items: center;
     }
 
-    .search-input {
-      flex: 1;
-      min-width: 250px;
+    .search-input, .select-input {
       padding: 0.625rem 1rem;
       border: 1px solid var(--border-color);
       border-radius: 0.375rem;
@@ -116,7 +114,12 @@
       background-color: var(--card-bg);
     }
 
-    .search-input:focus {
+    .search-input {
+      flex: 1;
+      min-width: 250px;
+    }
+
+    .search-input:focus, .select-input:focus {
       border-color: var(--primary);
       box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
     }
@@ -182,7 +185,6 @@
       font-weight: 600;
     }
 
-    /* Accordion / detaljvisning for svømmere */
     .details-row {
       display: none;
       background-color: #f8fafc;
@@ -240,8 +242,8 @@
       🏊‍♂️ SvømmeResultater
     </div>
     <nav>
-      <button class="nav-btn active" onclick="byttFane('resultater')">Alle Resultater</button>
-      <button class="nav-btn" onclick="byttFane('grafer')">Grafer & Målinger</button>
+      <button class="nav-btn active" onclick="byttFane('resultater', event)">Alle Resultater</button>
+      <button class="nav-btn" onclick="byttFane('grafer', event)">Grafer & Målinger</button>
     </nav>
   </header>
 
@@ -253,7 +255,12 @@
       <p class="page-subtitle">Oversikt over alle registrerte tider fra siste stevner.</p>
 
       <div class="controls">
-        <input type="text" id="searchResultater" class="search-input" placeholder="Søk på navnet til svømmer eller klubb..." oninput="visResultater()">
+        <input type="text" id="searchResultater" class="search-input" placeholder="Søk på navnet til svømmer eller øvelse..." oninput="oppdaterVisning()">
+        <select id="klubbFilterResultater" class="select-input" onchange="oppdaterVisning()">
+          <option value="alle">Klubb: Alle</option>
+          <option value="Varodd Svømmeklubb">Varodd Svømmeklubb</option>
+          <option value="Vågsbygd SLK">Vågsbygd SLK</option>
+        </select>
       </div>
 
       <div class="table-card">
@@ -282,7 +289,12 @@
       <p class="page-subtitle">Klikk på en svømmer for å se alle øvelser og beregnet forbedringsprosent.</p>
 
       <div class="controls">
-        <input type="text" id="searchGrafer" class="search-input" placeholder="Søk på svømmer..." oninput="visGrafer()">
+        <input type="text" id="searchGrafer" class="search-input" placeholder="Søk på svømmer..." oninput="oppdaterVisning()">
+        <select id="klubbFilterGrafer" class="select-input" onchange="oppdaterVisning()">
+          <option value="alle">Klubb: Alle</option>
+          <option value="Varodd Svømmeklubb">Varodd Svømmeklubb</option>
+          <option value="Vågsbygd SLK">Vågsbygd SLK</option>
+        </select>
       </div>
 
       <div class="table-card">
@@ -307,15 +319,14 @@
 
   <script>
     let alleResultater = [];
+    let aktivFane = 'resultater';
 
-    // Hent data ved oppstart
     async function lastData() {
       try {
         const response = await fetch('data/resultater.json');
         if (!response.ok) throw new Error('Kunne ikke laste data');
         alleResultater = await response.json();
-        visResultater();
-        visGrafer();
+        oppdaterVisning();
       } catch (err) {
         console.error(err);
         document.getElementById('resultaterTableBody').innerHTML = `
@@ -324,31 +335,44 @@
       }
     }
 
-    // Bytt mellom faner
-    function byttFane(fane) {
+    function byttFane(fane, evt) {
+      aktivFane = fane;
       document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'));
       document.getElementById('view-resultater').style.display = 'none';
       document.getElementById('view-grafer').style.display = 'none';
 
+      if (evt && evt.target) {
+        evt.target.classList.add('active');
+      }
+
       if (fane === 'resultater') {
         document.getElementById('view-resultater').style.display = 'block';
-        event.target.classList.add('active');
       } else {
         document.getElementById('view-grafer').style.display = 'block';
-        event.target.classList.add('active');
+      }
+      oppdaterVisning();
+    }
+
+    function oppdaterVisning() {
+      if (aktivFane === 'resultater') {
+        visResultater();
+      } else {
+        visGrafer();
       }
     }
 
-    // Render alle enkeltresultater (Fane 1)
     function visResultater() {
       const sok = document.getElementById('searchResultater').value.toLowerCase();
+      const klubbFilter = document.getElementById('klubbFilterResultater').value;
       const tbody = document.getElementById('resultaterTableBody');
 
-      const filtrert = alleResultater.filter(r => 
-        (r.navn && r.navn.toLowerCase().includes(sok)) ||
-        (r.klubb && r.klubb.toLowerCase().includes(sok)) ||
-        (r.ovelse && r.ovelse.toLowerCase().includes(sok))
-      );
+      const filtrert = alleResultater.filter(r => {
+        const matchetSok = (r.navn && r.navn.toLowerCase().includes(sok)) ||
+                           (r.klubb && r.klubb.toLowerCase().includes(sok)) ||
+                           (r.ovelse && r.ovelse.toLowerCase().includes(sok));
+        const matchetKlubb = klubbFilter === 'alle' || r.klubb === klubbFilter;
+        return matchetSok && matchetKlubb;
+      });
 
       if (filtrert.length === 0) {
         tbody.innerHTML = `<tr><td colspan="7" class="empty-state">Ingen resultater funnet.</td></tr>`;
@@ -368,12 +392,12 @@
       `).join('');
     }
 
-    // Render aggregerte svømmere (Fane 2)
     function visGrafer() {
       const sok = document.getElementById('searchGrafer').value.toLowerCase();
+      const klubbFilter = document.getElementById('klubbFilterGrafer').value;
       const tbody = document.getElementById('graferTableBody');
 
-      // Grupper resultater per svømmer
+      // Grupper per svømmer
       const utoverMap = {};
       alleResultater.forEach(r => {
         if (!utoverMap[r.navn]) {
@@ -388,24 +412,25 @@
 
       let utovere = Object.values(utoverMap);
 
-      // Filtrer etter søkeord
-      if (sok) {
-        utovere = utovere.filter(u => u.navn.toLowerCase().includes(sok) || u.klubb.toLowerCase().includes(sok));
-      }
+      // Filtrer på søk og valgt klubb
+      utovere = utovere.filter(u => {
+        const matchetSok = u.navn.toLowerCase().includes(sok) || (u.klubb && u.klubb.toLowerCase().includes(sok));
+        const matchetKlubb = klubbFilter === 'alle' || u.klubb === klubbFilter;
+        return matchetSok && matchetKlubb;
+      });
 
       if (utovere.length === 0) {
         tbody.innerHTML = `<tr><td colspan="5" class="empty-state">Ingen svømmere funnet.</td></tr>`;
         return;
       }
 
-      // Sorter svømmere etter høyeste forbedringsprosent
+      // Finn høyeste forbedring per utøver
       utovere.forEach(u => {
         const forbedringer = u.ovelser.map(o => o.forbedring || 0);
         u.maxForbedring = Math.max(...forbedringer, 0);
       });
       utovere.sort((a, b) => b.maxForbedring - a.maxForbedring);
 
-      // Bygg HTML med rader som kan felles ut
       let html = '';
       utovere.forEach((u, index) => {
         const rowId = `details-${index}`;
@@ -458,7 +483,6 @@
       tbody.innerHTML = html;
     }
 
-    // Åpne/lukke detaljrad for svømmer
     function toggleDetails(rowId, chevronId) {
       const row = document.getElementById(rowId);
       const chevron = document.getElementById(chevronId);
@@ -472,7 +496,6 @@
       }
     }
 
-    // Start innlasting når siden lastes
     window.addEventListener('DOMContentLoaded', lastData);
   </script>
 </body>
