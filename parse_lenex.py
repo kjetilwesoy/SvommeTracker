@@ -674,6 +674,12 @@ def beregn_forbedring(results):
     """
     Beregner forbedring for hver kombinasjon
     svømmer + øvelse + basseng.
+    
+    Returnerer aggregert data med:
+    - Alle råresultater i array
+    - Første tid, dårligste tid, beste tid
+    - Forbedring fra første til beste
+    - Forbedring fra dårligste til beste
     """
 
     grupper = {}
@@ -697,11 +703,12 @@ def beregn_forbedring(results):
 
     for key, rows in grupper.items():
 
+        # Sorter etter dato (eldste først)
         rows.sort(
-            key=lambda x: str(x.get("dato", "")),
-            reverse=True
+            key=lambda x: str(x.get("dato", ""))
         )
 
+        # Filter: siste 12 måneder, gyldige tider
         siste_12 = [
             row
             for row in rows
@@ -710,45 +717,100 @@ def beregn_forbedring(results):
             and str(row.get("dato", "")) >= cutoff
         ]
 
-        for row in rows:
-            row["forbedring"] = 0.0
-            row["beste_tid"] = row["tid"]
-            row["daarligste_tid"] = row["tid"]
+        if len(siste_12) == 0:
+            continue
 
-        if len(siste_12) >= 2:
+        # Råresultater (fra siste 12 mnd)
+        resultater_array = [
+            {
+                "dato": row["dato"],
+                "tid": row["tid"],
+                "sekunder": row["sekunder"],
+                "fina": row.get("fina", 0),
+                "stevne": row.get("stevne", ""),
+            }
+            for row in siste_12
+        ]
 
-            best = min(
-                siste_12,
-                key=lambda x: x["sekunder"]
-            )
+        # Første tid (eldste i 12 mnd)
+        forste = siste_12[0]
+        forste_tid = forste["tid"]
+        forste_sekunder = forste["sekunder"]
 
-            worst = max(
-                siste_12,
-                key=lambda x: x["sekunder"]
-            )
+        # Beste tid
+        best = min(
+            siste_12,
+            key=lambda x: x["sekunder"]
+        )
+        beste_tid = best["tid"]
+        beste_sekunder = best["sekunder"]
 
-            if worst["sekunder"] > 0:
+        # Dårligste tid
+        worst = max(
+            siste_12,
+            key=lambda x: x["sekunder"]
+        )
+        daarligste_tid = worst["tid"]
+        daarligste_sekunder = worst["sekunder"]
 
-                improvement = (
-                    (
-                        worst["sekunder"]
-                        - best["sekunder"]
-                    )
-                    / worst["sekunder"]
-                ) * 100
+        # Forbedring: første -> beste
+        if forste_sekunder > 0:
+            forbedring_forste_beste = (
+                (
+                    forste_sekunder
+                    - beste_sekunder
+                )
+                / forste_sekunder
+            ) * 100
+        else:
+            forbedring_forste_beste = 0.0
 
-            else:
-                improvement = 0
+        # Forbedring: dårligste -> beste
+        if daarligste_sekunder > 0:
+            forbedring_daarligste_beste = (
+                (
+                    daarligste_sekunder
+                    - beste_sekunder
+                )
+                / daarligste_sekunder
+            ) * 100
+        else:
+            forbedring_daarligste_beste = 0.0
 
-            rows[0]["forbedring"] = round(
-                improvement,
+        aggregert = {
+            "navn": key[0],
+            "klubb": key[1],
+            "ovelse": key[2],
+            "basseng": key[3],
+            "antall_resultater": len(resultater_array),
+            # Første tid
+            "forste_tid": forste_tid,
+            "forste_sekunder": forste_sekunder,
+            # Beste tid
+            "beste_tid": beste_tid,
+            "beste_sekunder": beste_sekunder,
+            # Dårligste tid
+            "daarligste_tid": daarligste_tid,
+            "daarligste_sekunder": daarligste_sekunder,
+            # Forbedringer
+            "forbedring_forste_beste": round(
+                forbedring_forste_beste,
                 2
-            )
+            ),
+            "forbedring_daarligste_beste": round(
+                forbedring_daarligste_beste,
+                2
+            ),
+            # Beste FINA-poeng fra periodeen
+            "beste_fina": max(
+                (r.get("fina", 0) for r in siste_12),
+                default=0
+            ),
+            # Alle råresultater
+            "resultater": resultater_array,
+        }
 
-            rows[0]["beste_tid"] = best["tid"]
-            rows[0]["daarligste_tid"] = worst["tid"]
-
-        final.append(rows[0])
+        final.append(aggregert)
 
     return final
 
@@ -820,16 +882,16 @@ def main():
 
     all_results = list(unique.values())
 
-    # Beregn forbedring
+    # Beregn forbedring og lag aggregerte resultater
     final_results = beregn_forbedring(
         all_results
     )
 
-    # Sorter nyeste først
+    # Sorter etter beste forbedring (først->beste)
     final_results.sort(
         key=lambda x: (
-            str(x.get("dato", "")),
-            int(x.get("fina", 0) or 0),
+            x.get("forbedring_forste_beste", 0),
+            int(x.get("beste_fina", 0) or 0),
         ),
         reverse=True
     )
@@ -859,7 +921,7 @@ def main():
         f"{len(all_results)}"
     )
     print(
-        f"Resultater til JSON: "
+        f"Aggregerte resultater til JSON: "
         f"{len(final_results)}"
     )
     print(
