@@ -3,442 +3,478 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>SvømmeTracker</title>
+  <title>Svømmeresultater & Forbedring</title>
   <style>
     :root {
-      --sidebar-bg: #0b1329;
-      --sidebar-hover: #16203d;
-      --varodd-blue: #00a8e8;
-      --vagsbygd-red: #ef4444;
-      --main-bg: #f8fafc;
+      --bg-color: #f8fafc;
       --card-bg: #ffffff;
       --text-main: #0f172a;
       --text-muted: #64748b;
+      --primary: #2563eb;
+      --primary-hover: #1d4ed8;
+      --border-color: #e2e8f0;
+      --success: #10b981;
+      --badge-25m: #3b82f6;
+      --badge-50m: #8b5cf6;
     }
 
-    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
-    body { background-color: var(--main-bg); color: var(--text-main); display: flex; flex-direction: row; min-height: 100vh; }
-
-    /* MOBIL-HEADER (Viser hamburger-meny på mobil) */
-    .mobile-header {
-      display: none;
-      background: var(--sidebar-bg);
-      color: white;
-      padding: 12px 16px;
-      align-items: center;
-      justify-content: space-between;
-      width: 100%;
-      position: sticky;
-      top: 0;
-      z-index: 100;
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
     }
 
-    .menu-toggle {
-      background: none;
-      border: none;
-      color: white;
-      font-size: 1.5rem;
-      cursor: pointer;
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background-color: var(--bg-color);
+      color: var(--text-main);
+      line-height: 1.5;
+      padding-bottom: 3rem;
     }
 
-    /* SIDEBAR */
-    .sidebar {
-      width: 260px;
-      background-color: var(--sidebar-bg);
-      color: #94a3b8;
+    header {
+      background-color: var(--card-bg);
+      border-bottom: 1px solid var(--border-color);
+      padding: 1rem 2rem;
       display: flex;
-      flex-direction: column;
-      padding: 24px 16px;
-      flex-shrink: 0;
-      transition: transform 0.2s ease-in-out;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 1rem;
+      box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
     }
 
-    .brand { display: flex; align-items: center; gap: 12px; margin-bottom: 32px; padding: 0 8px; }
-    .brand-logo { width: 36px; height: 36px; background: var(--varodd-blue); border-radius: 8px; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; font-size: 1.2rem; }
-    .brand-title { color: #ffffff; font-size: 1.1rem; font-weight: 700; }
-    .brand-subtitle { color: var(--varodd-blue); font-size: 0.75rem; font-weight: 600; }
+    .brand {
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: var(--text-main);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
 
-    .nav-section-title { font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: #475569; margin: 24px 8px 8px 8px; }
-    .nav-list { list-style: none; display: flex; flex-direction: column; gap: 4px; }
-    .nav-item { display: flex; align-items: center; gap: 12px; padding: 10px 12px; border-radius: 8px; color: #94a3b8; font-size: 0.9rem; font-weight: 500; cursor: pointer; transition: all 0.15s ease; }
-    .nav-item:hover { background-color: var(--sidebar-hover); color: #ffffff; }
-    
-    .nav-item.active-all { background-color: #334155; color: #ffffff; font-weight: 600; }
-    .nav-item.varodd-btn { color: var(--varodd-blue); }
-    .nav-item.varodd-btn.active { background-color: var(--varodd-blue); color: #ffffff; font-weight: 600; }
-    .nav-item.vagsbygd-btn { color: var(--vagsbygd-red); }
-    .nav-item.vagsbygd-btn.active { background-color: var(--vagsbygd-red); color: #ffffff; font-weight: 600; }
+    nav {
+      display: flex;
+      gap: 0.5rem;
+    }
 
-    /* HOVEDINNHOLD */
-    .main-content { flex: 1; padding: 40px 48px; overflow-y: auto; width: 100%; }
-    .page-title { font-size: 2rem; font-weight: 800; color: #0f172a; }
-    .page-subtitle { color: var(--text-muted); font-size: 0.95rem; margin-top: 4px; margin-bottom: 24px; }
+    .nav-btn {
+      background: transparent;
+      border: none;
+      padding: 0.5rem 1rem;
+      font-size: 0.95rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      cursor: pointer;
+      border-radius: 0.375rem;
+      transition: all 0.2s;
+    }
 
-    .search-input { width: 100%; max-width: 360px; padding: 10px 16px; font-size: 0.9rem; border: 1px solid #e2e8f0; border-radius: 8px; outline: none; margin-bottom: 20px; }
+    .nav-btn:hover {
+      background-color: #f1f5f9;
+      color: var(--text-main);
+    }
 
-    /* TABELLER MED MOBIL-SCROLL */
-    .table-card { background: var(--card-bg); border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.03); overflow-x: auto; border: 1px solid #f1f5f9; }
-    table { width: 100%; border-collapse: collapse; text-align: left; min-width: 500px; }
-    th { font-size: 0.75rem; font-weight: 700; text-transform: uppercase; color: #64748b; padding: 16px 20px; background-color: #fafafa; border-bottom: 1px solid #edf2f7; white-space: nowrap; }
-    td { padding: 16px 20px; border-bottom: 1px solid #f1f5f9; font-size: 0.92rem; color: #334155; white-space: nowrap; }
-    tr:hover td { background-color: #f8fafc; }
+    .nav-btn.active {
+      background-color: var(--primary);
+      color: #ffffff;
+    }
 
-    .athlete-name { font-weight: 600; color: #0f172a; cursor: pointer; }
-    .athlete-name:hover { color: var(--varodd-blue); text-decoration: underline; }
+    .container {
+      max-width: 1200px;
+      margin: 2rem auto;
+      padding: 0 1rem;
+    }
 
-    /* TRENINGSPROGRAM BYGGER */
-    .program-builder { background: white; padding: 24px; border-radius: 12px; border: 1px solid #e2e8f0; max-width: 700px; }
-    .program-input { width: 100%; height: 160px; padding: 12px; border: 1px solid #cbd5e1; border-radius: 8px; font-family: monospace; font-size: 1rem; margin-top: 8px; margin-bottom: 16px; }
-    .total-badge { font-size: 1.2rem; font-weight: 700; color: var(--varodd-blue); background: #e0f2fe; padding: 8px 16px; border-radius: 8px; display: inline-block; margin-top: 4px; }
+    .page-title {
+      font-size: 1.75rem;
+      font-weight: 700;
+      margin-bottom: 0.25rem;
+    }
 
-    /* MODAL */
-    .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.6); display: none; justify-content: center; align-items: center; z-index: 1000; padding: 16px; }
-    .modal-overlay.active { display: flex; }
-    .modal { background: white; width: 100%; max-width: 650px; max-height: 85vh; border-radius: 16px; overflow: hidden; display: flex; flex-direction: column; }
-    .modal-header { padding: 16px 20px; border-bottom: 1px solid #f1f5f9; display: flex; justify-content: space-between; background: #fafafa; }
-    .modal-body { padding: 0; overflow-y: auto; overflow-x: auto; }
-    .close-btn { background: none; border: none; font-size: 1.8rem; cursor: pointer; color: var(--text-muted); line-height: 1; }
-    .pool-badge { padding: 2px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: 600; background: #f1f5f9; }
-    .pool-badge.m50 { background: #fef3c7; color: #92400e; }
+    .page-subtitle {
+      color: var(--text-muted);
+      margin-bottom: 1.5rem;
+      font-size: 0.95rem;
+    }
 
-    /* MEDIA QUERIES FOR MOBILTILPASSING */
-    @media (max-width: 768px) {
-      body { flex-direction: column; }
-      
-      .mobile-header { display: flex; }
+    .controls {
+      display: flex;
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+      flex-wrap: wrap;
+    }
 
-      .sidebar {
-        position: fixed;
-        top: 57px;
-        left: 0;
-        height: calc(100vh - 57px);
-        z-index: 99;
-        transform: translateX(-100%);
-        width: 280px;
-        box-shadow: 4px 0 12px rgba(0,0,0,0.15);
-      }
+    .search-input {
+      flex: 1;
+      min-width: 250px;
+      padding: 0.625rem 1rem;
+      border: 1px solid var(--border-color);
+      border-radius: 0.375rem;
+      font-size: 0.95rem;
+      outline: none;
+      background-color: var(--card-bg);
+    }
 
-      .sidebar.open {
-        transform: translateX(0);
-      }
+    .search-input:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+    }
 
-      .main-content {
-        padding: 20px 16px;
-      }
+    .table-card {
+      background-color: var(--card-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 0.5rem;
+      overflow: hidden;
+      box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
+    }
 
-      .page-title { font-size: 1.5rem; }
-      .search-input { max-width: 100%; }
-      .program-builder { padding: 16px; }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      text-align: left;
+      font-size: 0.95rem;
+    }
+
+    th {
+      background-color: #f8fafc;
+      padding: 0.75rem 1rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    td {
+      padding: 0.875rem 1rem;
+      border-bottom: 1px solid var(--border-color);
+      vertical-align: middle;
+    }
+
+    tr.clickable-row {
+      cursor: pointer;
+      transition: background-color 0.15s;
+    }
+
+    tr.clickable-row:hover {
+      background-color: #f1f5f9;
+    }
+
+    .pool-badge {
+      display: inline-block;
+      padding: 0.15rem 0.5rem;
+      border-radius: 0.25rem;
+      font-size: 0.75rem;
+      font-weight: 700;
+      color: white;
+      background-color: var(--badge-25m);
+    }
+
+    .pool-badge.m50 {
+      background-color: var(--badge-50m);
+    }
+
+    .badge-fina {
+      background-color: #e2e8f0;
+      color: #334155;
+      padding: 0.15rem 0.4rem;
+      border-radius: 0.25rem;
+      font-size: 0.8rem;
+      font-weight: 600;
+    }
+
+    /* Accordion / detaljvisning for svømmere */
+    .details-row {
+      display: none;
+      background-color: #f8fafc;
+    }
+
+    .details-row.open {
+      display: table-row;
+    }
+
+    .details-container {
+      padding: 1rem 1.5rem;
+      border-left: 4px solid var(--primary);
+    }
+
+    .details-table {
+      margin-top: 0.5rem;
+      background-color: #ffffff;
+      border-radius: 0.375rem;
+      border: 1px solid var(--border-color);
+    }
+
+    .details-table th {
+      background-color: #f1f5f9;
+      font-size: 0.85rem;
+    }
+
+    .details-table td {
+      font-size: 0.875rem;
+      padding: 0.625rem 0.75rem;
+    }
+
+    .chevron {
+      display: inline-block;
+      transition: transform 0.2s;
+      font-size: 0.8rem;
+      margin-right: 0.5rem;
+      color: var(--text-muted);
+    }
+
+    .chevron.rotated {
+      transform: rotate(90deg);
+    }
+
+    .empty-state {
+      padding: 3rem;
+      text-align: center;
+      color: var(--text-muted);
     }
   </style>
 </head>
 <body>
 
-  <!-- MOBIL-HEADER -->
-  <div class="mobile-header">
-    <div style="font-weight: 700; font-size: 1.1rem;">≈ SvømmeTracker</div>
-    <button class="menu-toggle" onclick="toggleMenu()">☰</button>
-  </div>
-
-  <!-- SIDEBAR -->
-  <aside class="sidebar" id="sidebar">
+  <header>
     <div class="brand">
-      <div class="brand-logo">≈</div>
-      <div>
-        <div class="brand-title">SvømmeTracker</div>
-        <div class="brand-subtitle">AI · Region Sør</div>
-      </div>
+      🏊‍♂️ SvømmeResultater
     </div>
+    <nav>
+      <button class="nav-btn active" onclick="byttFane('resultater')">Alle Resultater</button>
+      <button class="nav-btn" onclick="byttFane('grafer')">Grafer & Målinger</button>
+    </nav>
+  </header>
 
-    <ul class="nav-list">
-      <li class="nav-item active-all" id="btn-felles" onclick="velgVisning('felles')">
-        Oversikt (Felles)
-      </li>
-      <li class="nav-item varodd-btn" id="btn-varodd" onclick="velgVisning('varodd')">
-        Varodd SK
-      </li>
-      <li class="nav-item vagsbygd-btn" id="btn-vagsbygd" onclick="velgVisning('vagsbygd')">
-        Vågsbygd SLK
-      </li>
-    </ul>
+  <div class="container">
 
-    <div class="nav-section-title">Trenerverktøy</div>
+    <!-- FANE 1: ALLE RESULTATER -->
+    <div id="view-resultater">
+      <h1 class="page-title">Stevneresultater</h1>
+      <p class="page-subtitle">Oversikt over alle registrerte tider fra siste stevner.</p>
 
-    <ul class="nav-list">
-      <li class="nav-item" id="btn-prog" onclick="velgVisning('program')">
-        Treningsprogrammer
-      </li>
-      <li class="nav-item" id="btn-grafer" onclick="velgVisning('grafer')">
-        Grafer & Målinger
-      </li>
-    </ul>
-  </aside>
-
-  <!-- MAIN CONTENT -->
-  <main class="main-content">
-    <div id="view-tropp">
-      <div class="header-area">
-        <h1 class="page-title" id="pageTitle">Alle Svømmere</h1>
-        <p class="page-subtitle" id="pageSubtitle">Samlet oversikt for alle klubber.</p>
+      <div class="controls">
+        <input type="text" id="searchResultater" class="search-input" placeholder="Søk på navnet til svømmer eller klubb..." oninput="visResultater()">
       </div>
-
-      <input type="text" id="searchInput" class="search-input" placeholder="Søk på utøver eller øvelse...">
 
       <div class="table-card">
         <table>
           <thead>
             <tr>
+              <th>Dato</th>
               <th>Navn</th>
               <th>Klubb</th>
-              <th>År / Kjønn</th>
-              <th>Beste Øvelse</th>
+              <th>Øvelse</th>
+              <th>Bane</th>
               <th>Tid</th>
-              <th>Beste WA / FINA</th>
+              <th>FINA</th>
             </tr>
           </thead>
-          <tbody id="mainTableBody">
-            <tr><td colspan="6" style="text-align: center; padding: 20px;">Laster svømmedata...</td></tr>
+          <tbody id="resultaterTableBody">
+            <!-- Fylles med JS -->
           </tbody>
         </table>
       </div>
     </div>
 
-    <!-- TRENINGSPROGRAM BYGGER -->
-    <div id="view-program" style="display: none;">
-      <h1 class="page-title">Treningsprogrammer</h1>
-      <p class="page-subtitle">Skriv inn økten. Total distanse regnes ut automatisk.</p>
-
-      <div class="program-builder">
-        <label><strong>Skriv inn program (f.eks. 400m innsvøm, 4x100m cr, 8x50m driller, 200m ut):</strong></label>
-        <textarea id="programText" class="program-input" oninput="beregnProgramD()"></textarea>
-        <div>
-          <span>Beregnet totallengde:</span><br>
-          <div class="total-badge" id="totalMeters">0 meter</div>
-        </div>
-      </div>
-    </div>
-
-    <!-- GRAFER & MÅLINGER -->
+    <!-- FANE 2: GRAFER & MÅLINGER -->
     <div id="view-grafer" style="display: none;">
-      <h1 class="page-title">Grafer & Målinger</h1>
-      <p class="page-subtitle">Forbedringsprosent basert på eldste stevnetid siste 12 måneder mot nyeste pers.</p>
+      <h1 class="page-title">Grafer & Målinger (12 mnd)</h1>
+      <p class="page-subtitle">Klikk på en svømmer for å se alle øvelser og beregnet forbedringsprosent.</p>
+
+      <div class="controls">
+        <input type="text" id="searchGrafer" class="search-input" placeholder="Søk på svømmer..." oninput="visGrafer()">
+      </div>
 
       <div class="table-card">
         <table>
           <thead>
             <tr>
-              <th>Navn</th>
+              <th style="width: 30px;"></th>
+              <th>Svømmer</th>
               <th>Klubb</th>
-              <th>Øvelse</th>
-              <th>Bane</th>
-              <th>Siste Forbedring (12mnd)</th>
+              <th>Antall øvelser</th>
+              <th>Beste forbedring (12 mnd)</th>
             </tr>
           </thead>
           <tbody id="graferTableBody">
+            <!-- Fylles med JS -->
           </tbody>
         </table>
       </div>
     </div>
-  </main>
 
-  <!-- MODAL -->
-  <div id="modalOverlay" class="modal-overlay">
-    <div class="modal">
-      <div class="modal-header">
-        <div>
-          <div id="modalName" style="font-size: 1.2rem; font-weight:700;"></div>
-          <div id="modalClub" style="font-size: 0.85rem; color: #64748b;"></div>
-        </div>
-        <button class="close-btn" onclick="lukkModal()">&times;</button>
-      </div>
-      <div class="modal-body">
-        <table>
-          <thead>
-            <tr>
-              <th>Øvelse</th>
-              <th>Bane</th>
-              <th>Tid</th>
-              <th>WA / FINA Poeng</th>
-            </tr>
-          </thead>
-          <tbody id="modalTableBody"></tbody>
-        </table>
-      </div>
-    </div>
   </div>
 
   <script>
     let alleResultater = [];
-    let aktivVisning = 'felles';
 
-    function toggleMenu() {
-      const sidebar = document.getElementById('sidebar');
-      sidebar.classList.toggle('open');
-    }
-
+    // Hent data ved oppstart
     async function lastData() {
       try {
         const response = await fetch('data/resultater.json');
+        if (!response.ok) throw new Error('Kunne ikke laste data');
         alleResultater = await response.json();
-        oppdaterVisning();
-      } catch (feil) {
-        document.getElementById('mainTableBody').innerHTML = '<tr><td colspan="6" style="text-align:center;">Kunne ikke laste data/resultater.json.</td></tr>';
-      }
-    }
-
-    function velgVisning(type) {
-      aktivVisning = type;
-      
-      // Lukk mobilmeny ved valg
-      document.getElementById('sidebar').classList.remove('open');
-
-      document.getElementById('btn-felles').className = 'nav-item' + (type === 'felles' ? ' active-all' : '');
-      document.getElementById('btn-varodd').className = 'nav-item varodd-btn' + (type === 'varodd' ? ' active' : '');
-      document.getElementById('btn-vagsbygd').className = 'nav-item vagsbygd-btn' + (type === 'vagsbygd' ? ' active' : '');
-      document.getElementById('btn-prog').className = 'nav-item' + (type === 'program' ? ' active-all' : '');
-      document.getElementById('btn-grafer').className = 'nav-item' + (type === 'grafer' ? ' active-all' : '');
-
-      document.getElementById('view-tropp').style.display = (type === 'felles' || type === 'varodd' || type === 'vagsbygd') ? 'block' : 'none';
-      document.getElementById('view-program').style.display = (type === 'program') ? 'block' : 'none';
-      document.getElementById('view-grafer').style.display = (type === 'grafer') ? 'block' : 'none';
-
-      oppdaterVisning();
-    }
-
-    function oppdaterVisning() {
-      if (aktivVisning === 'grafer') {
+        visResultater();
         visGrafer();
-        return;
+      } catch (err) {
+        console.error(err);
+        document.getElementById('resultaterTableBody').innerHTML = `
+          <tr><td colspan="7" class="empty-state">Kunne ikke laste data. Sjekk at data/resultater.json eksisterer.</td></tr>
+        `;
       }
-      if (aktivVisning === 'program') return;
-
-      const titleMap = {
-        felles: { title: "Alle Svømmere", sub: "Samlet oversikt for Varodd SK og Vågsbygd SLK." },
-        varodd: { title: "Varodd Svømmeklubb", sub: "Tropp og resultater for Varodd SK." },
-        vagsbygd: { title: "Vågsbygd SLK", sub: "Tropp og resultater for Vågsbygd SLK." }
-      };
-
-      document.getElementById('pageTitle').textContent = titleMap[aktivVisning].title;
-      document.getElementById('pageSubtitle').textContent = titleMap[aktivVisning].sub;
-
-      let filtrert = alleResultater;
-      if (aktivVisning === 'varodd') filtrert = alleResultater.filter(r => r.klubb === 'Varodd Svømmeklubb');
-      if (aktivVisning === 'vagsbygd') filtrert = alleResultater.filter(r => r.klubb === 'Vågsbygd SLK');
-
-      const utoverMap = new Map();
-      filtrert.forEach(item => {
-        const poeng = parseInt(item.fina) || 0;
-        if (!utoverMap.has(item.navn)) {
-          utoverMap.set(item.navn, { ...item, besteWa: poeng });
-        } else {
-          if (poeng > utoverMap.get(item.navn).besteWa) {
-            utoverMap.set(item.navn, { ...item, besteWa: poeng });
-          }
-        }
-      });
-
-      const unike = Array.from(utoverMap.values()).sort((a, b) => a.navn.localeCompare(b.navn, 'no'));
-      visHovedTabell(unike);
     }
 
-    function visHovedTabell(liste) {
-      const tbody = document.getElementById('mainTableBody');
-      if (liste.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;">Ingen svømmere funnet.</td></tr>';
+    // Bytt mellom faner
+    function byttFane(fane) {
+      document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'));
+      document.getElementById('view-resultater').style.display = 'none';
+      document.getElementById('view-grafer').style.display = 'none';
+
+      if (fane === 'resultater') {
+        document.getElementById('view-resultater').style.display = 'block';
+        event.target.classList.add('active');
+      } else {
+        document.getElementById('view-grafer').style.display = 'block';
+        event.target.classList.add('active');
+      }
+    }
+
+    // Render alle enkeltresultater (Fane 1)
+    function visResultater() {
+      const sok = document.getElementById('searchResultater').value.toLowerCase();
+      const tbody = document.getElementById('resultaterTableBody');
+
+      const filtrert = alleResultater.filter(r => 
+        (r.navn && r.navn.toLowerCase().includes(sok)) ||
+        (r.klubb && r.klubb.toLowerCase().includes(sok)) ||
+        (r.ovelse && r.ovelse.toLowerCase().includes(sok))
+      );
+
+      if (filtrert.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="7" class="empty-state">Ingen resultater funnet.</td></tr>`;
         return;
       }
 
-      tbody.innerHTML = liste.map(s => `
+      tbody.innerHTML = filtrert.map(r => `
         <tr>
-          <td><span class="athlete-name" onclick="openAthleteModal('${s.navn.replace(/'/g, "\\'")}')">${s.navn}</span></td>
-          <td><strong>${s.klubb}</strong></td>
-          <td>${s.fodselsar || ''} ${s.kjonn ? '(' + s.kjonn + ')' : ''}</td>
-          <td>${s.ovelse}</td>
-          <td>${s.tid}</td>
-          <td><strong>${s.fina ? s.fina + ' p' : '-'}</strong></td>
+          <td>${r.dato || '-'}</td>
+          <td><strong>${r.navn}</strong></td>
+          <td>${r.klubb || '-'}</td>
+          <td>${r.ovelse}</td>
+          <td><span class="pool-badge ${r.basseng === '50m' ? 'm50' : ''}">${r.basseng}</span></td>
+          <td><strong>${r.tid}</strong></td>
+          <td><span class="badge-fina">${r.fina || 0} p</span></td>
         </tr>
       `).join('');
     }
 
-    function openAthleteModal(navn) {
-      const svommerTider = alleResultater.filter(r => r.navn === navn);
-      if (svommerTider.length === 0) return;
-
-      svommerTider.sort((a, b) => (parseInt(b.fina) || 0) - (parseInt(a.fina) || 0));
-
-      const forste = svommerTider[0];
-      document.getElementById('modalName').textContent = forste.navn;
-      document.getElementById('modalClub').textContent = `${forste.klubb} • Født ${forste.fodselsar || '-'}`;
-
-      const tbody = document.getElementById('modalTableBody');
-      tbody.innerHTML = svommerTider.map(t => `
-        <tr>
-          <td><strong>${t.ovelse}</strong></td>
-          <td><span class="pool-badge ${t.basseng === '50m' ? 'm50' : ''}">${t.basseng}</span></td>
-          <td>${t.tid}</td>
-          <td><strong>${t.fina ? t.fina + ' p' : '-'}</strong></td>
-        </tr>
-      `).join('');
-
-      document.getElementById('modalOverlay').classList.add('active');
-    }
-
-    function lukkModal() {
-      document.getElementById('modalOverlay').classList.remove('active');
-    }
-
-    function beregnProgramD() {
-      const text = document.getElementById('programText').value;
-      const lines = text.split('\n');
-      let totalt = 0;
-
-      lines.forEach(line => {
-        const multMatch = line.match(/(\d+)\s*x\s*(\d+)/i);
-        const singleMatch = line.match(/(\d+)\s*m/i);
-
-        if (multMatch) {
-          totalt += parseInt(multMatch[1]) * parseInt(multMatch[2]);
-        } else if (singleMatch) {
-          totalt += parseInt(singleMatch[1]);
-        }
-      });
-
-      document.getElementById('totalMeters').textContent = totalt + " meter";
-    }
-
+    // Render aggregerte svømmere (Fane 2)
     function visGrafer() {
+      const sok = document.getElementById('searchGrafer').value.toLowerCase();
       const tbody = document.getElementById('graferTableBody');
-      const sortert = [...alleResultater].sort((a, b) => (b.forbedring || 0) - (a.forbedring || 0));
 
-      tbody.innerHTML = sortert.map(s => `
-        <tr>
-          <td><strong>${s.navn}</strong></td>
-          <td>${s.klubb}</td>
-          <td>${s.ovelse}</td>
-          <td><span class="pool-badge ${s.basseng === '50m' ? 'm50' : ''}">${s.basseng}</span></td>
-          <td style="color: ${s.forbedring > 0 ? '#10b981' : '#64748b'}; font-weight: bold;">
-            ${s.forbedring ? '+' + s.forbedring + '%' : '0%'}
-          </td>
-        </tr>
-      `).join('');
+      // Grupper resultater per svømmer
+      const utoverMap = {};
+      alleResultater.forEach(r => {
+        if (!utoverMap[r.navn]) {
+          utoverMap[r.navn] = {
+            navn: r.navn,
+            klubb: r.klubb,
+            ovelser: []
+          };
+        }
+        utoverMap[r.navn].ovelser.push(r);
+      });
+
+      let utovere = Object.values(utoverMap);
+
+      // Filtrer etter søkeord
+      if (sok) {
+        utovere = utovere.filter(u => u.navn.toLowerCase().includes(sok) || u.klubb.toLowerCase().includes(sok));
+      }
+
+      if (utovere.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="5" class="empty-state">Ingen svømmere funnet.</td></tr>`;
+        return;
+      }
+
+      // Sorter svømmere etter høyeste forbedringsprosent
+      utovere.forEach(u => {
+        const forbedringer = u.ovelser.map(o => o.forbedring || 0);
+        u.maxForbedring = Math.max(...forbedringer, 0);
+      });
+      utovere.sort((a, b) => b.maxForbedring - a.maxForbedring);
+
+      // Bygg HTML med rader som kan felles ut
+      let html = '';
+      utovere.forEach((u, index) => {
+        const rowId = `details-${index}`;
+        const chevronId = `chevron-${index}`;
+
+        html += `
+          <tr class="clickable-row" onclick="toggleDetails('${rowId}', '${chevronId}')">
+            <td><span id="${chevronId}" class="chevron">▶</span></td>
+            <td><strong>${u.navn}</strong></td>
+            <td>${u.klubb || '-'}</td>
+            <td>${u.ovelser.length} øvelse(r)</td>
+            <td style="color: ${u.maxForbedring > 0 ? 'var(--success)' : 'var(--text-muted)'}; font-weight: bold;">
+              ${u.maxForbedring > 0 ? '+' + u.maxForbedring + '%' : '0%'}
+            </td>
+          </tr>
+          <tr id="${rowId}" class="details-row">
+            <td colspan="5">
+              <div class="details-container">
+                <strong>Øvelser og forbedring siste 12 mnd for ${u.navn}:</strong>
+                <table class="details-table">
+                  <thead>
+                    <tr>
+                      <th>Øvelse</th>
+                      <th>Bane</th>
+                      <th>Dårligste (siste 12 mnd)</th>
+                      <th>Beste (siste 12 mnd)</th>
+                      <th>Forbedring</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    ${u.ovelser.map(o => `
+                      <tr>
+                        <td><strong>${o.ovelse}</strong></td>
+                        <td><span class="pool-badge ${o.basseng === '50m' ? 'm50' : ''}">${o.basseng}</span></td>
+                        <td>${o.daarligste_tid || o.tid}</td>
+                        <td><strong>${o.beste_tid || o.tid}</strong></td>
+                        <td style="color: ${o.forbedring > 0 ? 'var(--success)' : 'var(--text-muted)'}; font-weight: bold;">
+                          ${o.forbedring ? '+' + o.forbedring + '%' : '0%'}
+                        </td>
+                      </tr>
+                    `).join('')}
+                  </tbody>
+                </table>
+              </div>
+            </td>
+          </tr>
+        `;
+      });
+
+      tbody.innerHTML = html;
     }
 
-    document.getElementById('searchInput').addEventListener('input', (e) => {
-      const sok = e.target.value.toLowerCase().trim();
-      let filtrert = alleResultater;
-      if (aktivVisning === 'varodd') filtrert = alleResultater.filter(r => r.klubb === 'Varodd Svømmeklubb');
-      if (aktivVisning === 'vagsbygd') filtrert = alleResultater.filter(r => r.klubb === 'Vågsbygd SLK');
+    // Åpne/lukke detaljrad for svømmer
+    function toggleDetails(rowId, chevronId) {
+      const row = document.getElementById(rowId);
+      const chevron = document.getElementById(chevronId);
 
-      const treff = filtrert.filter(s => s.navn.toLowerCase().includes(sok) || s.ovelse.toLowerCase().includes(sok));
-      visHovedTabell(treff);
-    });
+      if (row.classList.contains('open')) {
+        row.classList.remove('open');
+        chevron.classList.remove('rotated');
+      } else {
+        row.classList.add('open');
+        chevron.classList.add('rotated');
+      }
+    }
 
-    // Lukk modal dersom man trykker utenfor på mobil/desktop
-    document.getElementById('modalOverlay').addEventListener('click', (e) => {
-      if (e.target.id === 'modalOverlay') lukkModal();
-    });
-
-    lastData();
+    // Start innlasting når siden lastes
+    window.addEventListener('DOMContentLoaded', lastData);
   </script>
 </body>
-</html>
+  </html>
+  
