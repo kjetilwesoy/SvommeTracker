@@ -1,4 +1,4 @@
-name: Oppdater Svømmedata fra LENEX
+name: Oppdater Svømmedata fra LENEX/PDF/HTML
 
 on:
   workflow_dispatch:
@@ -27,7 +27,7 @@ jobs:
       - name: Installer pakker
         run: |
           python -m pip install --upgrade pip
-          pip install requests pdfplumber
+          pip install requests pdfplumber beautifulsoup4
 
       - name: Kjøre LENEX-parser
         run: python parse_lenex.py
@@ -37,7 +37,7 @@ jobs:
           git config --global user.name "GitHub Action Bot"
           git config --global user.email "bot@github.com"
           git add data/resultater.json
-          git commit -m "Auto-oppdatert svømmedata fra LENEX/PDF" || exit 0
+          git commit -m "Auto-oppdatert svømmedata fra LENEX/PDF/HTML" || exit 0
           git pull --rebase origin main
           git push
           
