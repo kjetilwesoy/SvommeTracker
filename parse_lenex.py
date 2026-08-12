@@ -1,6 +1,7 @@
 import io
 import json
 import os
+import re
 import requests
 import zipfile
 import xml.etree.ElementTree as ET
@@ -35,19 +36,38 @@ def parse_time_to_seconds(time_str):
     except:
         return None
 
+def extract_date_from_text(text):
+    # Forsøker å finne dato i format YYYY-MM-DD eller DD.MM.YYYY i teksten
+    match_iso = re.search(r'\b(20\d{2})[-/.](0[1-9]|1[0-2])[-/.](0[1-9]|[12]\d|3[01])\b', text)
+    if match_iso:
+        return f"{match_iso.group(1)}-{match_iso.group(2)}-{match_iso.group(3)}"
+    
+    match_nor = re.search(r'\b(0[1-9]|[12]\d|3[01])[-/.](0[1-9]|1[0-2])[-/.](20\d{2})\b', text)
+    if match_nor:
+        return f"{match_nor.group(3)}-{match_nor.group(2)}-{match_nor.group(1)}"
+        
+    return datetime.now().strftime("%Y-%m-%d")
+
 for url in urls:
     try:
         res = requests.get(url, headers=headers, timeout=30)
         res.raise_for_status()
 
-        # Sjekk om lenken er en PDF-fil
+        # -------------------------------------------------------------
+        # 1. PARSING AV PDF-FILER
+        # -------------------------------------------------------------
         if url.lower().endswith('.pdf') or 'pdf' in url.lower():
             with pdfplumber.open(io.BytesIO(res.content)) as pdf:
                 current_event = "Ukjent øvelse"
                 current_course = "25m"
+                meet_date = datetime.now().strftime("%Y-%m-%d")
+
+                # Hent dato fra første side dersom det finnes
+                if len(pdf.pages) > 0:
+                    first_page_text = pdf.pages[0].extract_text() or ""
+                    meet_date = extract_date_from_text(first_page_text)
 
                 for page in pdf.pages:
-                    # Les tekst for å fange opp øvelsesnavn
                     text = page.extract_text()
                     if text:
                         for line in text.split('\n'):
@@ -58,14 +78,12 @@ for url in urls:
                                 else:
                                     current_course = "25m"
 
-                    # Les tabeller fra PDF-siden (Livetiming-format)
                     tables = page.extract_tables()
                     for table in tables:
                         for row in table:
                             row_clean = [c.strip() if c else "" for c in row]
                             row_text = " ".join(row_clean).lower()
 
-                            # Filtrer ut kun relevante klubber
                             if "varodd" in row_text or "vågsbygd" in row_text or "vagsbygd" in row_text:
                                 club_name = ""
                                 athlete_name = ""
@@ -79,7 +97,6 @@ for url in urls:
                                     club_name = "Vågsbygd SLK"
 
                                 for cell in row_clean:
-                                    cell_lower = cell.lower()
                                     if len(cell) == 4 and cell.isdigit() and 1990 <= int(cell) <= 2026:
                                         bday_year = cell
                                     elif ":" in cell or ("." in cell and any(char.isdigit() for char in cell) and len(cell) <= 8):
@@ -88,7 +105,6 @@ for url in urls:
                                         else:
                                             swim_time = cell
 
-                                # Finn utøvernavn hvis ikke satt
                                 non_empty = [c for c in row_clean if c and "varodd" not in c.lower() and "vågsbygd" not in c.lower() and "vagsbygd" not in c.lower() and c != swim_time and c != str(fina_pts) and c != bday_year]
                                 if non_empty:
                                     athlete_name = non_empty[0]
@@ -109,10 +125,13 @@ for url in urls:
                                         "tid": swim_time,
                                         "fina": fina_pts,
                                         "sekunder": sec,
-                                        "dato": datetime.now().strftime("%Y-%m-%d")
+                                        "dato": meet_date
                                     })
+
+        # -------------------------------------------------------------
+        # 2. PARSING AV LENEX (.ZIP / .XML / .LEF)
+        # -------------------------------------------------------------
         else:
-            # Behandle som Lenex (.zip / .xml / .lef)
             try:
                 with zipfile.ZipFile(io.BytesIO(res.content)) as z:
                     xml_files = [f for f in z.namelist() if f.lower().endswith(('.xml', '.lef'))]
@@ -212,10 +231,12 @@ for url in urls:
     except Exception as e:
         print(f"Feil ved lesing av {url}: {e}")
 
-# Grupper og finn beste tider + forbedringsprosent
-to_year_ago = (datetime.now() - timedelta(days=365)).strftime("%Y-%m-%d")
-utover_map = {}
+# -------------------------------------------------------------
+# 3. KRONOLOGISK SORTERING OG BEREGNING AV BARE DE NYESTE RESULTATENE
+# -------------------------------------------------------------
 
+# Grupper alle tider per utøver + øvelse + basseng
+utover_map = {}
 for r in raw_results:
     key = (r["navn"], r["ovelse"], r["basseng"])
     if key not in utover_map:
@@ -223,26 +244,43 @@ for r in raw_results:
     utover_map[key].append(r)
 
 endelige_resultater = []
+to_years_ago = (datetime.now() - timedelta(days=730)).strftime("%Y-%m-%d")
 
 for key, tider in utover_map.items():
-    tider.sort(key=lambda x: x["fina"], reverse=True)
-    beste = tider[0].copy()
+    # Sorter alle tider for denne øvelsen etter DATO (nyeste først)
+    tider.sort(key=lambda x: str(x["dato"]), reverse=True)
 
+    # Den nyeste registrerte tiden/stevnet blir hovedresultatet
+    nyeste = tider[0].copy()
+
+    # Beregn forbedringsprosent dersom det finnes eldre tider
     gyldige_tider = [t for t in tider if t["sekunder"] is not None]
-    
     if len(gyldige_tider) > 1:
-        gyldige_tider.sort(key=lambda x: x["dato"] if x["dato"] else "1900-01-01")
-        siste_aar = [t for t in gyldige_tider if t["dato"] >= to_year_ago]
-        bruk_tider = siste_aar if len(siste_aar) >= 2 else gyldige_tider
+        # Sorter fra eldste til nyeste for forbedringsberegning
+        gyldige_tider.sort(key=lambda x: str(x["dato"]))
+        siste_to_ar = [t for t in gyldige_tider if str(t["dato"]) >= to_years_ago]
+        bruk_tider = siste_to_ar if len(siste_to_ar) >= 2 else gyldige_tider
 
         eldste_sek = bruk_tider[0]["sekunder"]
         beste_sek = min(t["sekunder"] for t in bruk_tider)
 
         if eldste_sek and eldste_sek > 0:
             endring = ((eldste_sek - beste_sek) / eldste_sek) * 100
-            beste["forbedring"] = round(endring, 2)
+            nyeste["forbedring"] = round(endring, 2)
         else:
-            beste["forbedring"] = 0.0
+            nyeste["forbedring"] = 0.0
     else:
-    ...
-                                         
+        nyeste["forbedring"] = 0.0
+
+    endelige_resultater.append(nyeste)
+
+# Sorter den endelige listen slik at de nyeste stevneresultatene ligger øverst
+endelige_resultater.sort(key=lambda x: (str(x["dato"]), int(x["fina"] or 0)), reverse=True)
+
+# Lagre til JSON
+os.makedirs(json_dir, exist_ok=True)
+with open(json_path, "w", encoding="utf-8") as f:
+    json.dump(endelige_resultater, f, ensure_ascii=False, indent=2)
+
+print(f"Suksess! Lagret {len(endelige_resultater)} resultater sortert etter nyeste dato til {json_path}")
+        
