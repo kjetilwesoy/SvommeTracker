@@ -9,390 +9,864 @@ from datetime import datetime, timedelta
 from bs4 import BeautifulSoup
 import pdfplumber
 
+
 STEVNER_FIL = "stevner.txt"
-json_dir = "data"
-json_path = os.path.join(json_dir, "resultater.json")
+JSON_DIR = "data"
+JSON_PATH = os.path.join(JSON_DIR, "resultater.json")
+
+KLUBBER = {
+    "varodd": "Varodd Svømmeklubb",
+    "vågsbygd": "Vågsbygd SLK",
+    "vagsbygd": "Vågsbygd SLK",
+}
 
 OVERSTYR_TIL_VARODD = [
     "mio wesøy-danielsen",
-    "luca wesøy-danielsen"
+    "luca wesøy-danielsen",
 ]
 
-urls = []
-if os.path.exists(STEVNER_FIL):
-    with open(STEVNER_FIL, "r", encoding="utf-8") as f:
-        urls = [line.strip() for line in f if line.strip() and not line.startswith("#")]
+HEADERS = {
+    "User-Agent": (
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+        "AppleWebKit/537.36 Chrome/124.0 Safari/537.36"
+    )
+}
 
-raw_results = []
-headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'}
 
 def parse_time_to_seconds(time_str):
-    try:
-        parts = time_str.strip().split(':')
-        if len(parts) == 3:
-            return float(parts[0])*3600 + float(parts[1])*60 + float(parts[2])
-        elif len(parts) == 2:
-            return float(parts[0])*60 + float(parts[1])
-        return float(parts[0])
-    except:
+    if not time_str:
         return None
 
-def extract_date_from_text(text):
-    match_iso = re.search(r'\b(20\d{2})[-/.](0[1-9]|1[0-2])[-/.](0[1-9]|[12]\d|3[01])\b', text)
-    if match_iso:
-        return f"{match_iso.group(1)}-{match_iso.group(2)}-{match_iso.group(3)}"
-    
-    match_nor = re.search(r'\b(0[1-9]|[12]\d|3[01])[-/.](0[1-9]|1[0-2])[-/.](20\d{2})\b', text)
-    if match_nor:
-        return f"{match_nor.group(3)}-{match_nor.group(2)}-{match_nor.group(1)}"
-        
-    return datetime.now().strftime("%Y-%m-%d")
+    value = str(time_str).strip().replace(",", ".")
 
-def is_long_course(course_str):
-    if not course_str:
+    # Fjern eventuelle markeringer
+    value = re.sub(r"[^\d:.]", "", value)
+
+    try:
+        parts = value.split(":")
+
+        if len(parts) == 3:
+            return (
+                float(parts[0]) * 3600
+                + float(parts[1]) * 60
+                + float(parts[2])
+            )
+
+        if len(parts) == 2:
+            return float(parts[0]) * 60 + float(parts[1])
+
+        return float(parts[0])
+
+    except Exception:
+        return None
+
+
+def normaliser_dato(value):
+    if not value:
+        return ""
+
+    value = str(value).strip()
+
+    # 2026-08-12
+    match = re.search(
+        r"(20\d{2})[-/.](\d{1,2})[-/.](\d{1,2})",
+        value
+    )
+
+    if match:
+        try:
+            return datetime(
+                int(match.group(1)),
+                int(match.group(2)),
+                int(match.group(3))
+            ).strftime("%Y-%m-%d")
+        except Exception:
+            pass
+
+    # 12.08.2026
+    match = re.search(
+        r"(\d{1,2})[-/.](\d{1,2})[-/.](20\d{2})",
+        value
+    )
+
+    if match:
+        try:
+            return datetime(
+                int(match.group(3)),
+                int(match.group(2)),
+                int(match.group(1))
+            ).strftime("%Y-%m-%d")
+        except Exception:
+            pass
+
+    return ""
+
+
+def is_long_course(course):
+    if not course:
         return False
-    c = str(course_str).strip().upper()
-    return c in ['LCM', '50M', '50', 'LCM50', 'LANGBANE']
 
-def sjekk_og_rens_klubb(klubb_raw, fullt_navn=""):
-    navn_lower = fullt_navn.lower().strip()
-    klubb_lower = (klubb_raw or "").lower().strip()
+    value = str(course).strip().upper()
+
+    return value in {
+        "LCM",
+        "50M",
+        "50",
+        "LCM50",
+        "LANGBANE",
+        "LONG COURSE",
+    }
+
+
+def finn_klubb(klubb_raw, navn=""):
+    klubb = (klubb_raw or "").lower().strip()
+    navn_lower = (navn or "").lower().strip()
 
     if navn_lower in OVERSTYR_TIL_VARODD:
         return "Varodd Svømmeklubb"
-    if "varodd" in klubb_lower:
+
+    if "varodd" in klubb:
         return "Varodd Svømmeklubb"
-    if "vågsbygd" in klubb_lower or "vagsbygd" in klubb_lower:
+
+    if "vågsbygd" in klubb or "vagsbygd" in klubb:
         return "Vågsbygd SLK"
+
     return None
 
-for url in urls:
+
+def finn_stevne_id(url):
+    match = re.search(r"stevnenr=(\d+)", url, re.IGNORECASE)
+
+    if match:
+        return match.group(1)
+
+    return ""
+
+
+def les_stevneinfo(url):
+    """
+    Forsøker å hente stevnenavn, dato og basseng fra Medley-stevnesiden.
+    """
     try:
-        res = requests.get(url, headers=headers, timeout=30)
-        res.raise_for_status()
-        content_type = res.headers.get('Content-Type', '').lower()
+        response = requests.get(
+            url,
+            headers=HEADERS,
+            timeout=30
+        )
+        response.raise_for_status()
 
-        # -------------------------------------------------------------
-        # 1. PARSING AV PDF-FILER
-        # -------------------------------------------------------------
-        if url.lower().endswith('.pdf') or 'application/pdf' in content_type or 'pdf' in url.lower():
-            with pdfplumber.open(io.BytesIO(res.content)) as pdf:
-                full_text = "".join([page.extract_text() or "" for page in pdf.pages[:3]]).lower()
-                
-                global_course = "25m"
-                if "langbane" in full_text or "50m-bane" in full_text or "50m basseng" in full_text or "bane: 50" in full_text or "lcm" in full_text:
-                    global_course = "50m"
+        soup = BeautifulSoup(response.text, "html.parser")
+        text = soup.get_text(" ", strip=True)
 
-                meet_date = extract_date_from_text(full_text)
-                current_event = "Ukjent øvelse"
-                current_course = global_course
+        navn = ""
 
-                for page in pdf.pages:
-                    text = page.extract_text()
-                    if text:
-                        for line in text.split('\n'):
-                            line_lower = line.lower()
-                            if "øvelse" in line_lower or "event" in line_lower:
-                                current_event = line.strip()
-                                if "langbane" in line_lower or "(50m)" in line_lower or "50m bane" in line_lower:
-                                    current_course = "50m"
-                                elif "kortbane" in line_lower or "(25m)" in line_lower or "25m bane" in line_lower:
-                                    current_course = "25m"
-                                else:
-                                    current_course = global_course
+        # H1
+        h1 = soup.find("h1")
+        if h1:
+            navn = h1.get_text(" ", strip=True)
 
-                    tables = page.extract_tables()
-                    for table in tables:
-                        for row in table:
-                            row_clean = [c.strip() if c else "" for c in row]
-                            row_text = " ".join(row_clean).lower()
+        # Fallback: title
+        if not navn and soup.title:
+            navn = soup.title.get_text(" ", strip=True)
 
-                            if "varodd" in row_text or "vågsbygd" in row_text or "vagsbygd" in row_text or any(n in row_text for n in OVERSTYR_TIL_VARODD):
-                                club_name = ""
-                                athlete_name = ""
-                                swim_time = ""
-                                fina_pts = 0
-                                bday_year = ""
+        dato = ""
 
-                                if "varodd" in row_text:
-                                    club_name = "Varodd Svømmeklubb"
-                                elif "vågsbygd" in row_text or "vagsbygd" in row_text:
-                                    club_name = "Vågsbygd SLK"
+        match = re.search(
+            r"Fra dato:\s*(\d{2}\.\d{2}\.\d{4})",
+            text,
+            re.IGNORECASE
+        )
 
-                                for cell in row_clean:
-                                    cell_str = cell.strip()
-                                    if not cell_str:
-                                        continue
+        if match:
+            dato = normaliser_dato(match.group(1))
 
-                                    if cell_str.isdigit() and 1990 <= int(cell_str) <= 2026 and not bday_year:
-                                        bday_year = cell_str
+        basseng = "25m"
 
-                                    elif cell_str.isdigit():
-                                        val = int(cell_str)
-                                        if 10 <= val <= 1100 and val != int(bday_year or 0):
-                                            fina_pts = val
+        if re.search(
+            r"Bassenglengde:\s*50m",
+            text,
+            re.IGNORECASE
+        ):
+            basseng = "50m"
 
-                                    elif re.match(r'^(\d{1,2}:)?\d{1,2}\.\d{2}$', cell_str):
-                                        swim_time = cell_str
+        return {
+            "navn": navn,
+            "dato": dato,
+            "basseng": basseng,
+        }
 
-                                non_empty = [
-                                    c for c in row_clean 
-                                    if c and "varodd" not in c.lower() 
-                                    and "vågsbygd" not in c.lower() 
-                                    and "vagsbygd" not in c.lower() 
-                                    and c != swim_time 
-                                    and c != str(fina_pts) 
-                                    and c != bday_year 
-                                    and not re.match(r'^\d+\.?$', c)
-                                ]
-                                if non_empty:
-                                    athlete_name = non_empty[0]
+    except Exception as exc:
+        print(f"Kunne ikke lese stevneinfo: {url}")
+        print(f"Feil: {exc}")
 
-                                fullt_navn = athlete_name.title()
-                                valid_club = sjekk_og_rens_klubb(club_name, fullt_navn)
+        return {
+            "navn": "",
+            "dato": "",
+            "basseng": "25m",
+        }
 
-                                sec = parse_time_to_seconds(swim_time)
-                                if fullt_navn and swim_time and swim_time != "00:00.00" and valid_club:
-                                    raw_results.append({
-                                        "navn": fullt_navn,
-                                        "klubb": valid_club,
-                                        "fodselsar": bday_year,
-                                        "kjonn": "",
-                                        "ovelse": current_event,
-                                        "basseng": current_course,
-                                        "tid": swim_time,
-                                        "fina": fina_pts,
-                                        "sekunder": sec,
-                                        "dato": meet_date
-                                    })
 
-        # -------------------------------------------------------------
-        # 2. PARSING AV LENEX (.ZIP / .XML / .LEF)
-        # -------------------------------------------------------------
-        elif url.lower().endswith(('.zip', '.lef', '.cl2', '.xml')) or 'zip' in content_type:
-            try:
-                with zipfile.ZipFile(io.BytesIO(res.content)) as z:
-                    xml_files = [f for f in z.namelist() if f.lower().endswith(('.xml', '.lef'))]
-                    xml_raw = z.read(xml_files[0]) if xml_files else z.read(z.namelist()[0])
-            except zipfile.BadZipFile:
-                xml_raw = res.content
+def parse_lenex(content, source_url, metadata=None):
+    """
+    Leser LENEX/XML eller ZIP med LENEX/XML.
+    Returnerer ALLE resultater for Varodd og Vågsbygd.
+    """
 
-            if not xml_raw:
+    metadata = metadata or {}
+
+    xml_raw = None
+
+    try:
+        try:
+            with zipfile.ZipFile(io.BytesIO(content)) as archive:
+
+                candidates = [
+                    name
+                    for name in archive.namelist()
+                    if name.lower().endswith(
+                        (".xml", ".lef", ".lenex")
+                    )
+                ]
+
+                if candidates:
+                    xml_raw = archive.read(candidates[0])
+                elif archive.namelist():
+                    xml_raw = archive.read(archive.namelist()[0])
+
+        except zipfile.BadZipFile:
+            xml_raw = content
+
+        if not xml_raw:
+            return []
+
+        try:
+            xml_text = xml_raw.decode("utf-8")
+        except UnicodeDecodeError:
+            xml_text = xml_raw.decode(
+                "iso-8859-1",
+                errors="ignore"
+            )
+
+        root = ET.fromstring(xml_text)
+
+    except Exception as exc:
+        print(f"LENEX-feil i {source_url}: {exc}")
+        return []
+
+    # ---------------------------------------------------------
+    # Stevneinformasjon
+    # ---------------------------------------------------------
+
+    meet_date = metadata.get("dato", "")
+    meet_course = metadata.get("basseng", "25m")
+    meet_name = metadata.get("navn", "")
+
+    for elem in root.iter():
+        if elem.tag.upper().endswith("MEET"):
+
+            meet_date = (
+                elem.attrib.get("citydate")
+                or elem.attrib.get("date")
+                or meet_date
+            )
+
+            meet_date = normaliser_dato(meet_date)
+
+            if is_long_course(
+                elem.attrib.get("course")
+            ):
+                meet_course = "50m"
+
+            meet_name = (
+                elem.attrib.get("name")
+                or meet_name
+            )
+
+            break
+
+    # ---------------------------------------------------------
+    # Finn øvelser
+    # ---------------------------------------------------------
+
+    events = {}
+
+    for elem in root.iter():
+
+        if not elem.tag.upper().endswith("EVENT"):
+            continue
+
+        event_id = (
+            elem.attrib.get("eventid")
+            or elem.attrib.get("id")
+            or ""
+        )
+
+        course = elem.attrib.get("course")
+
+        basseng = (
+            "50m"
+            if is_long_course(course)
+            else meet_course
+        )
+
+        distance = ""
+        stroke = ""
+
+        for child in elem.iter():
+
+            if child.tag.upper().endswith("SWIMSTYLE"):
+
+                distance = (
+                    child.attrib.get("distance")
+                    or ""
+                )
+
+                stroke = (
+                    child.attrib.get("stroke")
+                    or ""
+                )
+
+                break
+
+        if distance and stroke:
+            event_name = f"{distance}m {stroke}"
+        else:
+            event_name = "Ukjent øvelse"
+
+        events[event_id] = {
+            "navn": event_name,
+            "basseng": basseng,
+        }
+
+    # ---------------------------------------------------------
+    # Finn utøvere og resultater
+    # ---------------------------------------------------------
+
+    results = []
+
+    for club in root.iter():
+
+        if not club.tag.upper().endswith("CLUB"):
+            continue
+
+        original_club = (
+            club.attrib.get("name")
+            or club.attrib.get("shortname")
+            or ""
+        )
+
+        for athlete in club.iter():
+
+            if not athlete.tag.upper().endswith("ATHLETE"):
                 continue
 
-            try:
-                xml_str = xml_raw.decode('utf-8')
-            except UnicodeDecodeError:
-                xml_str = xml_raw.decode('iso-8859-1', errors='ignore')
+            firstname = (
+                athlete.attrib.get("firstname")
+                or ""
+            ).strip()
 
-            root = ET.fromstring(xml_str)
+            lastname = (
+                athlete.attrib.get("lastname")
+                or ""
+            ).strip()
 
-            meet_date_str = ""
-            meet_course = "25m"
+            full_name = (
+                f"{firstname} {lastname}"
+            ).strip()
 
-            for meet in root.iter():
-                if meet.tag.upper() == 'MEET':
-                    meet_date_str = meet.attrib.get('citydate') or meet.attrib.get('date') or ''
-                    if is_long_course(meet.attrib.get('course')):
-                        meet_course = "50m"
-                    break
+            klubbnavn = finn_klubb(
+                original_club,
+                full_name
+            )
 
-            ovelser = {}
-            for elem in root.iter():
-                if elem.tag.upper() == 'EVENT':
-                    event_id = elem.attrib.get('eventid') or ''
-                    event_course_raw = elem.attrib.get('course')
-                    course_str = "50m" if is_long_course(event_course_raw) else meet_course
+            if not klubbnavn:
+                continue
 
-                    dist, stroke = '', ''
-                    for child in elem.iter():
-                        if child.tag.upper() == 'SWIMSTYLE':
-                            dist = child.attrib.get('distance') or ''
-                            stroke = child.attrib.get('stroke') or ''
-                            break
-                    
-                    ovelse_navn = f"{dist}m {stroke}".strip() if dist and stroke else "Ukjent øvelse"
-                    ovelser[event_id] = {"navn": ovelse_navn, "basseng": course_str}
+            birthdate = (
+                athlete.attrib.get("birthdate")
+                or ""
+            )
 
-            for club in root.iter():
-                if club.tag.upper() == 'CLUB':
-                    orig_club = club.attrib.get('name') or ''
-                    
-                    for athlete in club.iter():
-                        if athlete.tag.upper() == 'ATHLETE':
-                            fornavn = (athlete.attrib.get('firstname') or '').strip()
-                            etternavn = (athlete.attrib.get('lastname') or '').strip()
-                            fullt_navn = f"{fornavn} {etternavn}".strip()
-                            
-                            klubbnavn = sjekk_og_rens_klubb(orig_club, fullt_navn)
-                            if not klubbnavn:
-                                continue
+            fodselsar = (
+                birthdate[:4]
+                if birthdate
+                else ""
+            )
 
-                            bday = athlete.attrib.get('birthdate') or ''
-                            fodselsar = bday[:4] if bday else ''
-                            kjonn = athlete.attrib.get('gender') or ''
+            kjonn = (
+                athlete.attrib.get("gender")
+                or ""
+            )
 
-                            for result in athlete.iter():
-                                if result.tag.upper() == 'RESULT':
-                                    tid = result.attrib.get('swimtime') or ''
-                                    raw_pts = result.attrib.get('points') or result.attrib.get('fina') or 0
-                                    fina = int(raw_pts) if str(raw_pts).isdigit() else 0
+            for result in athlete.iter():
 
-                                    event_id = result.attrib.get('eventid') or ''
-                                    res_date = result.attrib.get('date') or meet_date_str
-
-                                    if tid and tid != "00:00.00" and fullt_navn:
-                                        info = ovelser.get(event_id, {"navn": "Ukjent øvelse", "basseng": meet_course})
-                                        sec = parse_time_to_seconds(tid)
-
-                                        raw_results.append({
-                                            "navn": fullt_navn,
-                                            "klubb": klubbnavn,
-                                            "fodselsar": fodselsar,
-                                            "kjonn": kjonn,
-                                            "ovelse": info["navn"],
-                                            "basseng": info["basseng"],
-                                            "tid": tid,
-                                            "fina": fina,
-                                            "sekunder": sec,
-                                            "dato": res_date
-                                        })
-
-        # -------------------------------------------------------------
-        # 3. PARSING AV NETTSIDER / HTML (LIVETIMING SCRAPING)
-        # -------------------------------------------------------------
-        else:
-            res.encoding = 'utf-8'
-            soup = BeautifulSoup(res.text, 'html.parser')
-            page_text = soup.get_text()
-            meet_date = extract_date_from_text(page_text)
-
-            current_event = "Ukjent øvelse"
-            current_course = "25m"
-
-            for tr in soup.find_all('tr'):
-                text = tr.get_text().strip()
-                text_lower = text.lower()
-
-                if "øvelse" in text_lower or "event" in text_lower:
-                    current_event = text.split('\n')[0].strip()
-                    if "50m" in text_lower and "bane" in text_lower:
-                        current_course = "50m"
-                    elif "25m" in text_lower:
-                        current_course = "25m"
+                if not result.tag.upper().endswith("RESULT"):
                     continue
 
-                tds = tr.find_all('td')
-                if len(tds) >= 4:
-                    row_clean = [td.get_text().strip() for td in tds]
-                    row_text = " ".join(row_clean).lower()
+                tid = (
+                    result.attrib.get("swimtime")
+                    or result.attrib.get("time")
+                    or ""
+                ).strip()
 
-                    klubbnavn = None
-                    if "varodd" in row_text:
-                        klubbnavn = "Varodd Svømmeklubb"
-                    elif "vågsbygd" in row_text or "vagsbygd" in row_text:
-                        klubbnavn = "Vågsbygd SLK"
+                if not tid:
+                    continue
 
-                    athlete_name = ""
-                    bday_year = ""
-                    swim_time = ""
-                    fina_pts = 0
+                if tid in {
+                    "00:00.00",
+                    "0:00.00",
+                    "NT",
+                    "DNS",
+                    "DNF",
+                    "DSQ",
+                }:
+                    continue
 
-                    for cell in row_clean:
-                        cell_clean = cell.strip()
-                        if not cell_clean:
-                            continue
+                event_id = (
+                    result.attrib.get("eventid")
+                    or ""
+                )
 
-                        if cell_clean.isdigit():
-                            val = int(cell_clean)
-                            if 1990 <= val <= 2026 and not bday_year:
-                                bday_year = cell_clean
-                            elif 10 <= val <= 1200 and val != int(bday_year or 0):
-                                fina_pts = val
+                event_info = events.get(
+                    event_id,
+                    {
+                        "navn": "Ukjent øvelse",
+                        "basseng": meet_course,
+                    }
+                )
 
-                        elif re.match(r'^(\d{1,2}:)?\d{1,2}\.\d{2}$', cell_clean):
-                            swim_time = cell_clean
+                points_raw = (
+                    result.attrib.get("points")
+                    or result.attrib.get("fina")
+                    or "0"
+                )
 
-                        elif not athlete_name and len(cell_clean) > 2 and not cell_clean.isdigit():
-                            if "varodd" not in cell_clean.lower() and "vågsbygd" not in cell_clean.lower() and "vagsbygd" not in cell_clean.lower():
-                                athlete_name = cell_clean
+                try:
+                    fina = int(float(points_raw))
+                except Exception:
+                    fina = 0
 
-                    fullt_navn = athlete_name.title()
-                    valid_club = sjekk_og_rens_klubb(klubbnavn, fullt_navn)
+                result_date = (
+                    result.attrib.get("date")
+                    or meet_date
+                )
 
-                    if fullt_navn and swim_time and swim_time != "00:00.00" and valid_club:
-                        sec = parse_time_to_seconds(swim_time)
-                        raw_results.append({
-                            "navn": fullt_navn,
-                            "klubb": valid_club,
-                            "fodselsar": bday_year,
-                            "kjonn": "",
-                            "ovelse": current_event,
-                            "basseng": current_course,
-                            "tid": swim_time,
-                            "fina": fina_pts,
-                            "sekunder": sec,
-                            "dato": meet_date
-                        })
+                result_date = normaliser_dato(
+                    result_date
+                )
 
-    except Exception as e:
-        print(f"Feil ved lesing av {url}: {e}")
+                seconds = parse_time_to_seconds(tid)
 
-# -------------------------------------------------------------
-# 4. KRONOLOGISK SORTERING OG 12-MÅNEDERS BEREGNING
-# -------------------------------------------------------------
-utover_map = {}
-for r in raw_results:
-    key = (r["navn"], r["ovelse"], r["basseng"])
-    if key not in utover_map:
-        utover_map[key] = []
-    utover_map[key].append(r)
+                results.append({
+                    "stevne": meet_name,
+                    "stevne_id": finn_stevne_id(source_url),
+                    "dato": result_date,
+                    "navn": full_name,
+                    "klubb": klubbnavn,
+                    "ovelse": event_info["navn"],
+                    "basseng": event_info["basseng"],
+                    "tid": tid,
+                    "fina": fina,
+                    "sekunder": seconds,
+                    "fodselsar": fodselsar,
+                    "kjonn": kjonn,
+                })
 
-endelige_resultater = []
-one_year_ago = (datetime.now() - timedelta(days=365)).strftime("%Y-%m-%d")
+    return results
 
-for key, tider in utover_map.items():
-    tider.sort(key=lambda x: str(x["dato"]), reverse=True)
-    nyeste = tider[0].copy()
 
-    siste_12_mnd = [
-        t for t in tider 
-        if t["sekunder"] is not None and t["sekunder"] > 0 and str(t["dato"]) >= one_year_ago
-    ]
+def parse_html(content, source_url, metadata=None):
+    """
+    Fallback dersom Medley ikke tilbyr LENEX på et stevne.
+    """
 
-    if len(siste_12_mnd) >= 2:
-        daarligste_obj = max(siste_12_mnd, key=lambda x: x["sekunder"])
-        beste_obj = min(siste_12_mnd, key=lambda x: x["sekunder"])
+    metadata = metadata or {}
 
-        daarligste_sek = daarligste_obj["sekunder"]
-        beste_sek = beste_obj["sekunder"]
+    try:
+        soup = BeautifulSoup(
+            content.decode("utf-8", errors="ignore"),
+            "html.parser"
+        )
+    except Exception:
+        return []
 
-        if daarligste_sek > 0:
-            endring = ((daarligste_sek - beste_sek) / daarligste_sek) * 100
-            nyeste["forbedring"] = round(endring, 2)
-        else:
-            nyeste["forbedring"] = 0.0
+    results = []
 
-        nyeste["daarligste_tid"] = daarligste_obj["tid"]
-        nyeste["beste_tid"] = beste_obj["tid"]
+    date = metadata.get("dato", "")
+    course = metadata.get("basseng", "25m")
+    meet_name = metadata.get("navn", "")
 
-    elif len(siste_12_mnd) == 1:
-        nyeste["forbedring"] = 0.0
-        nyeste["daarligste_tid"] = siste_12_mnd[0]["tid"]
-        nyeste["beste_tid"] = siste_12_mnd[0]["tid"]
+    current_event = "Ukjent øvelse"
 
-    else:
-        nyeste["forbedring"] = 0.0
-        nyeste["daarligste_tid"] = nyeste["tid"]
-        nyeste["beste_tid"] = nyeste["tid"]
+    for tr in soup.find_all("tr"):
 
-    endelige_resultater.append(nyeste)
+        cells = [
+            td.get_text(" ", strip=True)
+            for td in tr.find_all(["td", "th"])
+        ]
 
-endelige_resultater.sort(key=lambda x: (str(x["dato"]), int(x["fina"] or 0)), reverse=True)
+        if not cells:
+            continue
 
-os.makedirs(json_dir, exist_ok=True)
-with open(json_path, "w", encoding="utf-8") as f:
-    json.dump(endelige_resultater, f, ensure_ascii=False, indent=2)
+        row_text = " ".join(cells)
+        row_lower = row_text.lower()
 
-print(f"Fullført! Lagret {len(endelige_resultater)} resultater til {json_path}")
-            
+        # Forsøk å finne øvelse
+        if "øvelse" in row_lower or "event" in row_lower:
+
+            current_event = cells[0]
+
+            if "50m" in row_lower:
+                course = "50m"
+
+            elif "25m" in row_lower:
+                course = "25m"
+
+            continue
+
+        klubb = None
+
+        if "varodd" in row_lower:
+            klubb = "Varodd Svømmeklubb"
+
+        elif (
+            "vågsbygd" in row_lower
+            or "vagsbygd" in row_lower
+        ):
+            klubb = "Vågsbygd SLK"
+
+        if not klubb:
+            continue
+
+        # Finn svømmetid
+        tid = ""
+
+        for cell in cells:
+
+            if re.match(
+                r"^(\d{1,2}:)?\d{1,2}\.\d{2}$",
+                cell
+            ):
+                tid = cell
+                break
+
+        if not tid:
+            continue
+
+        # Finn navn
+        navn = ""
+
+        for cell in cells:
+
+            low = cell.lower()
+
+            if (
+                cell
+                and cell != tid
+                and "varodd" not in low
+                and "vågsbygd" not in low
+                and "vagsbygd" not in low
+                and not cell.isdigit()
+            ):
+                navn = cell
+                break
+
+        if not navn:
+            continue
+
+        fina = 0
+
+        for cell in cells:
+
+            if cell.isdigit():
+
+                number = int(cell)
+
+                if 10 <= number <= 1200:
+                    fina = number
+
+        results.append({
+            "stevne": meet_name,
+            "stevne_id": finn_stevne_id(source_url),
+            "dato": date,
+            "navn": navn,
+            "klubb": klubb,
+            "ovelse": current_event,
+            "basseng": course,
+            "tid": tid,
+            "fina": fina,
+            "sekunder": parse_time_to_seconds(tid),
+            "fodselsar": "",
+            "kjonn": "",
+        })
+
+    return results
+
+
+def hent_resultat(url, metadata):
+    print(f"  Henter: {url}")
+
+    try:
+
+        response = requests.get(
+            url,
+            headers=HEADERS,
+            timeout=60
+        )
+
+        response.raise_for_status()
+
+        content_type = (
+            response.headers
+            .get("Content-Type", "")
+            .lower()
+        )
+
+        is_xml = (
+            url.lower().endswith(
+                (".xml", ".lef", ".zip", ".lenex")
+            )
+            or "xml" in content_type
+            or "zip" in content_type
+        )
+
+        if is_xml:
+            return parse_lenex(
+                response.content,
+                url,
+                metadata
+            )
+
+        return parse_html(
+            response.content,
+            url,
+            metadata
+        )
+
+    except Exception as exc:
+
+        print(
+            f"  FEIL ved henting av {url}: {exc}"
+        )
+
+        return []
+
+
+def les_urls():
+    if not os.path.exists(STEVNER_FIL):
+        return []
+
+    with open(
+        STEVNER_FIL,
+        "r",
+        encoding="utf-8"
+    ) as file:
+
+        return [
+            line.strip()
+            for line in file
+            if line.strip()
+            and not line.strip().startswith("#")
+        ]
+
+
+def beregn_forbedring(results):
+    """
+    Beregner forbedring for hver kombinasjon
+    svømmer + øvelse + basseng.
+    """
+
+    grupper = {}
+
+    for result in results:
+
+        key = (
+            result["navn"],
+            result["klubb"],
+            result["ovelse"],
+            result["basseng"],
+        )
+
+        grupper.setdefault(key, []).append(result)
+
+    final = []
+
+    cutoff = (
+        datetime.now() - timedelta(days=365)
+    ).strftime("%Y-%m-%d")
+
+    for key, rows in grupper.items():
+
+        rows.sort(
+            key=lambda x: str(x.get("dato", "")),
+            reverse=True
+        )
+
+        siste_12 = [
+            row
+            for row in rows
+            if row.get("sekunder")
+            and row["sekunder"] > 0
+            and str(row.get("dato", "")) >= cutoff
+        ]
+
+        for row in rows:
+            row["forbedring"] = 0.0
+            row["beste_tid"] = row["tid"]
+            row["daarligste_tid"] = row["tid"]
+
+        if len(siste_12) >= 2:
+
+            best = min(
+                siste_12,
+                key=lambda x: x["sekunder"]
+            )
+
+            worst = max(
+                siste_12,
+                key=lambda x: x["sekunder"]
+            )
+
+            if worst["sekunder"] > 0:
+
+                improvement = (
+                    (
+                        worst["sekunder"]
+                        - best["sekunder"]
+                    )
+                    / worst["sekunder"]
+                ) * 100
+
+            else:
+                improvement = 0
+
+            rows[0]["forbedring"] = round(
+                improvement,
+                2
+            )
+
+            rows[0]["beste_tid"] = best["tid"]
+            rows[0]["daarligste_tid"] = worst["tid"]
+
+        final.append(rows[0])
+
+    return final
+
+
+def main():
+
+    urls = les_urls()
+
+    print("=" * 60)
+    print("SvømmeTracker – resultatimport")
+    print("=" * 60)
+    print(f"Antall kilder: {len(urls)}")
+
+    if not urls:
+        print(
+            "INGEN KILDER FUNNET I stevner.txt"
+        )
+
+        return
+
+    all_results = []
+
+    for url in urls:
+
+        print()
+        print(f"Behandler stevne: {url}")
+
+        metadata = les_stevneinfo(url)
+
+        print(
+            f"  Stevne: {metadata.get('navn', '')}"
+        )
+
+        print(
+            f"  Dato: {metadata.get('dato', '')}"
+        )
+
+        print(
+            f"  Basseng: {metadata.get('basseng', '')}"
+        )
+
+        results = hent_resultat(
+            url,
+            metadata
+        )
+
+        print(
+            f"  Fant {len(results)} resultater"
+        )
+
+        all_results.extend(results)
+
+    # Fjern duplikater
+    unique = {}
+
+    for result in all_results:
+
+        key = (
+            result.get("stevne_id"),
+            result.get("navn"),
+            result.get("klubb"),
+            result.get("ovelse"),
+            result.get("basseng"),
+            result.get("tid"),
+            result.get("dato"),
+        )
+
+        unique[key] = result
+
+    all_results = list(unique.values())
+
+    # Beregn forbedring
+    final_results = beregn_forbedring(
+        all_results
+    )
+
+    # Sorter nyeste først
+    final_results.sort(
+        key=lambda x: (
+            str(x.get("dato", "")),
+            int(x.get("fina", 0) or 0),
+        ),
+        reverse=True
+    )
+
+    os.makedirs(
+        JSON_DIR,
+        exist_ok=True
+    )
+
+    with open(
+        JSON_PATH,
+        "w",
+        encoding="utf-8"
+    ) as file:
+
+        json.dump(
+            final_results,
+            file,
+            ensure_ascii=False,
+            indent=2
+        )
+
+    print()
+    print("=" * 60)
+    print(
+        f"Totalt importerte råresultater: "
+        f"{len(all_results)}"
+    )
+    print(
+        f"Resultater til JSON: "
+        f"{len(final_results)}"
+    )
+    print(
+        f"Lagret: {JSON_PATH}"
+    )
+    print("=" * 60)
+
+
+if __name__ == "__main__":
+    main()
