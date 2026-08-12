@@ -63,7 +63,6 @@ for url in urls:
         # -------------------------------------------------------------
         if url.lower().endswith('.pdf') or 'pdf' in url.lower():
             with pdfplumber.open(io.BytesIO(res.content)) as pdf:
-                # Sjekk hele PDF-teksten for global banelengde (kortbane vs langbane)
                 full_text = "".join([page.extract_text() or "" for page in pdf.pages[:3]]).lower()
                 
                 global_course = "25m"
@@ -81,7 +80,6 @@ for url in urls:
                             line_lower = line.lower()
                             if "øvelse" in line_lower or "event" in line_lower:
                                 current_event = line.strip()
-                                # Sjekk om øvelsesoverskriften spesifikt nevner banetype
                                 if "langbane" in line_lower or "(50m)" in line_lower or "50m bane" in line_lower:
                                     current_course = "50m"
                                 elif "kortbane" in line_lower or "(25m)" in line_lower or "25m bane" in line_lower:
@@ -107,27 +105,22 @@ for url in urls:
                                 elif "vågsbygd" in row_text or "vagsbygd" in row_text:
                                     club_name = "Vågsbygd SLK"
 
-                                # Identifiser felt basert på mønster (Tid, Poeng, Fødselsår)
                                 for cell in row_clean:
                                     cell_str = cell.strip()
                                     if not cell_str:
                                         continue
 
-                                    # Fødselsår (4 siffer mellom 1990 og 2026)
                                     if cell_str.isdigit() and 1990 <= int(cell_str) <= 2026 and not bday_year:
                                         bday_year = cell_str
 
-                                    # FINA / WA Poeng (Reelt poengtall mellom 10 og 1100, ikke fødselsår)
                                     elif cell_str.isdigit():
                                         val = int(cell_str)
                                         if 10 <= val <= 1100 and val != int(bday_year or 0):
                                             fina_pts = val
 
-                                    # Svømmetid (f.eks. 24.50 eller 1:02.15)
                                     elif re.match(r'^(\d{1,2}:)?\d{1,2}\.\d{2}$', cell_str):
                                         swim_time = cell_str
 
-                                # Hent utøvernavn
                                 non_empty = [
                                     c for c in row_clean 
                                     if c and "varodd" not in c.lower() 
@@ -195,8 +188,6 @@ for url in urls:
             for elem in root.iter():
                 if elem.tag.upper() == 'EVENT':
                     event_id = elem.attrib.get('eventid') or ''
-                    
-                    # Sjekk event-nivå, ellers fall tilbake på stevne-nivå
                     event_course_raw = elem.attrib.get('course')
                     if event_course_raw:
                         course_str = "50m" if is_long_course(event_course_raw) else "25m"
@@ -241,8 +232,6 @@ for url in urls:
                             for result in athlete.iter():
                                 if result.tag.upper() == 'RESULT':
                                     tid = result.attrib.get('swimtime') or ''
-                                    
-                                    # Les poeng fra 'points' eller 'fina' attributt
                                     raw_pts = result.attrib.get('points') or result.attrib.get('fina') or 0
                                     fina = int(raw_pts) if str(raw_pts).isdigit() else 0
 
@@ -269,7 +258,7 @@ for url in urls:
         print(f"Feil ved lesing av {url}: {e}")
 
 # -------------------------------------------------------------
-# 3. KRONOLOGISK SORTERING OG BEHANDLING
+# 3. KRONOLOGISK SORTERING OG 12-MÅNEDERS BEREGNING
 # -------------------------------------------------------------
 utover_map = {}
 for r in raw_results:
@@ -279,30 +268,47 @@ for r in raw_results:
     utover_map[key].append(r)
 
 endelige_resultater = []
-to_years_ago = (datetime.now() - timedelta(days=730)).strftime("%Y-%m-%d")
+one_year_ago = (datetime.now() - timedelta(days=365)).strftime("%Y-%m-%d")
 
 for key, tider in utover_map.items():
-    # Sorterer etter dato slik at nyeste registrering blir valgt som hovedresultat
+    # Sorterer etter dato slik at nyeste registrering velges som hovedobjekt
     tider.sort(key=lambda x: str(x["dato"]), reverse=True)
     nyeste = tider[0].copy()
 
-    # Forbedringsberegning
-    gyldige_tider = [t for t in tider if t["sekunder"] is not None]
-    if len(gyldige_tider) > 1:
-        gyldige_tider.sort(key=lambda x: str(x["dato"]))
-        siste_to_ar = [t for t in gyldige_tider if str(t["dato"]) >= to_years_ago]
-        bruk_tider = siste_to_ar if len(siste_to_ar) >= 2 else gyldige_tider
+    # Filtrer kun resultater fra de siste 12 månedene
+    siste_12_mnd = [
+        t for t in tider 
+        if t["sekunder"] is not None and t["sekunder"] > 0 and str(t["dato"]) >= one_year_ago
+    ]
 
-        eldste_sek = bruk_tider[0]["sekunder"]
-        beste_sek = min(t["sekunder"] for t in bruk_tider)
+    if len(siste_12_mnd) >= 2:
+        # Finn dårligste og beste tid i løpet av de siste 12 månedene
+        daarligste_obj = max(siste_12_mnd, key=lambda x: x["sekunder"])
+        beste_obj = min(siste_12_mnd, key=lambda x: x["sekunder"])
 
-        if eldste_sek and eldste_sek > 0:
-            endring = ((eldste_sek - beste_sek) / eldste_sek) * 100
+        daarligste_sek = daarligste_obj["sekunder"]
+        beste_sek = beste_obj["sekunder"]
+
+        if daarligste_sek > 0:
+            endring = ((daarligste_sek - beste_sek) / daarligste_sek) * 100
             nyeste["forbedring"] = round(endring, 2)
         else:
             nyeste["forbedring"] = 0.0
-    else:
+
+        nyeste["daarligste_tid"] = daarligste_obj["tid"]
+        nyeste["beste_tid"] = beste_obj["tid"]
+
+    elif len(siste_12_mnd) == 1:
+        # Bare 1 løp siste 12 måneder
         nyeste["forbedring"] = 0.0
+        nyeste["daarligste_tid"] = siste_12_mnd[0]["tid"]
+        nyeste["beste_tid"] = siste_12_mnd[0]["tid"]
+
+    else:
+        # Ingen løp siste 12 måneder
+        nyeste["forbedring"] = 0.0
+        nyeste["daarligste_tid"] = nyeste["tid"]
+        nyeste["beste_tid"] = nyeste["tid"]
 
     endelige_resultater.append(nyeste)
 
@@ -314,4 +320,3 @@ with open(json_path, "w", encoding="utf-8") as f:
     json.dump(endelige_resultater, f, ensure_ascii=False, indent=2)
 
 print(f"Fullført! Lagret {len(endelige_resultater)} resultater til {json_path}")
-        
