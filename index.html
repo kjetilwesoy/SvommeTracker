@@ -9,22 +9,20 @@
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 
 <style>
-
 :root {
     --bg: #0f172a;
     --panel: #ffffff;
-    --panel-light: #f8fafc;
+    --panel-dark: #1e293b;
     --border: #cbd5e1;
     --text: #0f172a;
     --muted: #64748b;
-
     --blue: #2563eb;
     --blue-dark: #1d4ed8;
-
     --red: #dc2626;
     --red-dark: #b91c1c;
-
-    --green: #16a34a;
+    --green: #059669;
+    --orange: #ea580c;
+    --light: #f8fafc;
 }
 
 * {
@@ -44,101 +42,105 @@ body {
 
     background:
         radial-gradient(
-            rgba(255,255,255,.06) 1px,
-            transparent 1px
-        );
+            circle at top,
+            rgba(37,99,235,.15),
+            transparent 40%
+        ),
+        var(--bg);
 
-    background-size: 24px 24px;
-    background-color: var(--bg);
     color: var(--text);
     min-height: 100vh;
 }
 
-/* --------------------------------------------------
-   LAYOUT
--------------------------------------------------- */
-
 .app {
-    display: flex;
     min-height: 100vh;
+    display: flex;
 }
 
-/* MENY TIL VENSTRE */
+/* =========================
+   SIDEBAR
+========================= */
 
 .sidebar {
     width: 280px;
-    background: #1e293b;
+    background: var(--panel-dark);
+    color: white;
     padding: 20px;
-    border-right: 2px solid #334155;
-    flex-shrink: 0;
+    position: fixed;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    overflow-y: auto;
 }
 
 .logo {
-    color: white;
-    font-size: 24px;
+    font-size: 23px;
     font-weight: 800;
     text-align: center;
-    padding: 15px;
-    border-bottom: 1px solid #475569;
+    padding: 12px 0 24px;
+    border-bottom: 1px solid #334155;
     margin-bottom: 20px;
 }
 
-.menu {
+.nav {
     display: flex;
     flex-direction: column;
     gap: 10px;
 }
 
-.menu button {
+.nav button {
     width: 100%;
-    padding: 14px;
-    border-radius: 8px;
     border: 1px solid #475569;
-    background: #334155;
+    border-radius: 8px;
+    padding: 13px;
     color: white;
+    background: #334155;
     cursor: pointer;
-    font-size: 15px;
-    font-weight: 700;
     text-align: left;
-    transition: .2s;
+    font-weight: 700;
+    font-size: 15px;
+    transition: .15s;
 }
 
-.menu button:hover {
-    transform: translateX(3px);
-    background: #475569;
+.nav button:hover {
+    transform: translateX(2px);
+    filter: brightness(1.08);
 }
 
-.menu button.active {
-    outline: 3px solid rgba(255,255,255,.15);
+.nav button.active {
+    box-shadow: inset 4px 0 0 white;
 }
 
-.menu .varodd {
+/* VARODD HELT BLÅ */
+.nav .varodd {
     background: #2563eb;
     border-color: #3b82f6;
 }
 
-.menu .varodd:hover {
+.nav .varodd:hover {
     background: #1d4ed8;
 }
 
-.menu .vagsbygd {
+/* VÅGSBYGD */
+.nav .vagsbygd {
     background: #dc2626;
     border-color: #ef4444;
 }
 
-.menu .vagsbygd:hover {
+.nav .vagsbygd:hover {
     background: #b91c1c;
 }
 
-/* --------------------------------------------------
+/* =========================
    MAIN
--------------------------------------------------- */
+========================= */
 
 .main {
-    flex: 1;
-    background: #f8fafc;
+    margin-left: 280px;
+    width: calc(100% - 280px);
     padding: 30px;
-    overflow-x: auto;
+    background: #f8fafc;
+    min-height: 100vh;
 }
 
 .page {
@@ -159,53 +161,63 @@ h1 {
     margin-bottom: 25px;
 }
 
-/* --------------------------------------------------
+/* =========================
    CARDS
--------------------------------------------------- */
+========================= */
 
 .card {
     background: white;
     border: 1px solid var(--border);
-    border-radius: 10px;
+    border-radius: 12px;
     padding: 20px;
     margin-bottom: 20px;
-    box-shadow: 0 3px 8px rgba(0,0,0,.04);
+    box-shadow: 0 3px 10px rgba(0,0,0,.04);
 }
 
 .card h2 {
-    margin-bottom: 15px;
+    margin-bottom: 12px;
 }
 
-/* --------------------------------------------------
+.card h3 {
+    margin-bottom: 10px;
+}
+
+/* =========================
    CONTROLS
--------------------------------------------------- */
+========================= */
 
 .controls {
     display: flex;
-    flex-wrap: wrap;
     gap: 10px;
-    margin-bottom: 20px;
+    flex-wrap: wrap;
+    margin-bottom: 18px;
 }
 
 input,
+select,
+button {
+    font: inherit;
+}
+
+input[type="text"],
+input[type="number"],
 select {
-    padding: 11px 13px;
     border: 1px solid var(--border);
     border-radius: 7px;
+    padding: 10px 12px;
     background: white;
-    font-size: 15px;
 }
 
 input[type="text"] {
-    min-width: 220px;
+    min-width: 250px;
 }
 
 button.primary {
     background: var(--blue);
     color: white;
     border: none;
-    padding: 11px 18px;
     border-radius: 7px;
+    padding: 10px 15px;
     font-weight: 700;
     cursor: pointer;
 }
@@ -218,48 +230,66 @@ button.danger {
     background: var(--red);
     color: white;
     border: none;
-    padding: 10px 15px;
     border-radius: 7px;
+    padding: 10px 15px;
+    font-weight: 700;
     cursor: pointer;
 }
 
-/* --------------------------------------------------
+button.success {
+    background: var(--green);
+    color: white;
+    border: none;
+    border-radius: 7px;
+    padding: 10px 15px;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+button.secondary {
+    background: #e2e8f0;
+    color: #0f172a;
+    border: none;
+    border-radius: 7px;
+    padding: 10px 15px;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+/* =========================
    TABLE
--------------------------------------------------- */
+========================= */
 
 .table-wrap {
     overflow-x: auto;
-    background: white;
-    border: 1px solid var(--border);
-    border-radius: 10px;
 }
 
 table {
     width: 100%;
     border-collapse: collapse;
-    min-width: 800px;
 }
 
 th {
-    background: #e2e8f0;
-    padding: 12px;
+    background: #f1f5f9;
+    color: var(--muted);
+    font-size: 13px;
     text-align: left;
-    color: #475569;
-    font-size: 14px;
+    padding: 12px;
+    border-bottom: 1px solid var(--border);
 }
 
 td {
     padding: 12px;
-    border-top: 1px solid #e2e8f0;
+    border-bottom: 1px solid var(--border);
 }
 
 tr:hover td {
     background: #f8fafc;
 }
 
-/* --------------------------------------------------
+/* =========================
    BADGES
--------------------------------------------------- */
+========================= */
 
 .badge {
     display: inline-block;
@@ -269,68 +299,78 @@ tr:hover td {
     font-weight: 800;
 }
 
-.badge-25 {
+.badge.blue {
     background: #dbeafe;
     color: #1d4ed8;
 }
 
-.badge-50 {
+.badge.purple {
     background: #ede9fe;
     color: #6d28d9;
 }
 
-.badge-varodd {
-    background: #dbeafe;
-    color: #1d4ed8;
-}
-
-.badge-vagsbygd {
+.badge.red {
     background: #fee2e2;
     color: #b91c1c;
 }
 
-.good {
-    color: var(--green);
-    font-weight: 800;
+.badge.green {
+    background: #d1fae5;
+    color: #047857;
 }
 
-.bad {
-    color: var(--red);
-    font-weight: 800;
+.badge.orange {
+    background: #ffedd5;
+    color: #c2410c;
 }
 
-/* --------------------------------------------------
+/* =========================
    IMPORT
--------------------------------------------------- */
+========================= */
 
 .import-box {
     border: 2px dashed #94a3b8;
-    border-radius: 10px;
-    padding: 30px;
+    border-radius: 12px;
+    padding: 35px;
     text-align: center;
     background: #f8fafc;
 }
 
-.import-box input[type="file"] {
-    margin: 15px 0;
-}
-
-.import-status {
+.import-box input {
     margin-top: 15px;
+}
+
+/* =========================
+   NEW SWIMMERS
+========================= */
+
+.new-swimmer {
+    border: 1px solid var(--border);
+    border-radius: 10px;
     padding: 15px;
-    border-radius: 8px;
-    background: #eff6ff;
-    color: #1e40af;
-    display: none;
+    margin-bottom: 12px;
+    background: #fff;
 }
 
-.import-status.show {
-    display: block;
+.new-swimmer-grid {
+    display: grid;
+    grid-template-columns:
+        minmax(180px, 2fr)
+        minmax(150px, 1fr)
+        minmax(100px, 1fr)
+        auto;
+
+    gap: 10px;
+    align-items: center;
 }
 
-/* --------------------------------------------------
+.new-swimmer-name {
+    font-weight: 800;
+}
+
+/* =========================
    STATS
--------------------------------------------------- */
+========================= */
 
 .stats {
     display: grid;
@@ -343,46 +383,66 @@ tr:hover td {
     background: white;
     border: 1px solid var(--border);
     border-radius: 10px;
-    padding: 20px;
-}
-
-.stat-number {
-    font-size: 30px;
-    font-weight: 800;
+    padding: 18px;
 }
 
 .stat-label {
     color: var(--muted);
+    font-size: 13px;
 }
 
-/* --------------------------------------------------
+.stat-value {
+    font-size: 26px;
+    font-weight: 800;
+    margin-top: 5px;
+}
+
+/* =========================
    MODAL
--------------------------------------------------- */
+========================= */
 
 .modal {
-    display: none;
     position: fixed;
     inset: 0;
-    background: rgba(0,0,0,.55);
-    z-index: 1000;
+    background: rgba(15,23,42,.65);
+    display: none;
     align-items: center;
     justify-content: center;
+    z-index: 1000;
     padding: 20px;
 }
 
-.modal.show {
+.modal.open {
     display: flex;
 }
 
 .modal-content {
     background: white;
     border-radius: 12px;
-    padding: 25px;
+    max-width: 650px;
     width: 100%;
-    max-width: 600px;
     max-height: 90vh;
     overflow-y: auto;
+    padding: 25px;
 }
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.close {
+    border: none;
+    background: transparent;
+    font-size: 28px;
+    cursor: pointer;
+}
+
+/* =========================
+   FORM
+========================= */
 
 .form-grid {
     display: grid;
@@ -400,46 +460,54 @@ tr:hover td {
     grid-column: 1 / -1;
 }
 
-.modal-buttons {
-    margin-top: 20px;
-    display: flex;
-    justify-content: flex-end;
-    gap: 10px;
+.form-group label {
+    font-weight: 700;
+    font-size: 14px;
 }
 
-/* --------------------------------------------------
-   RESPONSIVE
--------------------------------------------------- */
+/* =========================
+   EMPTY
+========================= */
+
+.empty {
+    text-align: center;
+    padding: 40px;
+    color: var(--muted);
+}
+
+/* =========================
+   MOBILE
+========================= */
 
 @media(max-width: 900px) {
+
+    .sidebar {
+        position: static;
+        width: 100%;
+    }
 
     .app {
         flex-direction: column;
     }
 
-    .sidebar {
-        width: 100%;
-        border-right: none;
-        border-bottom: 2px solid #334155;
-    }
-
-    .menu {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-    }
-
     .main {
+        margin-left: 0;
+        width: 100%;
         padding: 15px;
     }
 
     .stats {
         grid-template-columns: 1fr 1fr;
     }
+
+    .new-swimmer-grid {
+        grid-template-columns: 1fr;
+    }
 }
 
 @media(max-width: 600px) {
 
-    .menu {
+    .stats {
         grid-template-columns: 1fr;
     }
 
@@ -447,11 +515,11 @@ tr:hover td {
         grid-template-columns: 1fr;
     }
 
-    .stats {
-        grid-template-columns: 1fr;
+    input[type="text"] {
+        width: 100%;
+        min-width: 0;
     }
 }
-
 </style>
 </head>
 
@@ -459,9 +527,9 @@ tr:hover td {
 
 <div class="app">
 
-<!-- ==================================================
+<!-- =========================
      VENSTRE MENY
-================================================== -->
+========================= -->
 
 <aside class="sidebar">
 
@@ -469,7 +537,7 @@ tr:hover td {
         🏊‍♂️ SvømmeHub
     </div>
 
-    <div class="menu">
+    <nav class="nav">
 
         <button
             class="varodd active"
@@ -484,8 +552,8 @@ tr:hover td {
         </button>
 
         <button
-            onclick="showPage('svommere', this)">
-            👤 Svømmere
+            onclick="showPage('swimmers', this)">
+            👤 Svømmerregister
         </button>
 
         <button
@@ -494,76 +562,57 @@ tr:hover td {
         </button>
 
         <button
-            onclick="showPage('grafer', this)">
+            onclick="showPage('graphs', this)">
             📊 Grafer & målinger
         </button>
 
         <button
-            onclick="showPage('kalkulator', this)">
-            🧮 AI svømmekalkulator
+            onclick="showPage('calculator', this)">
+            🧮 Treningskalkulator
         </button>
 
-    </div>
+    </nav>
 
 </aside>
 
 
-<!-- ==================================================
+<!-- =========================
      HOVEDINNHOLD
-================================================== -->
+========================= -->
 
 <main class="main">
 
 
-<!-- ==================================================
+<!-- =========================
      VARODD
-================================================== -->
+========================= -->
 
 <section id="page-varodd" class="page active">
 
-    <h1>Varodd SK</h1>
+    <h1>Varodd Svømmeklubb</h1>
 
     <p class="subtitle">
         Resultater siste 12 måneder
     </p>
 
-    <div class="stats">
-        <div class="stat">
-            <div id="varoddSwimmers" class="stat-number">0</div>
-            <div class="stat-label">Svømmere</div>
-        </div>
-
-        <div class="stat">
-            <div id="varoddResults" class="stat-number">0</div>
-            <div class="stat-label">Resultater</div>
-        </div>
-
-        <div class="stat">
-            <div id="varoddEvents" class="stat-number">0</div>
-            <div class="stat-label">Øvelser</div>
-        </div>
-
-        <div class="stat">
-            <div id="varoddBest" class="stat-number">-</div>
-            <div class="stat-label">Beste forbedring</div>
-        </div>
-    </div>
-
     <div class="controls">
 
         <input
             type="text"
-            id="searchVarodd"
+            id="search-varodd"
             placeholder="Søk svømmer eller øvelse..."
-            oninput="renderResults('Varodd SK')">
+            oninput="renderClub('Varodd Svømmeklubb')">
 
     </div>
 
-    <div class="table-wrap">
+    <div class="card">
 
-        <table>
+        <div class="table-wrap">
 
-            <thead>
+            <table>
+
+                <thead>
+
                 <tr>
                     <th>Dato</th>
                     <th>Svømmer</th>
@@ -572,20 +621,23 @@ tr:hover td {
                     <th>Tid</th>
                     <th>Poeng</th>
                 </tr>
-            </thead>
 
-            <tbody id="varoddResultsTable"></tbody>
+                </thead>
 
-        </table>
+                <tbody id="table-varodd"></tbody>
+
+            </table>
+
+        </div>
 
     </div>
 
 </section>
 
 
-<!-- ==================================================
+<!-- =========================
      VÅGSBYGD
-================================================== -->
+========================= -->
 
 <section id="page-vagsbygd" class="page">
 
@@ -595,45 +647,24 @@ tr:hover td {
         Resultater siste 12 måneder
     </p>
 
-    <div class="stats">
-
-        <div class="stat">
-            <div id="vagsbygdSwimmers" class="stat-number">0</div>
-            <div class="stat-label">Svømmere</div>
-        </div>
-
-        <div class="stat">
-            <div id="vagsbygdResults" class="stat-number">0</div>
-            <div class="stat-label">Resultater</div>
-        </div>
-
-        <div class="stat">
-            <div id="vagsbygdEvents" class="stat-number">0</div>
-            <div class="stat-label">Øvelser</div>
-        </div>
-
-        <div class="stat">
-            <div id="vagsbygdBest" class="stat-number">-</div>
-            <div class="stat-label">Beste forbedring</div>
-        </div>
-
-    </div>
-
     <div class="controls">
 
         <input
             type="text"
-            id="searchVagsbygd"
+            id="search-vagsbygd"
             placeholder="Søk svømmer eller øvelse..."
-            oninput="renderResults('Vågsbygd SLK')">
+            oninput="renderClub('Vågsbygd SLK')">
 
     </div>
 
-    <div class="table-wrap">
+    <div class="card">
 
-        <table>
+        <div class="table-wrap">
 
-            <thead>
+            <table>
+
+                <thead>
+
                 <tr>
                     <th>Dato</th>
                     <th>Svømmer</th>
@@ -642,57 +673,207 @@ tr:hover td {
                     <th>Tid</th>
                     <th>Poeng</th>
                 </tr>
-            </thead>
 
-            <tbody id="vagsbygdResultsTable"></tbody>
+                </thead>
 
-        </table>
+                <tbody id="table-vagsbygd"></tbody>
+
+            </table>
+
+        </div>
 
     </div>
 
 </section>
 
 
-<!-- ==================================================
-     SVØMMERE
-================================================== -->
+<!-- =========================
+     SVØMMERREGISTER
+========================= -->
 
-<section id="page-svommere" class="page">
+<section id="page-swimmers" class="page">
 
     <h1>Svømmerregister</h1>
 
     <p class="subtitle">
-        Registrer svømmerne. Nye svømmere fra Excel kan også opprettes automatisk.
+        Registrerte svømmere lagres lokalt i nettleseren.
     </p>
 
-    <div class="card">
+    <div class="controls">
 
         <button
             class="primary"
-            onclick="openSwimmerModal()">
+            onclick="openAddSwimmerModal()">
             + Legg til svømmer
         </button>
 
+        <input
+            type="text"
+            id="search-swimmers"
+            placeholder="Søk navn..."
+            oninput="renderSwimmers()">
+
     </div>
+
+
+    <div id="unregistered-container"></div>
+
+
+    <div class="card">
+
+        <div class="table-wrap">
+
+            <table>
+
+                <thead>
+
+                <tr>
+                    <th>Navn</th>
+                    <th>Klubb</th>
+                    <th>Årsklasse</th>
+                    <th>Resultater</th>
+                    <th>Handling</th>
+                </tr>
+
+                </thead>
+
+                <tbody id="swimmer-table"></tbody>
+
+            </table>
+
+        </div>
+
+    </div>
+
+</section>
+
+
+<!-- =========================
+     IMPORT
+========================= -->
+
+<section id="page-import" class="page">
+
+    <h1>Importer Excel</h1>
+
+    <p class="subtitle">
+        Last opp resultatlisten fra Excel.
+    </p>
+
+
+    <div class="card">
+
+        <div class="import-box">
+
+            <h2>📥 Last opp resultatliste</h2>
+
+            <p style="margin-top:10px;color:#64748b;">
+                XLSX, XLS eller CSV
+            </p>
+
+            <input
+                type="file"
+                id="excel-file"
+                accept=".xlsx,.xls,.csv">
+
+        </div>
+
+    </div>
+
+
+    <div
+        id="import-summary"
+        style="display:none">
+    </div>
+
+
+    <div
+        id="new-swimmers-section"
+        style="display:none">
+
+        <div class="card">
+
+            <h2>
+                Nye svømmere funnet i Excel
+            </h2>
+
+            <p class="subtitle">
+                Disse finnes ikke i svømmerregisteret.
+                Du bestemmer selv hvem som skal registreres.
+            </p>
+
+            <div id="new-swimmers-list"></div>
+
+            <div class="controls">
+
+                <button
+                    class="success"
+                    onclick="registerAllNewSwimmers()">
+                    Registrer alle
+                </button>
+
+                <button
+                    class="secondary"
+                    onclick="skipAllNewSwimmers()">
+                    Ikke registrer nå
+                </button>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <div
+        id="unresolved-section"
+        style="display:none">
+
+        <div class="card">
+
+            <h2>
+                Tidligere hoppede svømmere
+            </h2>
+
+            <div id="unresolved-list"></div>
+
+        </div>
+
+    </div>
+
+</section>
+
+
+<!-- =========================
+     GRAFER
+========================= -->
+
+<section id="page-graphs" class="page">
+
+    <h1>Grafer & målinger</h1>
+
+    <p class="subtitle">
+        Beste og dårligste tid siste 12 måneder.
+    </p>
 
     <div class="controls">
 
         <input
             type="text"
-            id="searchSwimmers"
-            placeholder="Søk navn..."
-            oninput="renderSwimmers()">
+            id="search-graphs"
+            placeholder="Søk svømmer..."
+            oninput="renderGraphs()">
 
         <select
-            id="filterClub"
-            onchange="renderSwimmers()">
+            id="graph-club"
+            onchange="renderGraphs()">
 
             <option value="alle">
                 Alle klubber
             </option>
 
-            <option value="Varodd SK">
-                Varodd SK
+            <option value="Varodd Svømmeklubb">
+                Varodd Svømmeklubb
             </option>
 
             <option value="Vågsbygd SLK">
@@ -703,196 +884,24 @@ tr:hover td {
 
     </div>
 
-    <div class="table-wrap">
-
-        <table>
-
-            <thead>
-
-                <tr>
-                    <th>Navn</th>
-                    <th>Klubb</th>
-                    <th>Årsklasse</th>
-                    <th>Resultater</th>
-                    <th></th>
-                </tr>
-
-            </thead>
-
-            <tbody id="swimmersTable"></tbody>
-
-        </table>
-
-    </div>
+    <div id="graphs-container"></div>
 
 </section>
 
 
-<!-- ==================================================
-     IMPORT
-================================================== -->
-
-<section id="page-import" class="page">
-
-    <h1>Importer resultater</h1>
-
-    <p class="subtitle">
-        Last opp Excel-filen med resultater.
-    </p>
-
-    <div class="card">
-
-        <h2>1. Velg klubb</h2>
-
-        <div class="controls">
-
-            <label>
-                <input
-                    type="radio"
-                    name="importClub"
-                    value="Varodd SK"
-                    checked>
-
-                🔵 Varodd SK
-            </label>
-
-            <label>
-                <input
-                    type="radio"
-                    name="importClub"
-                    value="Vågsbygd SLK">
-
-                🔴 Vågsbygd SLK
-            </label>
-
-        </div>
-
-    </div>
-
-
-    <div class="card">
-
-        <h2>2. Velg Excel-fil</h2>
-
-        <div class="import-box">
-
-            <p>
-                Excel-filen må inneholde svømmernavn,
-                øvelse, tid og bassenglengde.
-            </p>
-
-            <input
-                type="file"
-                id="excelFile"
-                accept=".xlsx,.xls">
-
-            <br>
-
-            <button
-                class="primary"
-                onclick="importExcel()">
-
-                📥 Importer Excel
-
-            </button>
-
-            <div
-                id="importStatus"
-                class="import-status">
-            </div>
-
-        </div>
-
-    </div>
-
-
-    <div class="card">
-
-        <h2>Hva skjer ved import?</h2>
-
-        <ul style="padding-left:25px;line-height:2;">
-
-            <li>
-                Eksisterende svømmere blir funnet automatisk.
-            </li>
-
-            <li>
-                <strong>Amundsen, Sophie</strong>
-                kobles til
-                <strong>Sophie Amundsen</strong>.
-            </li>
-
-            <li>
-                Nye svømmere opprettes automatisk.
-            </li>
-
-            <li>
-                Gamle resultater beholdes.
-            </li>
-
-            <li>
-                Resultater uten klubb forsøkes koblet på nytt.
-            </li>
-
-            <li>
-                25 m og 50 m behandles separat.
-            </li>
-
-        </ul>
-
-    </div>
-
-</section>
-
-
-<!-- ==================================================
-     GRAFER
-================================================== -->
-
-<section id="page-grafer" class="page">
-
-    <h1>Grafer & målinger</h1>
-
-    <p class="subtitle">
-        Beste og dårligste registrerte tider siste 12 måneder.
-    </p>
-
-    <div class="controls">
-
-        <input
-            type="text"
-            id="searchGraph"
-            placeholder="Søk svømmer..."
-            oninput="renderGraphs()">
-
-        <select
-            id="graphClub"
-            onchange="renderGraphs()">
-
-            <option value="alle">Alle klubber</option>
-            <option value="Varodd SK">Varodd SK</option>
-            <option value="Vågsbygd SLK">Vågsbygd SLK</option>
-
-        </select>
-
-    </div>
-
-    <div id="graphContainer"></div>
-
-</section>
-
-
-<!-- ==================================================
+<!-- =========================
      KALKULATOR
-================================================== -->
+========================= -->
 
-<section id="page-kalkulator" class="page">
+<section id="page-calculator" class="page">
 
-    <h1>🧮 Svømmekalkulator</h1>
+    <h1>Treningskalkulator</h1>
 
     <p class="subtitle">
-        Beregn fart, effektivitet, takfrekvens og tidstap.
+        Kalkulator for svømmetrening. Langbane og kortbane
+        behandles separat.
     </p>
+
 
     <div class="card">
 
@@ -904,45 +913,49 @@ tr:hover td {
                     Basseng
                 </label>
 
-                <select id="calcPool">
+                <select id="calc-pool">
 
-                    <option value="25">
-                        Kortbane 25 m
+                    <option value="25m">
+                        Kortbane – 25 m
                     </option>
 
-                    <option value="50">
-                        Langbane 50 m
+                    <option value="50m">
+                        Langbane – 50 m
                     </option>
 
                 </select>
 
             </div>
 
+
             <div class="form-group">
 
                 <label>
-                    Distanse (m)
+                    Distanse (meter)
                 </label>
 
                 <input
                     type="number"
-                    id="calcDistance"
+                    id="calc-distance"
                     value="100">
 
             </div>
 
+
             <div class="form-group">
 
                 <label>
-                    Tid
+                    Tid (sekunder)
                 </label>
 
                 <input
-                    type="text"
-                    id="calcTime"
-                    placeholder="1:05.25">
+                    type="number"
+                    id="calc-time"
+                    step="0.01"
+                    placeholder="f.eks. 65.25">
 
             </div>
+
 
             <div class="form-group">
 
@@ -952,10 +965,11 @@ tr:hover td {
 
                 <input
                     type="number"
-                    id="calcStrokes"
-                    placeholder="60">
+                    id="calc-strokes"
+                    placeholder="f.eks. 42">
 
             </div>
+
 
             <div class="form-group">
 
@@ -965,8 +979,8 @@ tr:hover td {
 
                 <input
                     type="number"
-                    id="calcLengths"
-                    placeholder="4">
+                    id="calc-lengths"
+                    placeholder="f.eks. 4">
 
             </div>
 
@@ -976,46 +990,50 @@ tr:hover td {
 
         <button
             class="primary"
-            onclick="calculateSwimming()">
-
+            onclick="calculateTraining()">
             Beregn
-
         </button>
 
     </div>
 
+
     <div
-        id="calcResults"
-        class="card">
-
-        Legg inn verdier og trykk Beregn.
-
+        id="calculator-result"
+        style="display:none">
     </div>
 
 </section>
+
 
 </main>
 
 </div>
 
 
-<!-- ==================================================
-     SVØMMER MODAL
-================================================== -->
+<!-- =========================
+     MODAL
+========================= -->
 
 <div
-    id="swimmerModal"
+    id="swimmer-modal"
     class="modal">
 
     <div class="modal-content">
 
-        <h2 id="modalTitle">
-            Legg til svømmer
-        </h2>
+        <div class="modal-header">
 
-        <input
-            type="hidden"
-            id="editSwimmerId">
+            <h2 id="modal-title">
+                Legg til svømmer
+            </h2>
+
+            <button
+                class="close"
+                onclick="closeModal()">
+                ×
+            </button>
+
+        </div>
+
 
         <div class="form-grid">
 
@@ -1027,10 +1045,11 @@ tr:hover td {
 
                 <input
                     type="text"
-                    id="swimmerName"
+                    id="form-name"
                     placeholder="Fornavn Etternavn">
 
             </div>
+
 
             <div class="form-group">
 
@@ -1038,10 +1057,10 @@ tr:hover td {
                     Klubb
                 </label>
 
-                <select id="swimmerClub">
+                <select id="form-club">
 
-                    <option value="Varodd SK">
-                        Varodd SK
+                    <option value="Varodd Svømmeklubb">
+                        Varodd Svømmeklubb
                     </option>
 
                     <option value="Vågsbygd SLK">
@@ -1052,6 +1071,7 @@ tr:hover td {
 
             </div>
 
+
             <div class="form-group">
 
                 <label>
@@ -1060,28 +1080,27 @@ tr:hover td {
 
                 <input
                     type="number"
-                    id="swimmerYear"
+                    id="form-year"
                     placeholder="2012">
 
             </div>
 
         </div>
 
-        <div class="modal-buttons">
+        <br>
+
+        <div class="controls">
 
             <button
-                onclick="closeSwimmerModal()">
-
-                Avbryt
-
+                class="success"
+                onclick="saveManualSwimmer()">
+                Lagre
             </button>
 
             <button
-                class="primary"
-                onclick="saveSwimmer()">
-
-                Lagre
-
+                class="secondary"
+                onclick="closeModal()">
+                Avbryt
             </button>
 
         </div>
@@ -1093,420 +1112,907 @@ tr:hover td {
 
 <script>
 
-/* ==================================================
+/* =========================================================
    DATA
-================================================== */
+========================================================= */
 
-let swimmers = loadJSON("svommehub_swimmers", []);
-let results = loadJSON("svommehub_results", []);
+let swimmers = [];
+let results = [];
 
-let activePage = "varodd";
+let pendingNewSwimmers = [];
+let unresolvedSwimmers = [];
+
+let editingSwimmerId = null;
 
 
-/* ==================================================
+/* =========================================================
    LOCAL STORAGE
-================================================== */
+========================================================= */
 
-function loadJSON(key, fallback) {
+const STORAGE_SWIMMERS =
+    "svommehub_swimmers_v2";
+
+const STORAGE_RESULTS =
+    "svommehub_results_v2";
+
+const STORAGE_PENDING =
+    "svommehub_pending_v2";
+
+
+function loadData() {
 
     try {
 
-        const data = localStorage.getItem(key);
+        swimmers =
+            JSON.parse(
+                localStorage.getItem(
+                    STORAGE_SWIMMERS
+                )
+            ) || [];
 
-        if (!data) {
-            return fallback;
-        }
+    } catch {
 
-        return JSON.parse(data);
+        swimmers = [];
 
-    } catch (error) {
-
-        console.error(error);
-
-        return fallback;
     }
+
+
+    try {
+
+        results =
+            JSON.parse(
+                localStorage.getItem(
+                    STORAGE_RESULTS
+                )
+            ) || [];
+
+    } catch {
+
+        results = [];
+
+    }
+
+
+    try {
+
+        pendingNewSwimmers =
+            JSON.parse(
+                localStorage.getItem(
+                    STORAGE_PENDING
+                )
+            ) || [];
+
+    } catch {
+
+        pendingNewSwimmers = [];
+
+    }
+
+
+    /*
+       Migrering av gamle data dersom
+       tidligere versjon brukte andre nøkler.
+    */
+
+    migrateOldData();
+
+    renderAll();
+
 }
 
 
 function saveData() {
 
     localStorage.setItem(
-        "svommehub_swimmers",
+        STORAGE_SWIMMERS,
         JSON.stringify(swimmers)
     );
 
     localStorage.setItem(
-        "svommehub_results",
+        STORAGE_RESULTS,
         JSON.stringify(results)
     );
-}
 
-
-/* ==================================================
-   ID
-================================================== */
-
-function createId(prefix = "id") {
-
-    return (
-        prefix +
-        "_" +
-        Date.now().toString(36) +
-        "_" +
-        Math.random()
-            .toString(36)
-            .substring(2, 9)
+    localStorage.setItem(
+        STORAGE_PENDING,
+        JSON.stringify(pendingNewSwimmers)
     );
 }
 
 
-/* ==================================================
-   NAVIGATION
-================================================== */
+/* =========================================================
+   MIGRERING
+========================================================= */
 
-function showPage(page, button) {
+function migrateOldData() {
 
-    activePage = page;
+    const possibleSwimmerKeys = [
+        "swommehub_swimmers",
+        "svommehub_swimmers",
+        "swimmers",
+        "svommere"
+    ];
 
-    document
-        .querySelectorAll(".page")
-        .forEach(p => p.classList.remove("active"));
+    if (
+        swimmers.length === 0
+    ) {
 
-    document
-        .getElementById("page-" + page)
-        .classList.add("active");
+        for (
+            const key of possibleSwimmerKeys
+        ) {
 
-    document
-        .querySelectorAll(".menu button")
-        .forEach(b => b.classList.remove("active"));
+            try {
 
-    if (button) {
-        button.classList.add("active");
-    }
+                const old =
+                    JSON.parse(
+                        localStorage.getItem(key)
+                    );
 
-    refreshPage(page);
-}
+                if (
+                    Array.isArray(old) &&
+                    old.length
+                ) {
 
+                    swimmers =
+                        old.map(normalizeSwimmer);
 
-function refreshPage(page) {
+                    break;
+                }
 
-    if (page === "varodd") {
-        renderResults("Varodd SK");
-    }
+            } catch {}
 
-    if (page === "vagsbygd") {
-        renderResults("Vågsbygd SLK");
-    }
-
-    if (page === "svommere") {
-        renderSwimmers();
-    }
-
-    if (page === "grafer") {
-        renderGraphs();
-    }
-}
-
-
-/* ==================================================
-   NAVN - VIKTIG
-================================================== */
-
-/*
-   Gjør alle disse til samme søkenøkkel:
-
-   Sophie Amundsen
-   sophie amundsen
-   Amundsen, Sophie
-   AMUNDSEN, SOPHIE
-*/
-
-function normalizeName(name) {
-
-    if (!name) {
-        return "";
-    }
-
-    let value = String(name)
-        .trim()
-        .replace(/\s+/g, " ");
-
-    /*
-       Fjern punktum
-    */
-
-    value = value.replace(/\./g, "");
-
-    /*
-       Hvis Excel bruker:
-
-       Etternavn, Fornavn
-    */
-
-    if (value.includes(",")) {
-
-        const parts = value
-            .split(",")
-            .map(x => x.trim())
-            .filter(Boolean);
-
-        if (parts.length >= 2) {
-
-            value =
-                parts
-                    .slice(1)
-                    .join(" ") +
-                " " +
-                parts[0];
         }
+
     }
 
-    return value
-        .toLowerCase()
-        .normalize("NFD")
-        .replace(/[\u0300-\u036f]/g, "")
-        .replace(/[^a-z0-9 ]/g, "")
-        .replace(/\s+/g, " ")
-        .trim();
+
+    const possibleResultKeys = [
+        "swommehub_results",
+        "svommehub_results",
+        "results",
+        "resultater"
+    ];
+
+    if (
+        results.length === 0
+    ) {
+
+        for (
+            const key of possibleResultKeys
+        ) {
+
+            try {
+
+                const old =
+                    JSON.parse(
+                        localStorage.getItem(key)
+                    );
+
+                if (
+                    Array.isArray(old) &&
+                    old.length
+                ) {
+
+                    results =
+                        old.map(normalizeResult);
+
+                    break;
+                }
+
+            } catch {}
+
+        }
+
+    }
+
+
+    swimmers =
+        swimmers.map(normalizeSwimmer);
+
+    results =
+        results.map(normalizeResult);
+
+    saveData();
 }
 
 
-/* ==================================================
-   FINN SVØMMER
-================================================== */
+/* =========================================================
+   NORMALISERING
+========================================================= */
 
-function findSwimmerByName(name, club = "") {
+function normalizeSwimmer(s) {
 
-    const normalized = normalizeName(name);
+    return {
 
-    if (!normalized) {
-        return null;
-    }
+        id:
+            s.id ||
+            createId(),
 
-    /*
-       Først forsøker vi eksakt normalisert navn.
-    */
+        navn:
+            cleanName(
+                s.navn ||
+                s.name ||
+                ""
+            ),
 
-    let found = swimmers.find(
-        s => normalizeName(s.name) === normalized
-    );
+        klubb:
+            s.klubb ||
+            s.club ||
+            "",
 
-    if (found) {
-        return found;
-    }
-
-    /*
-       Ekstra kontroll dersom klubb finnes.
-    */
-
-    if (club) {
-
-        found = swimmers.find(
-            s =>
-                normalizeName(s.name) === normalized &&
-                s.club === club
-        );
-
-        if (found) {
-            return found;
-        }
-    }
-
-    return null;
-}
-
-
-/* ==================================================
-   OPPRETT NY SVØMMER
-================================================== */
-
-function createSwimmer(name, club, year = "") {
-
-    const existing =
-        findSwimmerByName(name, club);
-
-    if (existing) {
-        return existing;
-    }
-
-    /*
-       Forsøk å gjøre Excel-navnet pent.
-    */
-
-    let cleanName = String(name || "")
-        .trim()
-        .replace(/\s+/g, " ");
-
-    if (cleanName.includes(",")) {
-
-        const parts = cleanName
-            .split(",")
-            .map(x => x.trim());
-
-        if (parts.length >= 2) {
-
-            cleanName =
-                parts.slice(1).join(" ") +
-                " " +
-                parts[0];
-        }
-    }
-
-    const swimmer = {
-
-        id: createId("swimmer"),
-
-        name: cleanName,
-
-        club: club || "",
-
-        year:
-            year !== undefined &&
-            year !== null &&
-            year !== ""
-                ? String(year)
-                : "",
+        arsklasse:
+            s.arsklasse ||
+            s.årsklasse ||
+            s.year ||
+            "",
 
         createdAt:
+            s.createdAt ||
             new Date().toISOString()
 
     };
 
-    swimmers.push(swimmer);
-
-    return swimmer;
 }
 
 
-/* ==================================================
-   REKONSTRUKSJON AV GAMLE RESULTATER
-================================================== */
+function normalizeResult(r) {
 
-function relinkResults() {
+    return {
 
-    let changed = false;
+        id:
+            r.id ||
+            createId(),
 
-    results.forEach(result => {
+        swimmerId:
+            r.swimmerId ||
+            r.svømmerId ||
+            "",
 
-        /*
-           Dersom resultatet allerede har swimmerId,
-           behold koblingen.
-        */
+        navn:
+            cleanName(
+                r.navn ||
+                r.name ||
+                ""
+            ),
 
-        if (result.swimmerId) {
+        klubb:
+            r.klubb ||
+            r.club ||
+            "",
 
-            const swimmer =
-                swimmers.find(
-                    s => s.id === result.swimmerId
-                );
+        dato:
+            normalizeDate(
+                r.dato ||
+                r.date
+            ),
 
-            if (swimmer) {
+        ovelse:
+            r.ovelse ||
+            r.øvelse ||
+            r.event ||
+            "",
 
-                /*
-                   Oppdater klubb dersom resultatet mangler.
-                */
+        basseng:
+            normalizePool(
+                r.basseng ||
+                r.pool ||
+                r.banelengde
+            ),
 
-                if (!result.club && swimmer.club) {
+        tid:
+            r.tid ||
+            r.time ||
+            "",
 
-                    result.club = swimmer.club;
+        sekunder:
+            parseTimeToSeconds(
+                r.tid ||
+                r.time
+            ),
 
-                    changed = true;
-                }
+        poeng:
+            numberOrZero(
+                r.poeng ||
+                r.fina ||
+                r.points
+            ),
 
-                return;
-            }
+        importedAt:
+            r.importedAt ||
+            new Date().toISOString()
+
+    };
+
+}
+
+
+/* =========================================================
+   ID
+========================================================= */
+
+function createId() {
+
+    return (
+        Date.now().toString(36) +
+        Math.random()
+            .toString(36)
+            .substring(2, 9)
+    );
+
+}
+
+
+/* =========================================================
+   NAVN
+========================================================= */
+
+function cleanName(name) {
+
+    return String(name || "")
+        .replace(/\s+/g, " ")
+        .trim();
+
+}
+
+
+function nameKey(name) {
+
+    let n =
+        cleanName(name)
+            .toLowerCase()
+            .normalize("NFD")
+            .replace(/[\u0300-\u036f]/g, "");
+
+    n =
+        n.replace(/[.,]/g, " ")
+         .replace(/\s+/g, " ")
+         .trim();
+
+    return n;
+
+}
+
+
+function nameParts(name) {
+
+    return nameKey(name)
+        .split(" ")
+        .filter(Boolean);
+
+}
+
+
+/*
+   Denne funksjonen håndterer både:
+
+   Ola Nordmann
+   Nordmann, Ola
+   nordmann ola
+*/
+
+function namesMatch(a, b) {
+
+    if (!a || !b)
+        return false;
+
+    const ak =
+        nameKey(a);
+
+    const bk =
+        nameKey(b);
+
+    if (!ak || !bk)
+        return false;
+
+    if (ak === bk)
+        return true;
+
+
+    const ap =
+        nameParts(a);
+
+    const bp =
+        nameParts(b);
+
+    if (
+        ap.length === 2 &&
+        bp.length === 2
+    ) {
+
+        if (
+            ap[0] === bp[1] &&
+            ap[1] === bp[0]
+        ) {
+            return true;
         }
 
-        /*
-           Gamle data kan ha name/navn.
-        */
+    }
 
-        const name =
-            result.name ||
-            result.navn ||
-            "";
 
-        if (!name) {
-            return;
-        }
+    return false;
 
-        const swimmer =
-            findSwimmerByName(
-                name,
-                result.club || ""
+}
+
+
+/* =========================================================
+   FINN SVØMMER
+========================================================= */
+
+function findSwimmer(name, club) {
+
+    /*
+       Først forsøker vi eksakt navn.
+    */
+
+    let found =
+        swimmers.find(
+            s =>
+                namesMatch(
+                    s.navn,
+                    name
+                )
+        );
+
+    if (found)
+        return found;
+
+
+    /*
+       Deretter navn + klubb.
+       Dette gir ekstra sikkerhet dersom
+       to klubber har samme navn.
+    */
+
+    if (club) {
+
+        found =
+            swimmers.find(
+                s =>
+                    namesMatch(
+                        s.navn,
+                        name
+                    ) &&
+                    normalizeClub(
+                        s.klubb
+                    ) ===
+                    normalizeClub(club)
             );
 
-        if (swimmer) {
+        if (found)
+            return found;
 
-            result.swimmerId = swimmer.id;
-
-            result.name = swimmer.name;
-
-            result.navn = swimmer.name;
-
-            result.club = swimmer.club;
-
-            changed = true;
-        }
-
-    });
-
-    if (changed) {
-        saveData();
     }
+
+
+    return null;
+
 }
 
 
-/* ==================================================
-   SVØMMERREGISTER
-================================================== */
+/* =========================================================
+   KLUBB
+========================================================= */
 
-function renderSwimmers() {
+function normalizeClub(club) {
+
+    const c =
+        String(club || "")
+            .toLowerCase()
+            .trim();
+
+    if (
+        c.includes("varodd")
+    )
+        return "varodd";
+
+    if (
+        c.includes("vågsbygd") ||
+        c.includes("vagsbygd")
+    )
+        return "vagsbygd";
+
+    return c;
+
+}
+
+
+function standardClub(club) {
+
+    const c =
+        normalizeClub(club);
+
+    if (c === "varodd")
+        return "Varodd Svømmeklubb";
+
+    if (c === "vagsbygd")
+        return "Vågsbygd SLK";
+
+    return club || "";
+
+}
+
+
+/* =========================================================
+   DATO
+========================================================= */
+
+function normalizeDate(value) {
+
+    if (!value)
+        return "";
+
+    if (
+        value instanceof Date
+    ) {
+
+        return value
+            .toISOString()
+            .slice(0,10);
+
+    }
+
+
+    if (
+        typeof value === "number"
+    ) {
+
+        /*
+           Excel serialdato.
+        */
+
+        const date =
+            XLSX.SSF.parse_date_code(
+                value
+            );
+
+        if (date) {
+
+            return [
+                date.y,
+                String(date.m).padStart(2,"0"),
+                String(date.d).padStart(2,"0")
+            ].join("-");
+
+        }
+
+    }
+
+
+    let s =
+        String(value)
+            .trim();
+
+    /*
+       dd.mm.yyyy
+    */
+
+    let m =
+        s.match(
+            /^(\d{1,2})[./-](\d{1,2})[./-](\d{4})$/
+        );
+
+    if (m) {
+
+        return [
+            m[3],
+            String(m[2]).padStart(2,"0"),
+            String(m[1]).padStart(2,"0")
+        ].join("-");
+
+    }
+
+
+    const d =
+        new Date(s);
+
+    if (!isNaN(d)) {
+
+        return d
+            .toISOString()
+            .slice(0,10);
+
+    }
+
+
+    return s;
+
+}
+
+
+/* =========================================================
+   BASSENG
+========================================================= */
+
+function normalizePool(value) {
+
+    const s =
+        String(value || "")
+            .toLowerCase();
+
+    if (
+        s.includes("50")
+    )
+        return "50m";
+
+    return "25m";
+
+}
+
+
+/* =========================================================
+   TID
+========================================================= */
+
+function parseTimeToSeconds(value) {
+
+    if (
+        value === null ||
+        value === undefined ||
+        value === ""
+    )
+        return 0;
+
+
+    if (
+        typeof value === "number"
+    )
+        return value;
+
+
+    let s =
+        String(value)
+            .trim()
+            .replace(",", ".");
+
+
+    /*
+       mm:ss.xx
+    */
+
+    if (
+        s.includes(":")
+    ) {
+
+        const p =
+            s.split(":");
+
+        if (
+            p.length === 2
+        ) {
+
+            const min =
+                parseFloat(p[0]);
+
+            const sec =
+                parseFloat(p[1]);
+
+            if (
+                !isNaN(min) &&
+                !isNaN(sec)
+            )
+                return min * 60 + sec;
+
+        }
+
+    }
+
+
+    /*
+       Kun sekunder
+    */
+
+    const n =
+        parseFloat(s);
+
+    return isNaN(n)
+        ? 0
+        : n;
+
+}
+
+
+function numberOrZero(v) {
+
+    const n =
+        parseFloat(
+            String(v || "")
+                .replace(",", ".")
+        );
+
+    return isNaN(n)
+        ? 0
+        : n;
+
+}
+
+
+/* =========================================================
+   TID FORMAT
+========================================================= */
+
+function formatSeconds(sec) {
+
+    if (
+        !sec ||
+        sec <= 0
+    )
+        return "-";
+
+
+    if (
+        sec >= 60
+    ) {
+
+        const min =
+            Math.floor(sec / 60);
+
+        const rest =
+            sec - min * 60;
+
+        return (
+            min +
+            ":" +
+            rest
+                .toFixed(2)
+                .padStart(5,"0")
+        );
+
+    }
+
+
+    return sec.toFixed(2);
+
+}
+
+
+/* =========================================================
+   12 MÅNEDER
+========================================================= */
+
+function isWithin12Months(dateString) {
+
+    if (!dateString)
+        return false;
+
+    const date =
+        new Date(dateString);
+
+    if (
+        isNaN(date)
+    )
+        return false;
+
+    const now =
+        new Date();
+
+    const ago =
+        new Date();
+
+    ago.setFullYear(
+        now.getFullYear() - 1
+    );
+
+    return (
+        date >= ago &&
+        date <= now
+    );
+
+}
+
+
+/* =========================================================
+   NAVIGASJON
+========================================================= */
+
+function showPage(page, button) {
+
+    document
+        .querySelectorAll(".page")
+        .forEach(
+            p =>
+                p.classList.remove(
+                    "active"
+                )
+        );
+
+
+    document
+        .getElementById(
+            "page-" + page
+        )
+        .classList.add("active");
+
+
+    document
+        .querySelectorAll(".nav button")
+        .forEach(
+            b =>
+                b.classList.remove(
+                    "active"
+                )
+        );
+
+
+    if (button)
+        button.classList.add("active");
+
+
+    renderAll();
+
+}
+
+
+/* =========================================================
+   KLUBBRESULTATER
+========================================================= */
+
+function renderClub(club) {
+
+    const tableId =
+        club === "Varodd Svømmeklubb"
+            ? "table-varodd"
+            : "table-vagsbygd";
+
+
+    const searchId =
+        club === "Varodd Svømmeklubb"
+            ? "search-varodd"
+            : "search-vagsbygd";
+
 
     const tbody =
-        document.getElementById("swimmersTable");
+        document.getElementById(
+            tableId
+        );
+
 
     const search =
         (
             document.getElementById(
-                "searchSwimmers"
-            )?.value || ""
-        ).toLowerCase();
+                searchId
+            ).value || ""
+        )
+        .toLowerCase();
 
-    const club =
-        document.getElementById(
-            "filterClub"
-        )?.value || "alle";
 
-    const filtered =
-        swimmers
-            .filter(s => {
-
-                const nameMatch =
-                    s.name
+    const data =
+        results
+            .filter(
+                r =>
+                    normalizeClub(r.klubb) ===
+                    normalizeClub(club)
+            )
+            .filter(
+                r =>
+                    isWithin12Months(
+                        r.dato
+                    )
+            )
+            .filter(
+                r =>
+                    !search ||
+                    r.navn
                         .toLowerCase()
-                        .includes(search);
-
-                const clubMatch =
-                    club === "alle" ||
-                    s.club === club;
-
-                return nameMatch && clubMatch;
-            })
-            .sort((a,b) =>
-                a.name.localeCompare(
-                    b.name,
-                    "no"
-                )
+                        .includes(search) ||
+                    r.ovelse
+                        .toLowerCase()
+                        .includes(search)
+            )
+            .sort(
+                (a,b) =>
+                    String(b.dato)
+                        .localeCompare(
+                            String(a.dato)
+                        )
             );
 
-    if (!filtered.length) {
+
+    if (!data.length) {
 
         tbody.innerHTML = `
             <tr>
-                <td colspan="5"
-                    style="text-align:center;padding:30px;">
-                    Ingen svømmere registrert.
+                <td colspan="6" class="empty">
+                    Ingen resultater funnet.
                 </td>
             </tr>
         `;
@@ -1514,40 +2020,158 @@ function renderSwimmers() {
         return;
     }
 
+
     tbody.innerHTML =
-        filtered
-        .map(swimmer => {
+        data.map(
+            r => {
 
-            const count =
-                results.filter(
-                    r =>
-                        r.swimmerId ===
-                        swimmer.id
-                ).length;
+                const swimmer =
+                    swimmers.find(
+                        s =>
+                            s.id ===
+                            r.swimmerId
+                    );
 
-            const badge =
-                swimmer.club === "Varodd SK"
-                    ? "badge-varodd"
-                    : "badge-vagsbygd";
 
-            return `
+                return `
                 <tr>
 
                     <td>
+                        ${escapeHtml(r.dato)}
+                    </td>
+
+                    <td>
                         <strong>
-                            ${escapeHTML(swimmer.name)}
+                            ${escapeHtml(
+                                swimmer
+                                    ? swimmer.navn
+                                    : r.navn
+                            )}
                         </strong>
                     </td>
 
                     <td>
-                        <span class="badge ${badge}">
-                            ${escapeHTML(swimmer.club || "-")}
-                        </span>
+                        ${escapeHtml(r.ovelse)}
                     </td>
 
                     <td>
-                        ${escapeHTML(
-                            swimmer.year || "Ikke registrert"
+
+                        <span class="badge ${
+                            r.basseng === "50m"
+                                ? "purple"
+                                : "blue"
+                        }">
+
+                            ${r.basseng}
+
+                        </span>
+
+                    </td>
+
+                    <td>
+                        <strong>
+                            ${escapeHtml(r.tid)}
+                        </strong>
+                    </td>
+
+                    <td>
+                        ${r.poeng || 0}
+                    </td>
+
+                </tr>
+                `;
+
+            }
+        )
+        .join("");
+
+}
+
+
+/* =========================================================
+   SVØMMERE
+========================================================= */
+
+function renderSwimmers() {
+
+    const tbody =
+        document.getElementById(
+            "swimmer-table"
+        );
+
+
+    const search =
+        (
+            document.getElementById(
+                "search-swimmers"
+            )?.value || ""
+        )
+        .toLowerCase();
+
+
+    const data =
+        swimmers
+            .filter(
+                s =>
+                    !search ||
+                    s.navn
+                        .toLowerCase()
+                        .includes(search)
+            )
+            .sort(
+                (a,b) =>
+                    a.navn.localeCompare(
+                        b.navn,
+                        "no"
+                    )
+            );
+
+
+    if (!data.length) {
+
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="5" class="empty">
+                    Ingen registrerte svømmere.
+                </td>
+            </tr>
+        `;
+
+        return;
+
+    }
+
+
+    tbody.innerHTML =
+        data.map(
+            s => {
+
+                const count =
+                    results.filter(
+                        r =>
+                            r.swimmerId ===
+                            s.id
+                    ).length;
+
+
+                return `
+                <tr>
+
+                    <td>
+                        <strong>
+                            ${escapeHtml(s.navn)}
+                        </strong>
+                    </td>
+
+                    <td>
+                        ${escapeHtml(s.klubb)}
+                    </td>
+
+                    <td>
+                        ${escapeHtml(
+                            String(
+                                s.arsklasse || "-"
+                            )
                         )}
                     </td>
 
@@ -1558,228 +2182,323 @@ function renderSwimmers() {
                     <td>
 
                         <button
-                            class="primary"
-                            onclick="editSwimmer('${swimmer.id}')">
+                            class="secondary"
+                            onclick="editSwimmer('${s.id}')">
+                            Endre
+                        </button>
 
-                            Rediger
-
+                        <button
+                            class="danger"
+                            onclick="deleteSwimmer('${s.id}')">
+                            Slett
                         </button>
 
                     </td>
 
                 </tr>
-            `;
+                `;
 
-        })
+            }
+        )
         .join("");
+
 }
 
 
-/* ==================================================
-   SVØMMER MODAL
-================================================== */
+/* =========================================================
+   MANUELL SVØMMER
+========================================================= */
 
-function openSwimmerModal() {
+function openAddSwimmerModal() {
 
-    document
-        .getElementById("swimmerModal")
-        .classList.add("show");
+    editingSwimmerId =
+        null;
 
-    document
-        .getElementById("modalTitle")
-        .textContent =
+    document.getElementById(
+        "modal-title"
+    ).textContent =
         "Legg til svømmer";
 
-    document
-        .getElementById("editSwimmerId")
-        .value = "";
+
+    document.getElementById(
+        "form-name"
+    ).value = "";
+
+
+    document.getElementById(
+        "form-club"
+    ).value =
+        "Varodd Svømmeklubb";
+
+
+    document.getElementById(
+        "form-year"
+    ).value = "";
+
 
     document
-        .getElementById("swimmerName")
-        .value = "";
-
-    document
-        .getElementById("swimmerYear")
-        .value = "";
-
-}
-
-
-function closeSwimmerModal() {
-
-    document
-        .getElementById("swimmerModal")
-        .classList.remove("show");
+        .getElementById(
+            "swimmer-modal"
+        )
+        .classList.add("open");
 
 }
 
 
 function editSwimmer(id) {
 
-    const swimmer =
+    const s =
         swimmers.find(
-            s => s.id === id
+            x => x.id === id
         );
 
-    if (!swimmer) {
+    if (!s)
         return;
-    }
+
+
+    editingSwimmerId =
+        id;
+
+
+    document.getElementById(
+        "modal-title"
+    ).textContent =
+        "Endre svømmer";
+
+
+    document.getElementById(
+        "form-name"
+    ).value =
+        s.navn;
+
+
+    document.getElementById(
+        "form-club"
+    ).value =
+        standardClub(s.klubb);
+
+
+    document.getElementById(
+        "form-year"
+    ).value =
+        s.arsklasse || "";
+
 
     document
-        .getElementById("swimmerModal")
-        .classList.add("show");
-
-    document
-        .getElementById("modalTitle")
-        .textContent =
-        "Rediger svømmer";
-
-    document
-        .getElementById("editSwimmerId")
-        .value =
-        swimmer.id;
-
-    document
-        .getElementById("swimmerName")
-        .value =
-        swimmer.name;
-
-    document
-        .getElementById("swimmerClub")
-        .value =
-        swimmer.club;
-
-    document
-        .getElementById("swimmerYear")
-        .value =
-        swimmer.year || "";
+        .getElementById(
+            "swimmer-modal"
+        )
+        .classList.add("open");
 
 }
 
 
-function saveSwimmer() {
+function closeModal() {
 
-    const id =
-        document.getElementById(
-            "editSwimmerId"
-        ).value;
+    document
+        .getElementById(
+            "swimmer-modal"
+        )
+        .classList.remove("open");
+
+}
+
+
+function saveManualSwimmer() {
 
     const name =
-        document.getElementById(
-            "swimmerName"
-        ).value.trim();
+        cleanName(
+            document.getElementById(
+                "form-name"
+            ).value
+        );
+
 
     const club =
-        document.getElementById(
-            "swimmerClub"
-        ).value;
+        standardClub(
+            document.getElementById(
+                "form-club"
+            ).value
+        );
+
 
     const year =
         document.getElementById(
-            "swimmerYear"
-        ).value.trim();
+            "form-year"
+        ).value;
+
 
     if (!name) {
 
         alert(
-            "Du må skrive inn navn."
+            "Skriv inn navn."
         );
 
         return;
+
     }
 
-    if (id) {
 
-        const swimmer =
+    if (editingSwimmerId) {
+
+        const s =
             swimmers.find(
-                s => s.id === id
+                x =>
+                    x.id ===
+                    editingSwimmerId
             );
 
-        if (swimmer) {
+        if (s) {
 
-            swimmer.name = name;
-            swimmer.club = club;
-            swimmer.year = year;
+            s.navn = name;
+            s.klubb = club;
+            s.arsklasse = year;
 
         }
 
     } else {
 
-        createSwimmer(
-            name,
-            club,
-            year
-        );
+        /*
+           Viktig:
+           Dersom personen allerede finnes,
+           bruker vi eksisterende person.
+        */
+
+        const existing =
+            findSwimmer(
+                name,
+                club
+            );
+
+
+        if (existing) {
+
+            existing.klubb =
+                club;
+
+            existing.arsklasse =
+                year;
+
+        } else {
+
+            swimmers.push({
+
+                id:
+                    createId(),
+
+                navn:
+                    name,
+
+                klubb:
+                    club,
+
+                arsklasse:
+                    year,
+
+                createdAt:
+                    new Date().toISOString()
+
+            });
+
+        }
 
     }
 
+
     saveData();
 
-    closeSwimmerModal();
+    closeModal();
 
-    renderSwimmers();
-
-    renderResults("Varodd SK");
-    renderResults("Vågsbygd SLK");
+    renderAll();
 
 }
 
 
-/* ==================================================
+/* =========================================================
+   SLETT SVØMMER
+========================================================= */
+
+function deleteSwimmer(id) {
+
+    const s =
+        swimmers.find(
+            x => x.id === id
+        );
+
+    if (!s)
+        return;
+
+
+    if (
+        !confirm(
+            `Slette ${s.navn}? Resultatene beholdes.`
+        )
+    )
+        return;
+
+
+    swimmers =
+        swimmers.filter(
+            x => x.id !== id
+        );
+
+
+    /*
+       Resultatene beholdes med gammel ID.
+       Dette gjør at data ikke forsvinner.
+    */
+
+    saveData();
+
+    renderAll();
+
+}
+
+
+/* =========================================================
    EXCEL IMPORT
-================================================== */
+========================================================= */
 
-async function importExcel() {
+document
+    .getElementById(
+        "excel-file"
+    )
+    .addEventListener(
+        "change",
+        handleExcel
+    );
 
-    const fileInput =
-        document.getElementById(
-            "excelFile"
-        );
 
-    const status =
-        document.getElementById(
-            "importStatus"
-        );
+async function handleExcel(event) {
 
     const file =
-        fileInput.files[0];
+        event.target.files[0];
 
-    if (!file) {
-
-        alert(
-            "Velg en Excel-fil først."
-        );
-
+    if (!file)
         return;
-    }
 
-    const club =
-        document.querySelector(
-            'input[name="importClub"]:checked'
-        ).value;
-
-    status.classList.add("show");
-
-    status.innerHTML =
-        "⏳ Leser Excel-filen...";
 
     try {
 
         const buffer =
             await file.arrayBuffer();
 
+
         const workbook =
             XLSX.read(
                 buffer,
                 {
-                    type: "array"
+                    type: "array",
+                    cellDates: true
                 }
             );
+
 
         const sheet =
             workbook.Sheets[
                 workbook.SheetNames[0]
             ];
+
 
         const rows =
             XLSX.utils.sheet_to_json(
@@ -1789,1107 +2508,1401 @@ async function importExcel() {
                 }
             );
 
+
         if (!rows.length) {
 
-            throw new Error(
-                "Excel-filen inneholder ingen rader."
+            alert(
+                "Excel-filen inneholder ingen data."
             );
+
+            return;
+
         }
 
-        let imported = 0;
-        let linked = 0;
-        let created = 0;
-        let skipped = 0;
 
-        /*
-           Først forsøker vi å koble gamle
-           resultater som mangler kobling.
-        */
+        importRows(rows);
 
-        relinkResults();
 
-        rows.forEach(row => {
-
-            const mapped =
-                mapExcelRow(row);
-
-            if (!mapped.name) {
-
-                skipped++;
-
-                return;
-            }
-
-            /*
-               Finn eksisterende svømmer.
-            */
-
-            let swimmer =
-                findSwimmerByName(
-                    mapped.name,
-                    club
-                );
-
-            /*
-               Hvis ikke funnet:
-               opprett automatisk.
-            */
-
-            if (!swimmer) {
-
-                swimmer =
-                    createSwimmer(
-                        mapped.name,
-                        club,
-                        mapped.year
-                    );
-
-                created++;
-
-            } else {
-
-                linked++;
-
-                /*
-                   Hvis årsklasse mangler
-                   og Excel har en verdi,
-                   oppdater.
-                */
-
-                if (
-                    !swimmer.year &&
-                    mapped.year
-                ) {
-
-                    swimmer.year =
-                        mapped.year;
-                }
-
-                /*
-                   Dersom klubben mangler
-                   på eksisterende svømmer.
-                */
-
-                if (
-                    !swimmer.club &&
-                    club
-                ) {
-
-                    swimmer.club = club;
-                }
-            }
-
-            /*
-               Lag resultat.
-            */
-
-            const result = {
-
-                id:
-                    createId("result"),
-
-                swimmerId:
-                    swimmer.id,
-
-                name:
-                    swimmer.name,
-
-                navn:
-                    swimmer.name,
-
-                club:
-                    swimmer.club || club,
-
-                klubb:
-                    swimmer.club || club,
-
-                date:
-                    mapped.date,
-
-                dato:
-                    mapped.date,
-
-                event:
-                    mapped.event,
-
-                ovelse:
-                    mapped.event,
-
-                pool:
-                    mapped.pool,
-
-                basseng:
-                    mapped.pool,
-
-                time:
-                    mapped.time,
-
-                tid:
-                    mapped.time,
-
-                points:
-                    mapped.points,
-
-                fina:
-                    mapped.points,
-
-                importedAt:
-                    new Date().toISOString()
-
-            };
-
-            results.push(result);
-
-            imported++;
-
-        });
-
-        /*
-           Lagre alt.
-        */
-
-        saveData();
-
-        /*
-           Koble alle gamle resultater
-           på nytt etter import.
-        */
-
-        relinkResults();
-
-        status.innerHTML = `
-            <strong>✅ Import ferdig</strong><br><br>
-
-            ${imported}
-            resultater importert<br>
-
-            ${linked}
-            eksisterende svømmere koblet<br>
-
-            ${created}
-            nye svømmere opprettet<br>
-
-            ${skipped}
-            rader hoppet over
-        `;
-
-        renderSwimmers();
-
-        renderResults("Varodd SK");
-        renderResults("Vågsbygd SLK");
-
-    } catch (error) {
+    } catch(error) {
 
         console.error(error);
 
-        status.innerHTML = `
-            <strong>❌ Import feilet</strong><br><br>
-
-            ${escapeHTML(
-                error.message
-            )}
-        `;
+        alert(
+            "Kunne ikke lese Excel-filen."
+        );
 
     }
 
 }
 
 
-/* ==================================================
-   EXCEL-KOLONNER
-================================================== */
+/* =========================================================
+   EXCEL FELT
+========================================================= */
 
 function findColumn(row, names) {
 
     const keys =
         Object.keys(row);
 
-    for (const wanted of names) {
 
-        const found =
+    for (
+        const wanted of names
+    ) {
+
+        const exact =
             keys.find(
                 key =>
-                    normalizeHeader(key) ===
-                    normalizeHeader(wanted)
+                    key
+                        .toLowerCase()
+                        .trim() ===
+                    wanted
+                        .toLowerCase()
+                        .trim()
             );
 
-        if (found !== undefined) {
 
-            return row[found];
+        if (exact)
+            return row[exact];
+
+    }
+
+
+    /*
+       Fuzzy matching.
+    */
+
+    for (
+        const key of keys
+    ) {
+
+        const normalized =
+            key
+                .toLowerCase()
+                .replace(/\s+/g, " ")
+                .trim();
+
+
+        for (
+            const wanted of names
+        ) {
+
+            if (
+                normalized.includes(
+                    wanted
+                        .toLowerCase()
+                        .trim()
+                )
+            )
+                return row[key];
+
         }
 
     }
 
+
     return "";
+
 }
 
 
-function normalizeHeader(value) {
+/* =========================================================
+   IMPORT ROWS
+========================================================= */
 
-    return String(value || "")
-        .toLowerCase()
-        .trim()
-        .replace(/\s+/g, " ")
-        .replace(/[._-]/g, "");
+function importRows(rows) {
+
+    let imported = 0;
+    let duplicates = 0;
+    let existingSwimmers = 0;
+    let newSwimmers = 0;
+
+
+    const newlyFound =
+        new Map();
+
+
+    rows.forEach(
+        row => {
+
+            const name =
+                cleanName(
+                    findColumn(
+                        row,
+                        [
+                            "Navn",
+                            "Name",
+                            "Svømmer",
+                            "Swimmer",
+                            "Utøver",
+                            "Navn på svømmer"
+                        ]
+                    )
+                );
+
+
+            if (!name)
+                return;
+
+
+            const club =
+                standardClub(
+                    findColumn(
+                        row,
+                        [
+                            "Klubb",
+                            "Club",
+                            "Lag"
+                        ]
+                    )
+                );
+
+
+            const date =
+                normalizeDate(
+                    findColumn(
+                        row,
+                        [
+                            "Dato",
+                            "Date"
+                        ]
+                    )
+                );
+
+
+            const event =
+                cleanName(
+                    findColumn(
+                        row,
+                        [
+                            "Øvelse",
+                            "Ovelse",
+                            "Event",
+                            "Disiplin"
+                        ]
+                    )
+                );
+
+
+            const pool =
+                normalizePool(
+                    findColumn(
+                        row,
+                        [
+                            "Basseng",
+                            "Banelengde",
+                            "Pool",
+                            "Lengde"
+                        ]
+                    )
+                );
+
+
+            const time =
+                findColumn(
+                    row,
+                    [
+                        "Tid",
+                        "Time",
+                        "Resultat"
+                    ]
+                );
+
+
+            const points =
+                numberOrZero(
+                    findColumn(
+                        row,
+                        [
+                            "FINA",
+                            "Poeng",
+                            "Points",
+                            "Fina poeng"
+                        ]
+                    )
+                );
+
+
+            if (
+                !event ||
+                !time
+            )
+                return;
+
+
+            /*
+               Finn eksisterende svømmer.
+            */
+
+            let swimmer =
+                findSwimmer(
+                    name,
+                    club
+                );
+
+
+            if (swimmer) {
+
+                existingSwimmers++;
+
+
+                /*
+                   Dersom Excel har klubb
+                   og registeret mangler klubb,
+                   oppdaterer vi klubben.
+                */
+
+                if (
+                    club &&
+                    !swimmer.klubb
+                )
+                    swimmer.klubb =
+                        club;
+
+            } else {
+
+                /*
+                   Ikke opprett svømmeren
+                   automatisk ennå.
+
+                   Legg vedkommende i
+                   ventelisten.
+                */
+
+                const key =
+                    nameKey(name);
+
+
+                if (
+                    !newlyFound.has(key)
+                ) {
+
+                    newlyFound.set(
+                        key,
+                        {
+
+                            tempId:
+                                createId(),
+
+                            navn:
+                                name,
+
+                            klubb:
+                                club,
+
+                            arsklasse:
+                                "",
+
+                            results: []
+
+                        }
+                    );
+
+                }
+
+                const pending =
+                    newlyFound.get(key);
+
+                pending.results.push({
+
+                    navn:
+                        name,
+
+                    klubb:
+                        club,
+
+                    dato:
+                        date,
+
+                    ovelse:
+                        event,
+
+                    basseng:
+                        pool,
+
+                    tid:
+                        String(time),
+
+                    sekunder:
+                        parseTimeToSeconds(
+                            time
+                        ),
+
+                    poeng:
+                        points
+
+                });
+
+
+                return;
+
+            }
+
+
+            /*
+               Dersom eksisterende svømmer:
+               legg resultatet direkte på ID.
+            */
+
+            const result =
+                buildResult(
+                    swimmer,
+                    {
+                        name,
+                        club,
+                        date,
+                        event,
+                        pool,
+                        time,
+                        points
+                    }
+                );
+
+
+            /*
+               Dobbeltkontroll.
+            */
+
+            if (
+                resultExists(result)
+            ) {
+
+                duplicates++;
+
+            } else {
+
+                results.push(result);
+
+                imported++;
+
+            }
+
+        }
+    );
+
+
+    /*
+       Legg nye svømmere i ventelisten.
+    */
+
+    newlyFound.forEach(
+        person => {
+
+            const alreadyPending =
+                pendingNewSwimmers.find(
+                    p =>
+                        namesMatch(
+                            p.navn,
+                            person.navn
+                        )
+                );
+
+
+            if (!alreadyPending) {
+
+                pendingNewSwimmers.push(
+                    person
+                );
+
+                newSwimmers++;
+
+            }
+
+        }
+    );
+
+
+    saveData();
+
+    showImportSummary(
+        imported,
+        duplicates,
+        existingSwimmers,
+        newSwimmers
+    );
+
+    renderPendingNewSwimmers();
+
+    renderAll();
+
+
+    /*
+       Gå automatisk til importfanen.
+    */
+
+    showPage(
+        "import",
+        document.querySelector(
+            ".nav button:nth-child(4)"
+        )
+    );
+
 }
 
 
-function mapExcelRow(row) {
+/* =========================================================
+   BYGG RESULTAT
+========================================================= */
 
-    const name =
-        findColumn(
-            row,
-            [
-                "Navn",
-                "Name",
-                "Svømmer",
-                "Svømmer navn",
-                "Swimmer"
-            ]
-        );
-
-    const event =
-        findColumn(
-            row,
-            [
-                "Øvelse",
-                "Ovelse",
-                "Event",
-                "Disiplin"
-            ]
-        );
-
-    const time =
-        findColumn(
-            row,
-            [
-                "Tid",
-                "Time",
-                "Resultat",
-                "Result"
-            ]
-        );
-
-    const pool =
-        findColumn(
-            row,
-            [
-                "Basseng",
-                "Bane",
-                "Bassenglengde",
-                "Pool",
-                "Pool Length"
-            ]
-        );
-
-    const points =
-        findColumn(
-            row,
-            [
-                "Poeng",
-                "FINA",
-                "Fina",
-                "FINA points",
-                "Points"
-            ]
-        );
-
-    const date =
-        findColumn(
-            row,
-            [
-                "Dato",
-                "Date",
-                "Stevnedato"
-            ]
-        );
-
-    const year =
-        findColumn(
-            row,
-            [
-                "Årsklasse",
-                "Arsklasse",
-                "Year",
-                "Birth Year",
-                "Født"
-            ]
-        );
+function buildResult(
+    swimmer,
+    data
+) {
 
     return {
 
-        name:
-            String(name || "").trim(),
+        id:
+            createId(),
 
-        event:
-            String(event || "").trim(),
+        swimmerId:
+            swimmer.id,
 
-        time:
-            String(time || "").trim(),
+        navn:
+            swimmer.navn,
 
-        pool:
-            normalizePool(pool),
+        klubb:
+            swimmer.klubb,
 
-        points:
-            String(points || "").trim(),
+        dato:
+            data.date,
 
-        date:
-            normalizeDate(date),
+        ovelse:
+            data.event,
 
-        year:
-            String(year || "").trim()
+        basseng:
+            data.pool,
+
+        tid:
+            String(data.time),
+
+        sekunder:
+            parseTimeToSeconds(
+                data.time
+            ),
+
+        poeng:
+            data.points || 0,
+
+        importedAt:
+            new Date().toISOString()
 
     };
 
 }
 
 
-/* ==================================================
-   BASSENG
-================================================== */
+/* =========================================================
+   DUPLIKAT
+========================================================= */
 
-function normalizePool(value) {
+function resultExists(newResult) {
 
-    const v =
-        String(value || "")
-            .toLowerCase()
-            .replace(/\s/g, "");
+    return results.some(
+        r => {
 
-    if (
-        v.includes("50") ||
-        v.includes("lang")
-    ) {
+            /*
+               Samme svømmer
+            */
 
-        return "50m";
+            if (
+                r.swimmerId !==
+                newResult.swimmerId
+            )
+                return false;
 
-    }
 
-    return "25m";
-}
+            /*
+               Samme dato
+            */
 
+            if (
+                r.dato !==
+                newResult.dato
+            )
+                return false;
 
-/* ==================================================
-   DATO
-================================================== */
 
-function normalizeDate(value) {
+            /*
+               Samme øvelse
+            */
 
-    if (!value) {
+            if (
+                nameKey(r.ovelse) !==
+                nameKey(newResult.ovelse)
+            )
+                return false;
 
-        return new Date()
-            .toISOString()
-            .slice(0,10);
-    }
 
-    if (
-        Object.prototype.toString.call(value) ===
-        "[object Date]"
-    ) {
+            /*
+               Samme basseng
+            */
 
-        return value
-            .toISOString()
-            .slice(0,10);
-    }
+            if (
+                r.basseng !==
+                newResult.basseng
+            )
+                return false;
 
-    /*
-       Excel serial date
-    */
 
-    if (
-        typeof value === "number" &&
-        value > 20000
-    ) {
+            /*
+               Samme tid
+            */
 
-        const date =
-            new Date(
-                Math.round(
-                    (value - 25569) *
-                    86400 *
-                    1000
-                )
-            );
+            if (
+                r.sekunder !==
+                newResult.sekunder
+            )
+                return false;
 
-        return date
-            .toISOString()
-            .slice(0,10);
-    }
 
-    return String(value).trim();
+            return true;
 
-}
-
-
-/* ==================================================
-   SISTE 12 MÅNEDER
-================================================== */
-
-function isWithin12Months(dateString) {
-
-    if (!dateString) {
-        return true;
-    }
-
-    const date =
-        new Date(dateString);
-
-    if (
-        Number.isNaN(
-            date.getTime()
-        )
-    ) {
-
-        return true;
-    }
-
-    const now =
-        new Date();
-
-    const limit =
-        new Date();
-
-    limit.setMonth(
-        limit.getMonth() - 12
-    );
-
-    return (
-        date >= limit &&
-        date <= now
-    );
-}
-
-
-/* ==================================================
-   RESULTATER
-================================================== */
-
-function renderResults(club) {
-
-    const tableId =
-        club === "Varodd SK"
-            ? "varoddResultsTable"
-            : "vagsbygdResultsTable";
-
-    const searchId =
-        club === "Varodd SK"
-            ? "searchVarodd"
-            : "searchVagsbygd";
-
-    const tbody =
-        document.getElementById(
-            tableId
-        );
-
-    const search =
-        (
-            document.getElementById(
-                searchId
-            )?.value || ""
-        ).toLowerCase();
-
-    const filtered =
-        results
-            .filter(r => {
-
-                const resultClub =
-                    r.club ||
-                    r.klubb ||
-                    "";
-
-                if (
-                    resultClub !== club
-                ) {
-
-                    return false;
-                }
-
-                if (
-                    !isWithin12Months(
-                        r.date || r.dato
-                    )
-                ) {
-
-                    return false;
-                }
-
-                const name =
-                    r.name ||
-                    r.navn ||
-                    "";
-
-                const event =
-                    r.event ||
-                    r.ovelse ||
-                    "";
-
-                return (
-                    name
-                        .toLowerCase()
-                        .includes(search) ||
-                    event
-                        .toLowerCase()
-                        .includes(search)
-                );
-
-            })
-            .sort(
-                (a,b) =>
-                    String(
-                        b.date ||
-                        b.dato ||
-                        ""
-                    ).localeCompare(
-                        String(
-                            a.date ||
-                            a.dato ||
-                            ""
-                        )
-                    )
-            );
-
-    if (!filtered.length) {
-
-        tbody.innerHTML = `
-            <tr>
-                <td colspan="6"
-                    style="text-align:center;padding:30px;">
-                    Ingen resultater funnet.
-                </td>
-            </tr>
-        `;
-
-        updateClubStats(
-            club,
-            []
-        );
-
-        return;
-    }
-
-    tbody.innerHTML =
-        filtered
-        .map(r => {
-
-            const pool =
-                r.pool ||
-                r.basseng ||
-                "25m";
-
-            const badge =
-                pool === "50m"
-                    ? "badge-50"
-                    : "badge-25";
-
-            return `
-                <tr>
-
-                    <td>
-                        ${escapeHTML(
-                            r.date ||
-                            r.dato ||
-                            "-"
-                        )}
-                    </td>
-
-                    <td>
-                        <strong>
-                            ${escapeHTML(
-                                r.name ||
-                                r.navn ||
-                                "-"
-                            )}
-                        </strong>
-                    </td>
-
-                    <td>
-                        ${escapeHTML(
-                            r.event ||
-                            r.ovelse ||
-                            "-"
-                        )}
-                    </td>
-
-                    <td>
-                        <span class="badge ${badge}">
-                            ${escapeHTML(pool)}
-                        </span>
-                    </td>
-
-                    <td>
-                        <strong>
-                            ${escapeHTML(
-                                r.time ||
-                                r.tid ||
-                                "-"
-                            )}
-                        </strong>
-                    </td>
-
-                    <td>
-                        ${escapeHTML(
-                            r.points ||
-                            r.fina ||
-                            "0"
-                        )}
-                    </td>
-
-                </tr>
-            `;
-
-        })
-        .join("");
-
-    updateClubStats(
-        club,
-        filtered
+        }
     );
 
 }
 
 
-/* ==================================================
-   KLUBB STATISTIKK
-================================================== */
+/* =========================================================
+   IMPORT SUMMARY
+========================================================= */
 
-function updateClubStats(
-    club,
-    data
+function showImportSummary(
+    imported,
+    duplicates,
+    existing,
+    newCount
 ) {
 
-    const prefix =
-        club === "Varodd SK"
-            ? "varodd"
-            : "vagsbygd";
-
-    const swimmerIds =
-        new Set(
-            data
-                .map(r => r.swimmerId)
-                .filter(Boolean)
+    const box =
+        document.getElementById(
+            "import-summary"
         );
 
-    const events =
-        new Set(
-            data.map(
-                r =>
-                    r.event ||
-                    r.ovelse
-            )
-        );
 
-    const improvements =
-        calculateAllImprovements(
-            data
-        );
+    box.style.display =
+        "block";
 
-    const best =
-        improvements.length
-            ? Math.max(
-                ...improvements
-            )
-            : null;
 
-    document.getElementById(
-        prefix + "Swimmers"
-    ).textContent =
-        swimmerIds.size;
+    box.innerHTML = `
 
-    document.getElementById(
-        prefix + "Results"
-    ).textContent =
-        data.length;
+        <div class="card">
 
-    document.getElementById(
-        prefix + "Events"
-    ).textContent =
-        events.size;
+            <h2>Import ferdig</h2>
 
-    document.getElementById(
-        prefix + "Best"
-    ).textContent =
-        best !== null
-            ? best.toFixed(1) + "%"
-            : "-";
+            <div class="stats">
+
+                <div class="stat">
+                    <div class="stat-label">
+                        Nye resultater
+                    </div>
+                    <div class="stat-value">
+                        ${imported}
+                    </div>
+                </div>
+
+                <div class="stat">
+                    <div class="stat-label">
+                        Allerede importert
+                    </div>
+                    <div class="stat-value">
+                        ${duplicates}
+                    </div>
+                </div>
+
+                <div class="stat">
+                    <div class="stat-label">
+                        Kjente svømmere
+                    </div>
+                    <div class="stat-value">
+                        ${existing}
+                    </div>
+                </div>
+
+                <div class="stat">
+                    <div class="stat-label">
+                        Nye svømmere
+                    </div>
+                    <div class="stat-value">
+                        ${newCount}
+                    </div>
+                </div>
+
+            </div>
+
+        </div>
+
+    `;
 
 }
 
 
-/* ==================================================
-   FORBEDRING
-================================================== */
+/* =========================================================
+   NYE SVØMMERE
+========================================================= */
 
-function parseTime(time) {
+function renderPendingNewSwimmers() {
+
+    const section =
+        document.getElementById(
+            "new-swimmers-section"
+        );
+
+    const list =
+        document.getElementById(
+            "new-swimmers-list"
+        );
+
 
     if (
-        time === null ||
-        time === undefined
+        !pendingNewSwimmers.length
     ) {
 
-        return null;
+        section.style.display =
+            "none";
+
+        return;
+
     }
 
-    let value =
-        String(time)
-            .trim()
-            .replace(",", ".");
+
+    section.style.display =
+        "block";
+
+
+    list.innerHTML =
+        pendingNewSwimmers
+            .map(
+                (p,index) => `
+
+                <div
+                    class="new-swimmer"
+                    data-pending="${index}">
+
+                    <div class="new-swimmer-grid">
+
+                        <div>
+
+                            <div class="new-swimmer-name">
+                                ${escapeHtml(p.navn)}
+                            </div>
+
+                            <small>
+                                ${p.results.length}
+                                resultat(er)
+                            </small>
+
+                        </div>
+
+
+                        <select
+                            id="pending-club-${index}">
+
+                            <option
+                                value="Varodd Svømmeklubb"
+                                ${
+                                    normalizeClub(p.klubb)
+                                    === "varodd"
+                                    ? "selected"
+                                    : ""
+                                }>
+                                Varodd Svømmeklubb
+                            </option>
+
+                            <option
+                                value="Vågsbygd SLK"
+                                ${
+                                    normalizeClub(p.klubb)
+                                    === "vagsbygd"
+                                    ? "selected"
+                                    : ""
+                                }>
+                                Vågsbygd SLK
+                            </option>
+
+                        </select>
+
+
+                        <input
+                            type="number"
+                            id="pending-year-${index}"
+                            placeholder="Årsklasse"
+                            value="${escapeHtml(
+                                p.arsklasse || ""
+                            )}">
+
+
+                        <div>
+
+                            <button
+                                class="success"
+                                onclick="registerPending(${index})">
+                                Registrer
+                            </button>
+
+                            <button
+                                class="secondary"
+                                onclick="skipPending(${index})">
+                                Hopp over
+                            </button>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            `
+            )
+            .join("");
+
+
+    renderUnresolved();
+
+}
+
+
+/* =========================================================
+   REGISTRER PENDING
+========================================================= */
+
+function registerPending(index) {
+
+    const p =
+        pendingNewSwimmers[index];
+
+    if (!p)
+        return;
+
+
+    const club =
+        document.getElementById(
+            `pending-club-${index}`
+        ).value;
+
+
+    const year =
+        document.getElementById(
+            `pending-year-${index}`
+        ).value;
+
 
     /*
-       1:05.25
+       Sjekk igjen før opprettelse.
+       Dette beskytter mot duplikater.
     */
 
-    if (
-        value.includes(":")
-    ) {
-
-        const parts =
-            value.split(":");
-
-        const minutes =
-            parseFloat(parts[0]);
-
-        const seconds =
-            parseFloat(parts[1]);
-
-        if (
-            Number.isNaN(minutes) ||
-            Number.isNaN(seconds)
-        ) {
-
-            return null;
-        }
-
-        return (
-            minutes * 60 +
-            seconds
+    let swimmer =
+        findSwimmer(
+            p.navn,
+            club
         );
+
+
+    if (!swimmer) {
+
+        swimmer = {
+
+            id:
+                createId(),
+
+            navn:
+                cleanName(
+                    p.navn
+                ),
+
+            klubb:
+                club,
+
+            arsklasse:
+                year,
+
+            createdAt:
+                new Date().toISOString()
+
+        };
+
+
+        swimmers.push(
+            swimmer
+        );
+
+    } else {
+
+        swimmer.klubb =
+            club;
+
+        if (year)
+            swimmer.arsklasse =
+                year;
+
     }
 
-    const seconds =
-        parseFloat(value);
 
-    return Number.isNaN(seconds)
-        ? null
-        : seconds;
+    /*
+       Nå kobles ALLE resultatene
+       fra Excel til den nye ID-en.
+    */
+
+    p.results.forEach(
+        r => {
+
+            const result =
+                buildResult(
+                    swimmer,
+                    {
+                        name:
+                            r.navn,
+
+                        club:
+                            club,
+
+                        date:
+                            r.dato,
+
+                        event:
+                            r.ovelse,
+
+                        pool:
+                            r.basseng,
+
+                        time:
+                            r.tid,
+
+                        points:
+                            r.poeng
+                    }
+                );
+
+
+            if (
+                !resultExists(result)
+            )
+                results.push(result);
+
+        }
+    );
+
+
+    pendingNewSwimmers.splice(
+        index,
+        1
+    );
+
+
+    saveData();
+
+    renderAll();
+
 }
 
 
-function calculateAllImprovements(data) {
+/* =========================================================
+   REGISTRER ALLE
+========================================================= */
 
-    const groups = {};
+function registerAllNewSwimmers() {
 
-    data.forEach(r => {
+    /*
+       Vi går baklengs slik at
+       splice ikke ødelegger index.
+    */
 
-        const key =
-            [
-                r.swimmerId,
-                r.event || r.ovelse,
-                r.pool || r.basseng
-            ].join("|");
+    for (
+        let i =
+            pendingNewSwimmers.length - 1;
+        i >= 0;
+        i--
+    ) {
 
-        const time =
-            parseTime(
-                r.time ||
-                r.tid
+        const p =
+            pendingNewSwimmers[i];
+
+
+        const club =
+            document.getElementById(
+                `pending-club-${i}`
+            )?.value ||
+            standardClub(
+                p.klubb
+            ) ||
+            "Varodd Svømmeklubb";
+
+
+        const year =
+            document.getElementById(
+                `pending-year-${i}`
+            )?.value ||
+            "";
+
+
+        let swimmer =
+            findSwimmer(
+                p.navn,
+                club
             );
 
-        if (
-            time === null
-        ) {
-            return;
-        }
 
-        if (!groups[key]) {
-            groups[key] = [];
-        }
+        if (!swimmer) {
 
-        groups[key].push(time);
+            swimmer = {
 
-    });
+                id:
+                    createId(),
 
-    const improvements = [];
+                navn:
+                    cleanName(
+                        p.navn
+                    ),
 
-    Object.values(groups)
-        .forEach(times => {
+                klubb:
+                    club,
 
-            if (
-                times.length < 2
-            ) {
-                return;
-            }
+                arsklasse:
+                    year,
 
-            const worst =
-                Math.max(...times);
+                createdAt:
+                    new Date().toISOString()
 
-            const best =
-                Math.min(...times);
+            };
 
-            if (
-                worst <= 0
-            ) {
-                return;
-            }
-
-            const improvement =
-                (
-                    (worst - best) /
-                    worst
-                ) * 100;
-
-            improvements.push(
-                improvement
+            swimmers.push(
+                swimmer
             );
 
-        });
+        }
 
-    return improvements;
+
+        p.results.forEach(
+            r => {
+
+                const result =
+                    buildResult(
+                        swimmer,
+                        {
+                            name:
+                                r.navn,
+
+                            club:
+                                club,
+
+                            date:
+                                r.dato,
+
+                            event:
+                                r.ovelse,
+
+                            pool:
+                                r.basseng,
+
+                            time:
+                                r.tid,
+
+                            points:
+                                r.poeng
+                        }
+                    );
+
+
+                if (
+                    !resultExists(result)
+                )
+                    results.push(result);
+
+            }
+        );
+
+
+        pendingNewSwimmers.splice(
+            i,
+            1
+        );
+
+    }
+
+
+    saveData();
+
+    renderAll();
+
 }
 
 
-/* ==================================================
+/* =========================================================
+   HOPP OVER
+========================================================= */
+
+function skipPending(index) {
+
+    const p =
+        pendingNewSwimmers[index];
+
+    if (!p)
+        return;
+
+
+    unresolvedSwimmers.push(
+        p
+    );
+
+
+    pendingNewSwimmers.splice(
+        index,
+        1
+    );
+
+
+    saveData();
+
+    renderAll();
+
+}
+
+
+function skipAllNewSwimmers() {
+
+    unresolvedSwimmers =
+        unresolvedSwimmers.concat(
+            pendingNewSwimmers
+        );
+
+
+    pendingNewSwimmers = [];
+
+
+    saveData();
+
+    renderAll();
+
+}
+
+
+/* =========================================================
+   TIDLIGERE HOPPET OVER
+========================================================= */
+
+function renderUnresolved() {
+
+    const section =
+        document.getElementById(
+            "unresolved-section"
+        );
+
+    const list =
+        document.getElementById(
+            "unresolved-list"
+        );
+
+
+    if (
+        !unresolvedSwimmers.length
+    ) {
+
+        section.style.display =
+            "none";
+
+        return;
+
+    }
+
+
+    section.style.display =
+        "block";
+
+
+    list.innerHTML =
+        unresolvedSwimmers
+            .map(
+                (p,index) => `
+
+                <div class="new-swimmer">
+
+                    <div class="new-swimmer-grid">
+
+                        <div>
+                            <strong>
+                                ${escapeHtml(p.navn)}
+                            </strong>
+
+                            <small>
+                                ${p.results.length}
+                                resultat(er)
+                            </small>
+                        </div>
+
+                        <select
+                            id="unresolved-club-${index}">
+
+                            <option value="Varodd Svømmeklubb">
+                                Varodd Svømmeklubb
+                            </option>
+
+                            <option value="Vågsbygd SLK">
+                                Vågsbygd SLK
+                            </option>
+
+                        </select>
+
+                        <input
+                            type="number"
+                            id="unresolved-year-${index}"
+                            placeholder="Årsklasse">
+
+                        <button
+                            class="success"
+                            onclick="registerUnresolved(${index})">
+                            Registrer
+                        </button>
+
+                    </div>
+
+                </div>
+
+            `
+            )
+            .join("");
+
+}
+
+
+function registerUnresolved(index) {
+
+    const p =
+        unresolvedSwimmers[index];
+
+    if (!p)
+        return;
+
+
+    const club =
+        document.getElementById(
+            `unresolved-club-${index}`
+        ).value;
+
+
+    const year =
+        document.getElementById(
+            `unresolved-year-${index}`
+        ).value;
+
+
+    let swimmer =
+        findSwimmer(
+            p.navn,
+            club
+        );
+
+
+    if (!swimmer) {
+
+        swimmer = {
+
+            id:
+                createId(),
+
+            navn:
+                cleanName(
+                    p.navn
+                ),
+
+            klubb:
+                club,
+
+            arsklasse:
+                year,
+
+            createdAt:
+                new Date().toISOString()
+
+        };
+
+
+        swimmers.push(
+            swimmer
+        );
+
+    }
+
+
+    p.results.forEach(
+        r => {
+
+            const result =
+                buildResult(
+                    swimmer,
+                    {
+                        name:
+                            r.navn,
+
+                        club:
+                            club,
+
+                        date:
+                            r.dato,
+
+                        event:
+                            r.ovelse,
+
+                        pool:
+                            r.basseng,
+
+                        time:
+                            r.tid,
+
+                        points:
+                            r.poeng
+                    }
+                );
+
+
+            if (
+                !resultExists(result)
+            )
+                results.push(result);
+
+        }
+    );
+
+
+    unresolvedSwimmers.splice(
+        index,
+        1
+    );
+
+
+    saveData();
+
+    renderAll();
+
+}
+
+
+/* =========================================================
    GRAFER / MÅLINGER
-================================================== */
+========================================================= */
 
 function renderGraphs() {
 
     const container =
         document.getElementById(
-            "graphContainer"
+            "graphs-container"
         );
+
 
     const search =
         (
             document.getElementById(
-                "searchGraph"
+                "search-graphs"
             )?.value || ""
-        ).toLowerCase();
+        )
+        .toLowerCase();
+
 
     const club =
         document.getElementById(
-            "graphClub"
-        )?.value || "alle";
+            "graph-club"
+        )?.value ||
+        "alle";
 
-    const swimmerGroups = {};
 
-    results
-        .filter(
+    const activeResults =
+        results.filter(
             r =>
                 isWithin12Months(
-                    r.date ||
                     r.dato
                 )
-        )
-        .forEach(r => {
+        );
 
-            const swimmer =
-                swimmers.find(
-                    s =>
-                        s.id ===
-                        r.swimmerId
-                );
 
-            const name =
-                swimmer?.name ||
-                r.name ||
-                r.navn ||
-                "Ukjent";
+    const swimmerMap =
+        new Map();
 
-            const swimmerClub =
-                swimmer?.club ||
-                r.club ||
-                r.klubb ||
-                "";
+
+    swimmers.forEach(
+        s => {
+
+            if (
+                !s.navn
+                    .toLowerCase()
+                    .includes(search)
+            )
+                return;
+
 
             if (
                 club !== "alle" &&
-                swimmerClub !== club
-            ) {
-
+                normalizeClub(s.klubb) !==
+                normalizeClub(club)
+            )
                 return;
-            }
 
-            if (
-                !name
-                    .toLowerCase()
-                    .includes(search)
-            ) {
 
-                return;
-            }
-
-            if (
-                !swimmerGroups[name]
-            ) {
-
-                swimmerGroups[name] = {
-                    name,
-                    club:
-                        swimmerClub,
-                    groups: {}
-                };
-
-            }
-
-            const event =
-                r.event ||
-                r.ovelse ||
-                "";
-
-            const pool =
-                r.pool ||
-                r.basseng ||
-                "25m";
-
-            const time =
-                parseTime(
-                    r.time ||
-                    r.tid
+            const swimmerResults =
+                activeResults.filter(
+                    r =>
+                        r.swimmerId ===
+                        s.id
                 );
 
-            if (
-                time === null
-            ) {
 
-                return;
-            }
+            swimmerMap.set(
+                s.id,
+                {
+                    swimmer: s,
+                    results: swimmerResults
+                }
+            );
 
-            const key =
-                event +
-                "|" +
-                pool;
-
-            if (
-                !swimmerGroups[name]
-                    .groups[key]
-            ) {
-
-                swimmerGroups[name]
-                    .groups[key] = [];
-            }
-
-            swimmerGroups[name]
-                .groups[key]
-                .push({
-                    date:
-                        r.date ||
-                        r.dato ||
-                        "",
-                    time
-                });
-
-        });
+        }
+    );
 
 
-    const swimmersArray =
-        Object.values(
-            swimmerGroups
-        );
-
-    if (!swimmersArray.length) {
+    if (
+        swimmerMap.size === 0
+    ) {
 
         container.innerHTML = `
-            <div class="card">
+            <div class="card empty">
                 Ingen svømmere funnet.
             </div>
         `;
 
         return;
+
     }
 
 
-    container.innerHTML =
-        swimmersArray
-        .map(swimmer => {
-
-            let rows = "";
-
-            Object.entries(
-                swimmer.groups
-            )
-            .forEach(
-                ([key, values]) => {
-
-                    if (
-                        values.length < 2
-                    ) {
-
-                        return;
-                    }
-
-                    const parts =
-                        key.split("|");
-
-                    const event =
-                        parts[0];
-
-                    const pool =
-                        parts[1];
-
-                    const times =
-                        values.map(
-                            v => v.time
-                        );
-
-                    const best =
-                        Math.min(...times);
-
-                    const worst =
-                        Math.max(...times);
-
-                    const improvement =
-                        (
-                            (worst - best) /
-                            worst
-                        ) * 100;
-
-                    rows += `
-                        <tr>
-
-                            <td>
-                                <strong>
-                                    ${escapeHTML(event)}
-                                </strong>
-                            </td>
-
-                            <td>
-                                ${pool}
-                            </td>
-
-                            <td>
-                                ${formatSeconds(worst)}
-                            </td>
-
-                            <td>
-                                ${formatSeconds(best)}
-                            </td>
-
-                            <td class="good">
-                                +${improvement.toFixed(1)}%
-                            </td>
-
-                        </tr>
-                    `;
-
-                }
-            );
+    let html = "";
 
 
-            if (!rows) {
-                return "";
-            }
+    swimmerMap.forEach(
+        data => {
+
+            const groups =
+                groupResults(
+                    data.results
+                );
 
 
-            return `
+            html += `
 
                 <div class="card">
 
                     <h2>
-                        ${escapeHTML(
-                            swimmer.name
+                        ${escapeHtml(
+                            data.swimmer.navn
                         )}
                     </h2>
 
                     <p class="subtitle">
-                        ${escapeHTML(
-                            swimmer.club
+                        ${escapeHtml(
+                            data.swimmer.klubb
+                        )}
+                        · Årsklasse
+                        ${escapeHtml(
+                            String(
+                                data.swimmer.arsklasse || "-"
+                            )
                         )}
                     </p>
 
@@ -2899,34 +3912,83 @@ function renderGraphs() {
 
                             <thead>
 
-                                <tr>
-
-                                    <th>
-                                        Øvelse
-                                    </th>
-
-                                    <th>
-                                        Basseng
-                                    </th>
-
-                                    <th>
-                                        Dårligste
-                                    </th>
-
-                                    <th>
-                                        Beste
-                                    </th>
-
-                                    <th>
-                                        Forbedring
-                                    </th>
-
-                                </tr>
+                            <tr>
+                                <th>Øvelse</th>
+                                <th>Basseng</th>
+                                <th>Dårligste</th>
+                                <th>Beste</th>
+                                <th>Forbedring</th>
+                            </tr>
 
                             </thead>
 
                             <tbody>
-                                ${rows}
+
+                                ${
+                                    groups
+                                        .map(
+                                            g => {
+
+                                                const improvement =
+                                                    calculateImprovement(
+                                                        g.worst,
+                                                        g.best
+                                                    );
+
+
+                                                return `
+
+                                                <tr>
+
+                                                    <td>
+                                                        <strong>
+                                                            ${escapeHtml(
+                                                                g.event
+                                                            )}
+                                                        </strong>
+                                                    </td>
+
+                                                    <td>
+                                                        <span class="badge ${
+                                                            g.pool === "50m"
+                                                                ? "purple"
+                                                                : "blue"
+                                                        }">
+                                                            ${g.pool}
+                                                        </span>
+                                                    </td>
+
+                                                    <td>
+                                                        ${formatSeconds(
+                                                            g.worst
+                                                        )}
+                                                    </td>
+
+                                                    <td>
+                                                        <strong>
+                                                            ${formatSeconds(
+                                                                g.best
+                                                            )}
+                                                        </strong>
+                                                    </td>
+
+                                                    <td>
+
+                                                        <span class="badge green">
+                                                            ${improvement.toFixed(2)} %
+                                                        </span>
+
+                                                    </td>
+
+                                                </tr>
+
+                                                `;
+
+                                            }
+                                        )
+                                        .join("")
+                                }
+
                             </tbody>
 
                         </table>
@@ -2937,261 +3999,495 @@ function renderGraphs() {
 
             `;
 
-        })
-        .join("");
+        }
+    );
+
+
+    container.innerHTML =
+        html;
 
 }
 
 
-/* ==================================================
-   SEKUNDER TIL TID
-================================================== */
+function groupResults(data) {
 
-function formatSeconds(seconds) {
+    const map =
+        new Map();
 
-    if (
-        seconds === null ||
-        seconds === undefined
-    ) {
 
-        return "-";
-    }
+    data.forEach(
+        r => {
 
-    const minutes =
-        Math.floor(
-            seconds / 60
+            if (
+                !r.sekunder ||
+                !r.ovelse
+            )
+                return;
+
+
+            const key =
+                nameKey(
+                    r.ovelse
+                ) +
+                "|" +
+                r.basseng;
+
+
+            if (
+                !map.has(key)
+            ) {
+
+                map.set(
+                    key,
+                    {
+                        event:
+                            r.ovelse,
+
+                        pool:
+                            r.basseng,
+
+                        times: []
+                    }
+                );
+
+            }
+
+
+            map.get(key)
+                .times
+                .push(
+                    r.sekunder
+                );
+
+        }
+    );
+
+
+    return Array
+        .from(map.values())
+        .map(
+            g => {
+
+                const times =
+                    g.times
+                        .filter(
+                            t =>
+                                t > 0
+                        )
+                        .sort(
+                            (a,b) =>
+                                a - b
+                        );
+
+
+                return {
+
+                    ...g,
+
+                    best:
+                        times[0] || 0,
+
+                    worst:
+                        times[
+                            times.length - 1
+                        ] || 0
+
+                };
+
+            }
+        )
+        .sort(
+            (a,b) =>
+                a.event.localeCompare(
+                    b.event
+                )
         );
 
-    const rest =
+}
+
+
+/*
+   Forbedring:
+
+   (dårligste - beste)
+   / dårligste * 100
+*/
+
+function calculateImprovement(
+    worst,
+    best
+) {
+
+    if (
+        !worst ||
+        !best ||
+        worst <= best
+    )
+        return 0;
+
+
+    return (
         (
-            seconds -
-            minutes * 60
-        ).toFixed(2);
+            worst - best
+        ) /
+        worst
+    ) *
+    100;
 
-    if (
-        minutes > 0
-    ) {
-
-        return (
-            minutes +
-            ":" +
-            rest.padStart(5, "0")
-        );
-
-    }
-
-    return rest + " sek";
 }
 
 
-/* ==================================================
-   SVØMMEKALKULATOR
-================================================== */
+/* =========================================================
+   TRENNINGSKALKULATOR
+========================================================= */
 
-function calculateSwimming() {
+function calculateTraining() {
 
     const pool =
-        parseFloat(
-            document.getElementById(
-                "calcPool"
-            ).value
-        );
+        document.getElementById(
+            "calc-pool"
+        ).value;
+
 
     const distance =
-        parseFloat(
+        numberOrZero(
             document.getElementById(
-                "calcDistance"
+                "calc-distance"
             ).value
         );
+
 
     const time =
-        parseTime(
+        numberOrZero(
             document.getElementById(
-                "calcTime"
+                "calc-time"
             ).value
         );
+
 
     const strokes =
-        parseFloat(
+        numberOrZero(
             document.getElementById(
-                "calcStrokes"
+                "calc-strokes"
             ).value
         );
+
 
     const lengths =
-        parseFloat(
+        numberOrZero(
             document.getElementById(
-                "calcLengths"
+                "calc-lengths"
             ).value
         );
 
-    const output =
-        document.getElementById(
-            "calcResults"
-        );
 
     if (
         !distance ||
         !time
     ) {
 
-        output.innerHTML =
-            "Du må minst legge inn distanse og tid.";
+        alert(
+            "Fyll inn distanse og tid."
+        );
 
         return;
+
     }
+
 
     const speed =
         distance / time;
 
-    const speed100 =
-        time /
-        (distance / 100);
 
-    let html = `
-        <h2>Resultat</h2>
+    const pace100 =
+        time /
+        distance *
+        100;
+
+
+    const pace50 =
+        time /
+        distance *
+        50;
+
+
+    const strokeRate =
+        strokes &&
+        lengths
+            ? strokes / lengths
+            : 0;
+
+
+    const timePerLength =
+        lengths
+            ? time / lengths
+            : 0;
+
+
+    /*
+       En enkel SWOLF-beregning:
+       tid per 25m + tak per lengde.
+
+       På 50m-bane bruker vi
+       50m som lengde.
+    */
+
+    const poolLength =
+        pool === "50m"
+            ? 50
+            : 25;
+
+
+    const calculatedLengths =
+        distance /
+        poolLength;
+
+
+    const strokesPerLength =
+        strokes &&
+        calculatedLengths
+            ? strokes /
+              calculatedLengths
+            : 0;
+
+
+    const swolf =
+        strokesPerLength
+            ? (
+                time /
+                calculatedLengths
+            ) +
+              strokesPerLength
+            : 0;
+
+
+    const box =
+        document.getElementById(
+            "calculator-result"
+        );
+
+
+    box.style.display =
+        "block";
+
+
+    box.innerHTML = `
 
         <div class="stats">
 
             <div class="stat">
 
-                <div class="stat-number">
-                    ${speed.toFixed(2)}
+                <div class="stat-label">
+                    Basseng
                 </div>
 
+                <div class="stat-value">
+                    ${pool}
+                </div>
+
+            </div>
+
+
+            <div class="stat">
+
                 <div class="stat-label">
+                    Fart
+                </div>
+
+                <div class="stat-value">
+                    ${speed.toFixed(2)}
                     m/s
                 </div>
 
             </div>
 
-            <div class="stat">
-
-                <div class="stat-number">
-                    ${formatSeconds(speed100)}
-                </div>
-
-                <div class="stat-label">
-                    per 100 m
-                </div>
-
-            </div>
-    `;
-
-
-    if (
-        lengths &&
-        strokes
-    ) {
-
-        const strokesPerLength =
-            strokes / lengths;
-
-        const distancePerStroke =
-            distance / strokes;
-
-        html += `
 
             <div class="stat">
 
-                <div class="stat-number">
-                    ${strokesPerLength.toFixed(1)}
+                <div class="stat-label">
+                    Pace / 100 m
                 </div>
 
-                <div class="stat-label">
-                    tak per lengde
+                <div class="stat-value">
+                    ${pace100.toFixed(2)}
+                    s
                 </div>
 
             </div>
 
+
             <div class="stat">
 
-                <div class="stat-number">
-                    ${distancePerStroke.toFixed(2)}
+                <div class="stat-label">
+                    Pace / 50 m
                 </div>
 
-                <div class="stat-label">
-                    meter per tak
+                <div class="stat-value">
+                    ${pace50.toFixed(2)}
+                    s
                 </div>
 
             </div>
 
-        `;
-
-    }
-
-    html += `
         </div>
 
-        <hr>
 
-        <br>
+        <div class="card">
 
-        <p>
-            <strong>Basseng:</strong>
-            ${pool} m
-        </p>
+            <h2>
+                Analyse
+            </h2>
 
-        <p>
-            <strong>Distanse:</strong>
-            ${distance} m
-        </p>
+            <table>
 
-        <p>
-            <strong>Tid:</strong>
-            ${formatSeconds(time)}
-        </p>
+                <tr>
+                    <td>
+                        Bassenglengde
+                    </td>
 
-        <br>
+                    <td>
+                        <strong>
+                            ${poolLength} m
+                        </strong>
+                    </td>
+                </tr>
 
-        <p>
-            Kalkulatoren kan senere utvides med
-            splittider, vendinger, undervannsarbeid,
-            takfrekvens og beregnet tidstap.
-        </p>
+                <tr>
+                    <td>
+                        Antall lengder
+                    </td>
+
+                    <td>
+                        <strong>
+                            ${calculatedLengths.toFixed(1)}
+                        </strong>
+                    </td>
+                </tr>
+
+                <tr>
+                    <td>
+                        Tid per lengde
+                    </td>
+
+                    <td>
+                        <strong>
+                            ${
+                                (
+                                    time /
+                                    calculatedLengths
+                                ).toFixed(2)
+                            }
+                            s
+                        </strong>
+                    </td>
+                </tr>
+
+                <tr>
+                    <td>
+                        Tak per lengde
+                    </td>
+
+                    <td>
+                        <strong>
+                            ${
+                                strokesPerLength
+                                    ? strokesPerLength.toFixed(2)
+                                    : "-"
+                            }
+                        </strong>
+                    </td>
+                </tr>
+
+                <tr>
+                    <td>
+                        SWOLF
+                    </td>
+
+                    <td>
+                        <strong>
+                            ${
+                                swolf
+                                    ? swolf.toFixed(2)
+                                    : "-"
+                            }
+                        </strong>
+                    </td>
+                </tr>
+
+            </table>
+
+        </div>
+
     `;
 
-    output.innerHTML = html;
+}
+
+
+/* =========================================================
+   RENDER ALT
+========================================================= */
+
+function renderAll() {
+
+    renderClub(
+        "Varodd Svømmeklubb"
+    );
+
+    renderClub(
+        "Vågsbygd SLK"
+    );
+
+    renderSwimmers();
+
+    renderPendingNewSwimmers();
+
+    renderUnresolved();
+
+    renderGraphs();
 
 }
 
 
-/* ==================================================
+/* =========================================================
    ESCAPE HTML
-================================================== */
+========================================================= */
 
-function escapeHTML(value) {
+function escapeHtml(value) {
 
     return String(value ?? "")
-        .replace(/&/g, "&amp;")
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;")
-        .replace(/"/g, "&quot;")
-        .replace(/'/g, "&#039;");
+        .replace(
+            /&/g,
+            "&amp;"
+        )
+        .replace(
+            /</g,
+            "&lt;"
+        )
+        .replace(
+            />/g,
+            "&gt;"
+        )
+        .replace(
+            /"/g,
+            "&quot;"
+        )
+        .replace(
+            /'/g,
+            "&#039;"
+        );
+
 }
 
 
-/* ==================================================
+/* =========================================================
    START
-================================================== */
+========================================================= */
 
 document.addEventListener(
     "DOMContentLoaded",
     () => {
 
-        /*
-           VIKTIG:
-           Forsøk å koble gamle resultater
-           til eksisterende svømmere.
-        */
-
-        relinkResults();
-
-        renderSwimmers();
-
-        renderResults("Varodd SK");
-
-        renderResults("Vågsbygd SLK");
+        loadData();
 
     }
 );
