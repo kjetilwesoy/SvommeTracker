@@ -1,7 +1,9 @@
 # Automatisk generert av hent_medley.py
-# Resultatkilder fra Medley siste 12 måneder
+# Medley resultatkilder siste 12 måneder
+#
 https://livetiming.medley.no/eksport.aspx?stevnenr=5545
 https://livetiming.medley.no/eksport.aspx?stevnenr=5896
+https://www.medley.no/dokumenter/diverse/2026/Juni/20260629NSFNordicYouthChampionshipsLenexEvents.lef
 https://livetiming.medley.no/ltdok/lt5896/NordicYouthChampionships.lef
 https://livetiming.medley.no/eksport.aspx?stevnenr=5699
 https://livetiming.medley.no/eksport.aspx?stevnenr=5626
@@ -24,6 +26,7 @@ https://livetiming.medley.no/eksport.aspx?stevnenr=5701
 https://livetiming.medley.no/eksport.aspx?stevnenr=5642
 https://livetiming.medley.no/eksport.aspx?stevnenr=5728
 https://livetiming.medley.no/eksport.aspx?stevnenr=5713
+https://livetiming.medley.no/ltdok/lt5713/meetsetup.xml
 https://livetiming.medley.no/eksport.aspx?stevnenr=5766
 https://livetiming.medley.no/eksport.aspx?stevnenr=5744
 https://livetiming.medley.no/eksport.aspx?stevnenr=5606
@@ -37,6 +40,7 @@ https://livetiming.medley.no/eksport.aspx?stevnenr=5510
 https://livetiming.medley.no/eksport.aspx?stevnenr=5714
 https://livetiming.medley.no/eksport.aspx?stevnenr=5635
 https://livetiming.medley.no/eksport.aspx?stevnenr=5563
+https://www.medley.no/dokumenter/diverse/2026/Mars/20260320ROMANMMasters2026EventsLenex.lef
 https://livetiming.medley.no/ltdok/lt5563/lenex20.lef
 https://livetiming.medley.no/eksport.aspx?stevnenr=5689
 https://livetiming.medley.no/eksport.aspx?stevnenr=5680
@@ -63,15 +67,18 @@ https://livetiming.medley.no/eksport.aspx?stevnenr=5679
 https://livetiming.medley.no/eksport.aspx?stevnenr=5633
 https://livetiming.medley.no/eksport.aspx?stevnenr=5647
 https://livetiming.medley.no/eksport.aspx?stevnenr=5868
+https://livetiming.medley.no/ltdok/lt5868/meetsetup.xml
 https://livetiming.medley.no/eksport.aspx?stevnenr=5838
 https://livetiming.medley.no/eksport.aspx?stevnenr=5645
 https://livetiming.medley.no/eksport.aspx?stevnenr=5719
 https://livetiming.medley.no/eksport.aspx?stevnenr=5734
 https://livetiming.medley.no/eksport.aspx?stevnenr=5697
 https://livetiming.medley.no/eksport.aspx?stevnenr=5627
+https://livetiming.medley.no/ltdok/lt5627/lenex20.lef
 https://livetiming.medley.no/eksport.aspx?stevnenr=5617
 https://livetiming.medley.no/eksport.aspx?stevnenr=5686
 https://livetiming.medley.no/eksport.aspx?stevnenr=5671
+http://livetiming.medley.no/ltdok/lt5671/meetsetup BSC Mini Cup.xml
 https://livetiming.medley.no/eksport.aspx?stevnenr=5716
 https://livetiming.medley.no/eksport.aspx?stevnenr=5767
 https://livetiming.medley.no/eksport.aspx?stevnenr=5670
