@@ -8,18 +8,24 @@ from urllib.parse import urljoin
 MEDLEY_BASE = "https://livetiming.medley.no"
 
 STEVNEOVERSIKT = (
-    "https://livetiming.medley.no/default.aspx"
+    f"{MEDLEY_BASE}/default.aspx"
 )
 
 STEVNER_FIL = "stevner.txt"
 
+
 HEADERS = {
     "User-Agent": (
         "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
-        "AppleWebKit/537.36 Chrome/124.0 Safari/537.36"
+        "AppleWebKit/537.36 (KHTML, like Gecko) "
+        "Chrome/124.0 Safari/537.36"
     )
 }
 
+
+# ============================================================
+# HENT SIDE
+# ============================================================
 
 def hent(url):
 
@@ -31,21 +37,26 @@ def hent(url):
 
     response.raise_for_status()
 
-    response.encoding = "utf-8"
+    response.encoding = (
+        response.apparent_encoding
+        or "utf-8"
+    )
 
     return response.text
 
+
+# ============================================================
+# DATO
+# ============================================================
 
 def normaliser_dato(value):
 
     if not value:
         return ""
 
-    value = value.strip()
-
     match = re.search(
         r"(\d{1,2})[./-](\d{1,2})[./-](20\d{2})",
-        value
+        str(value)
     )
 
     if not match:
@@ -59,35 +70,119 @@ def normaliser_dato(value):
             int(match.group(1))
         )
 
-        return dato.strftime("%Y-%m-%d")
+        return dato.strftime(
+            "%Y-%m-%d"
+        )
 
-    except Exception:
+    except ValueError:
+
         return ""
 
+
+# ============================================================
+# STEVNE-ID
+# ============================================================
 
 def finn_stevne_id(url):
 
     match = re.search(
         r"stevnenr=(\d+)",
-        url,
+        url or "",
         re.IGNORECASE
     )
 
-    return (
-        match.group(1)
-        if match
-        else ""
-    )
+    if match:
 
+        return match.group(1)
+
+    return ""
+
+
+# ============================================================
+# FINN RESULTATKILDER
+# ============================================================
+
+def finn_resultatkilder(
+    soup
+):
+
+    resultater = []
+
+    for link in soup.find_all(
+        "a",
+        href=True
+    ):
+
+        text = link.get_text(
+            " ",
+            strip=True
+        )
+
+        href = link.get(
+            "href",
+            ""
+        )
+
+        combined = (
+            f"{text} {href}"
+        ).lower()
+
+        absolute = urljoin(
+            MEDLEY_BASE,
+            href
+        )
+
+        # Medley kan bruke forskjellige
+        # navn på eksport/resultat.
+
+        if (
+
+            ".lef" in combined
+
+            or ".lenex" in combined
+
+            or ".xml" in combined
+
+            or "eksport.aspx" in combined
+
+            or "klubbeksport" in combined
+
+            or (
+                "lenex" in combined
+                and (
+                    "result" in combined
+                    or "export" in combined
+                )
+            )
+        ):
+
+            if absolute not in resultater:
+
+                resultater.append(
+                    absolute
+                )
+
+    return resultater
+
+
+# ============================================================
+# FINN STEVNER SISTE 12 MÅNEDER
+# ============================================================
 
 def finn_stevner():
 
-    print()
-    print("=" * 60)
-    print("MEDLEY – finner stevner")
-    print("=" * 60)
+    print("=" * 70)
 
-    html = hent(STEVNEOVERSIKT)
+    print(
+        "MEDLEY – FINNER STEVNER "
+        "SISTE 12 MÅNEDER"
+    )
+
+    print("=" * 70)
+
+    html = hent(
+        STEVNEOVERSIKT
+    )
 
     soup = BeautifulSoup(
         html,
@@ -96,21 +191,39 @@ def finn_stevner():
 
     today = datetime.now().date()
 
-    cutoff = today - timedelta(
-        days=365
+    cutoff = (
+        today
+        - timedelta(
+            days=365
+        )
     )
 
-    funnet = {}
+    stevner = {}
 
-    # Finn alle lenker som inneholder stevnenr
-    for link in soup.find_all("a"):
+    # --------------------------------------------------------
+    # FINN STEVNEDETALJER
+    # --------------------------------------------------------
 
-        href = link.get("href", "")
+    for link in soup.find_all(
+        "a",
+        href=True
+    ):
 
-        if "stevnenr=" not in href.lower():
+        href = link.get(
+            "href",
+            ""
+        )
+
+        if (
+            "stevnenr="
+            not in href.lower()
+        ):
+
             continue
 
-        stevne_id = finn_stevne_id(href)
+        stevne_id = finn_stevne_id(
+            href
+        )
 
         if not stevne_id:
             continue
@@ -120,23 +233,29 @@ def finn_stevner():
             href
         )
 
-        # Vi vil ha selve detaljsiden
         if (
             "stevnedetaljer.aspx"
             not in absolute.lower()
         ):
+
             continue
 
-        funnet[stevne_id] = absolute
+        stevner[
+            stevne_id
+        ] = absolute
 
     print(
-        f"Fant {len(funnet)} stevner/lenker "
-        "i Medley-oversikten."
+        f"Fant {len(stevner)} "
+        "stevner i Medley-oversikten."
     )
 
     aktuelle = []
 
-    for stevne_id, detail_url in funnet.items():
+    # --------------------------------------------------------
+    # LES HVERT STEVNE
+    # --------------------------------------------------------
+
+    for stevne_id, detail_url in stevner.items():
 
         try:
 
@@ -144,19 +263,18 @@ def finn_stevner():
                 detail_url
             )
 
-            detail_soup = BeautifulSoup(
+            soup = BeautifulSoup(
                 detail_html,
                 "html.parser"
             )
 
-            text = detail_soup.get_text(
+            text = soup.get_text(
                 " ",
                 strip=True
             )
 
-            # Dato
             match = re.search(
-                r"Fra dato:\s*(\d{2}\.\d{2}\.\d{4})",
+                r"Fra dato:\s*(\d{1,2}\.\d{1,2}\.20\d{2})",
                 text,
                 re.IGNORECASE
             )
@@ -176,149 +294,138 @@ def finn_stevner():
                 "%Y-%m-%d"
             ).date()
 
-            # Ikke fremtidige stevner
+            # Fremtidige stevner skal ikke med.
+
             if date_obj > today:
                 continue
 
-            # Ikke eldre enn 12 måneder
+            # Eldre enn 12 måneder skal ikke med.
+
             if date_obj < cutoff:
                 continue
 
-            # Stevnenavn
-            name = ""
-
-            h1 = detail_soup.find("h1")
+            h1 = soup.find(
+                "h1"
+            )
 
             if h1:
+
                 name = h1.get_text(
                     " ",
                     strip=True
                 )
 
-            if not name and detail_soup.title:
-                name = detail_soup.title.get_text(
+            elif soup.title:
+
+                name = soup.title.get_text(
                     " ",
                     strip=True
                 )
 
-            # Basseng
-            course = "25m"
+            else:
+
+                name = (
+                    f"Stevne {stevne_id}"
+                )
+
+            basseng = "25m"
 
             if re.search(
                 r"Bassenglengde:\s*50m",
                 text,
                 re.IGNORECASE
             ):
-                course = "50m"
 
-            # Finn best mulig resultatkilde
-            result_urls = finn_resultatkilder(
-                detail_soup
+                basseng = "50m"
+
+            sources = finn_resultatkilder(
+                soup
             )
 
-            if not result_urls:
+            if not sources:
+
                 print(
-                    f"  ADVARSEL: Ingen resultatkilde "
-                    f"funnet for {name} ({stevne_id})"
+                    f"  ADVARSEL: Ingen "
+                    f"resultatkilde: "
+                    f"{name} "
+                    f"({stevne_id})"
                 )
 
                 continue
 
-            for result_url in result_urls:
+            for source in sources:
 
                 aktuelle.append({
-                    "id": stevne_id,
-                    "navn": name,
-                    "dato": start_date,
-                    "basseng": course,
-                    "url": result_url,
+
+                    "id":
+                        stevne_id,
+
+                    "navn":
+                        name,
+
+                    "dato":
+                        start_date,
+
+                    "basseng":
+                        basseng,
+
+                    "url":
+                        source
                 })
 
             print(
                 f"  OK {start_date} | "
                 f"{name} | "
-                f"{course} | "
-                f"{len(result_urls)} kilde(r)"
+                f"{basseng} | "
+                f"{len(sources)} kilde(r)"
             )
 
         except Exception as exc:
 
             print(
                 f"  FEIL ved stevne "
-                f"{stevne_id}: {exc}"
+                f"{stevne_id}: "
+                f"{exc}"
             )
 
     return aktuelle
 
 
-def finn_resultatkilder(soup):
+# ============================================================
+# SKRIV STEVNER.TXT
+# ============================================================
 
-    resultater = []
+def skriv_stevner(
+    stevner
+):
 
-    for link in soup.find_all("a"):
-
-        text = link.get_text(
-            " ",
-            strip=True
-        )
-
-        href = link.get(
-            "href",
-            ""
-        )
-
-        if not href:
-            continue
-
-        combined = (
-            f"{text} {href}"
-        ).lower()
-
-        absolute = urljoin(
-            MEDLEY_BASE,
-            href
-        )
-
-        # Førstevalg: LENEX-resultater
-        if (
-            "lenex" in combined
-            and "result" in combined
-        ):
-            resultater.append(
-                absolute
-            )
-            continue
-
-        # Klubbeksport kan også inneholde resultatdata
-        if "klubbeksport" in combined:
-
-            resultater.append(
-                absolute
-            )
-
-    # Fjern duplikater
-    unike = []
-
-    for url in resultater:
-
-        if url not in unike:
-            unike.append(url)
-
-    return unike
-
-
-def skriv_stevner(stevner):
-
-    # Vi skriver kun resultatkildene.
-    # parse_lenex.py bruker disse.
     urls = []
 
     for stevne in stevner:
 
-        url = stevne["url"]
+        url = stevne[
+            "url"
+        ]
 
         if url not in urls:
-            urls.append(url)
+
+            urls.append(
+                url
+            )
+
+    # --------------------------------------------------------
+    # SIKKERHET
+    #
+    # Hvis Medley ikke gir noen kilder,
+    # skal vi IKKE tømme stevner.txt.
+    # --------------------------------------------------------
+
+    if not urls:
+
+        raise SystemExit(
+            "Ingen resultatkilder ble funnet. "
+            "stevner.txt blir IKKE overskrevet."
+        )
 
     with open(
         STEVNER_FIL,
@@ -327,24 +434,38 @@ def skriv_stevner(stevner):
     ) as file:
 
         file.write(
-            "# Automatisk generert av hent_medley.py\n"
+            "# Automatisk generert "
+            "av hent_medley.py\n"
         )
 
         file.write(
-            "# Resultatkilder fra Medley siste 12 måneder\n"
+            "# Medley resultatkilder "
+            "siste 12 måneder\n"
+        )
+
+        file.write(
+            "#\n"
         )
 
         for url in urls:
+
             file.write(
-                url + "\n"
+                url
+                + "\n"
             )
 
     print()
+
     print(
-        f"Skrev {len(urls)} resultatkilder "
-        f"til {STEVNER_FIL}"
+        f"Skrev {len(urls)} "
+        f"resultatkilder til "
+        f"{STEVNER_FIL}"
     )
 
+
+# ============================================================
+# MAIN
+# ============================================================
 
 def main():
 
@@ -355,12 +476,13 @@ def main():
     )
 
     print()
-    print("=" * 60)
+
     print(
-        f"Aktuelle stevner: {len(stevner)}"
+        f"Aktuelle stevnekilder: "
+        f"{len(stevner)}"
     )
-    print("=" * 60)
 
 
 if __name__ == "__main__":
+
     main()
