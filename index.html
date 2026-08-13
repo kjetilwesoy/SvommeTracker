@@ -1,1280 +1,2706 @@
 <!DOCTYPE html>
 <html lang="no">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-  <title>SvømmeHub – Trenerhub & Svømmeresultater</title>
-
-  <style>
-
-    :root {
-      --bg-color: #0f172a;
-      --content-bg: #f8fafc;
-      --card-bg: #ffffff;
-      --text-main: #0f172a;
-      --text-muted: #64748b;
-      --border-color: #cbd5e1;
-
-      --water-primary: #0284c7;
-      --water-dark: #0369a1;
-
-      --varodd-blue: #2563eb;
-      --varodd-blue-hover: #1d4ed8;
-
-      --vagsbygd-red: #dc2626;
-      --vagsbygd-red-hover: #b91c1c;
-
-      --success: #10b981;
-      --warning: #f59e0b;
-
-      --badge-25m: #0284c7;
-      --badge-50m: #7c3aed;
-    }
-
-
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-    }
-
-
-    body {
-      font-family:
-        -apple-system,
-        BlinkMacSystemFont,
-        "Segoe UI",
-        Roboto,
-        Helvetica,
-        Arial,
-        sans-serif;
-
-      background-color: var(--bg-color);
-
-      background-image:
-        radial-gradient(
-          rgba(255, 255, 255, 0.05) 1px,
-          transparent 0
-        );
-
-      background-size: 24px 24px;
-
-      color: var(--text-main);
-
-      min-height: 100vh;
-
-      display: flex;
-      flex-direction: column;
-    }
-
-
-    /* =====================================================
-       LAYOUT
-       ===================================================== */
-
-    .app-layout {
-      display: flex;
-      flex-direction: row;
-
-      min-height: 100vh;
-      width: 100%;
-    }
-
-
-    .main-content {
-      flex: 1;
-
-      background-color: var(--content-bg);
-
-      padding: 2rem;
-
-      overflow-y: auto;
-
-      min-width: 0;
-    }
-
-
-    .right-sidebar {
-      width: 280px;
-
-      flex-shrink: 0;
-
-      background-color: #1e293b;
-
-      border-left: 2px solid #334155;
-
-      padding: 1.5rem 1rem;
-
-      display: flex;
-      flex-direction: column;
-
-      gap: 1.5rem;
-
-      box-shadow:
-        -4px 0 15px rgba(0,0,0,0.3);
-    }
-
-
-    /* =====================================================
-       HEADER
-       ===================================================== */
-
-    .brand-header {
-      color: #ffffff;
-
-      font-size: 1.2rem;
-
-      font-weight: 700;
-
-      text-align: center;
-
-      padding-bottom: 1rem;
-
-      border-bottom: 1px solid #334155;
-
-      display: flex;
-      align-items: center;
-      justify-content: center;
-
-      gap: 0.5rem;
-    }
-
-
-    /* =====================================================
-       NAVIGATION
-       ===================================================== */
-
-    .nav-menu {
-      display: flex;
-      flex-direction: column;
-
-      gap: 0.75rem;
-    }
-
-
-    .nav-btn {
-      width: 100%;
-
-      padding: 0.85rem 1rem;
-
-      font-size: 0.95rem;
-
-      font-weight: 600;
-
-      color: #f1f5f9;
-
-      background-color: #334155;
-
-      border: 1px solid #475569;
-
-      border-radius: 0.5rem;
-
-      cursor: pointer;
-
-      display: flex;
-      align-items: center;
-      justify-content: flex-start;
-
-      gap: 0.75rem;
-
-      transition: all 0.2s ease;
-
-      text-align: left;
-    }
-
-
-    .nav-btn:hover {
-      background-color: #475569;
-
-      transform: translateX(-3px);
-    }
-
-
-    .nav-btn.active {
-      border-left: 4px solid var(--water-primary);
-
-      background-color: #0f172a;
-
-      color: #ffffff;
-    }
-
-
-    .btn-varodd {
-      background-color: var(--varodd-blue);
-
-      border-color: #3b82f6;
-
-      color: #ffffff;
-    }
-
-
-    .btn-varodd:hover {
-      background-color: var(--varodd-blue-hover);
-    }
-
-
-    .btn-vagsbygd {
-      background-color: var(--vagsbygd-red);
-
-      border-color: #ef4444;
-
-      color: #ffffff;
-    }
-
-
-    .btn-vagsbygd:hover {
-      background-color: var(--vagsbygd-red-hover);
-    }
-
-
-    .club-logo {
-      width: 24px;
-      height: 24px;
-
-      object-fit: contain;
-
-      border-radius: 3px;
-
-      background: white;
-
-      padding: 2px;
-    }
-
-
-    /* =====================================================
-       TITLES
-       ===================================================== */
-
-    .page-title {
-      font-size: 1.75rem;
-
-      font-weight: 700;
-
-      color: #0f172a;
-
-      margin-bottom: 0.25rem;
-    }
-
-
-    .page-subtitle {
-      color: var(--text-muted);
-
-      margin-bottom: 1.5rem;
-
-      font-size: 0.95rem;
-
-      line-height: 1.5;
-    }
-
-
-    /* =====================================================
-       CONTROLS
-       ===================================================== */
-
-    .controls {
-      display: flex;
-
-      gap: 1rem;
-
-      margin-bottom: 1.5rem;
-
-      flex-wrap: wrap;
-    }
-
-
-    .search-input,
-    .select-input {
-      padding: 0.625rem 1rem;
-
-      border: 1px solid var(--border-color);
-
-      border-radius: 0.375rem;
-
-      font-size: 0.95rem;
-
-      outline: none;
-
-      background-color: var(--card-bg);
-    }
-
-
-    .search-input {
-      flex: 1;
-
-      min-width: 220px;
-    }
-
-
-    .search-input:focus,
-    .select-input:focus {
-      border-color: var(--water-primary);
-
-      box-shadow:
-        0 0 0 3px rgba(2,132,199,0.1);
-    }
-
-
-    /* =====================================================
-       TABLE
-       ===================================================== */
-
-    .table-card {
-      background-color: var(--card-bg);
-
-      border: 1px solid var(--border-color);
-
-      border-radius: 0.5rem;
-
-      overflow-x: auto;
-
-      box-shadow:
-        0 4px 6px -1px rgba(0,0,0,0.05);
-    }
-
-
-    table {
-      width: 100%;
-
-      border-collapse: collapse;
-
-      text-align: left;
-
-      font-size: 0.95rem;
-    }
-
-
-    th {
-      background-color: #f1f5f9;
-
-      padding: 0.75rem 1rem;
-
-      font-weight: 600;
-
-      color: var(--text-muted);
-
-      border-bottom:
-        1px solid var(--border-color);
-
-      white-space: nowrap;
-    }
-
-
-    td {
-      padding: 0.875rem 1rem;
-
-      border-bottom:
-        1px solid var(--border-color);
-
-      vertical-align: middle;
-    }
-
-
-    tr.clickable-row {
-      cursor: pointer;
-    }
-
-
-    tr.clickable-row:hover {
-      background-color: #f1f5f9;
-    }
-
-
-    /* =====================================================
-       BADGES
-       ===================================================== */
-
-    .pool-badge {
-      display: inline-block;
-
-      padding: 0.15rem 0.5rem;
-
-      border-radius: 0.25rem;
-
-      font-size: 0.75rem;
-
-      font-weight: 700;
-
-      color: white;
-
-      background-color: var(--badge-25m);
-    }
-
-
-    .pool-badge.m50 {
-      background-color: var(--badge-50m);
-    }
-
-
-    .badge-fina {
-      background-color: #e2e8f0;
-
-      color: #334155;
-
-      padding: 0.15rem 0.4rem;
-
-      border-radius: 0.25rem;
-
-      font-size: 0.8rem;
-
-      font-weight: 600;
-
-      white-space: nowrap;
-    }
-
-
-    .improvement {
-      color: var(--success);
-
-      font-weight: 700;
-    }
-
-
-    .no-improvement {
-      color: var(--text-muted);
-
-      font-weight: 600;
-    }
-
-
-    /* =====================================================
-       DETAILS
-       ===================================================== */
-
-    .details-row {
-      display: none;
-
-      background-color: #f8fafc;
-    }
-
-
-    .details-row.open {
-      display: table-row;
-    }
-
-
-    .details-container {
-      padding: 1.25rem;
-
-      border-left:
-        4px solid var(--water-primary);
-    }
-
-
-    .details-title {
-      font-size: 1.1rem;
-
-      margin-bottom: 1rem;
-    }
-
-
-    .details-section {
-      margin-top: 1.25rem;
-    }
-
-
-    .details-section-title {
-      font-size: 0.95rem;
-
-      font-weight: 700;
-
-      margin-bottom: 0.5rem;
-    }
-
-
-    .history-box {
-      background: #ffffff;
-
-      border: 1px solid var(--border-color);
-
-      border-radius: 0.5rem;
-
-      padding: 0.75rem;
-
-      margin-bottom: 0.75rem;
-    }
-
-
-    .history-header {
-      font-weight: 700;
-
-      margin-bottom: 0.5rem;
-    }
-
-
-    .history-row {
-      display: grid;
-
-      grid-template-columns:
-        110px
-        1fr
-        80px;
-
-      gap: 1rem;
-
-      padding: 0.35rem 0;
-
-      border-bottom:
-        1px solid #e2e8f0;
-
-      font-size: 0.9rem;
-    }
-
-
-    .history-row:last-child {
-      border-bottom: none;
-    }
-
-
-    .history-time {
-      text-align: right;
-
-      font-weight: 700;
-    }
-
-
-    .history-points {
-      text-align: right;
-
-      color: var(--text-muted);
-    }
-
-
-    /* =====================================================
-       STATISTICS CARDS
-       ===================================================== */
-
-    .stats-grid {
-      display: grid;
-
-      grid-template-columns:
-        repeat(3, minmax(0, 1fr));
-
-      gap: 0.75rem;
-
-      margin-bottom: 1rem;
-    }
-
-
-    .stat-card {
-      background: #ffffff;
-
-      border: 1px solid var(--border-color);
-
-      border-radius: 0.5rem;
-
-      padding: 0.75rem;
-    }
-
-
-    .stat-label {
-      font-size: 0.75rem;
-
-      color: var(--text-muted);
-
-      margin-bottom: 0.25rem;
-    }
-
-
-    .stat-value {
-      font-size: 1.15rem;
-
-      font-weight: 700;
-    }
-
-
-    .stat-date {
-      font-size: 0.7rem;
-
-      color: var(--text-muted);
-
-      margin-top: 0.2rem;
-    }
-
-
-    /* =====================================================
-       EMPTY / LOADING
-       ===================================================== */
-
-    .empty-state {
-      padding: 3rem;
-
-      text-align: center;
-
-      color: var(--text-muted);
-    }
-
-
-    .loading-state {
-      padding: 3rem;
-
-      text-align: center;
-
-      color: var(--text-muted);
-    }
-
-
-    .error-state {
-      padding: 2rem;
-
-      text-align: center;
-
-      color: #dc2626;
-    }
-
-
-    /* =====================================================
-       DATA STATUS
-       ===================================================== */
-
-    .data-status {
-      display: inline-flex;
-
-      align-items: center;
-
-      gap: 0.5rem;
-
-      padding: 0.4rem 0.7rem;
-
-      border-radius: 999px;
-
-      background: #e0f2fe;
-
-      color: #0369a1;
-
-      font-size: 0.8rem;
-
-      font-weight: 600;
-
-      margin-bottom: 1rem;
-    }
-
-
-    .status-dot {
-      width: 8px;
-      height: 8px;
-
-      border-radius: 50%;
-
-      background: var(--success);
-    }
-
-
-    /* =====================================================
-       MOBILE
-       ===================================================== */
-
-    @media (max-width: 768px) {
-
-      .app-layout {
-        flex-direction: column-reverse;
-      }
-
-
-      .right-sidebar {
-        width: 100%;
-
-        border-left: none;
-
-        border-bottom:
-          2px solid #334155;
-
-        padding: 1rem;
-      }
-
-
-      .nav-menu {
-        display: grid;
-
-        grid-template-columns:
-          1fr 1fr;
-
-        gap: 0.5rem;
-      }
-
-
-      .main-content {
-        padding: 1rem;
-      }
-
-
-      .stats-grid {
-        grid-template-columns: 1fr;
-      }
-
-
-      .history-row {
-        grid-template-columns:
-          1fr
-          1fr;
-
-        gap: 0.25rem;
-      }
-
-
-      .history-points {
-        text-align: left;
-      }
-
-
-      .details-container {
-        padding: 0.75rem;
-      }
-
-    }
-
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>SvømmeHub</title>
+
+<!-- Excel-leser -->
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+
+<!-- Grafer -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<style>
+:root {
+  --bg: #0f172a;
+  --sidebar: #1e293b;
+  --content: #f8fafc;
+  --card: #ffffff;
+  --text: #0f172a;
+  --muted: #64748b;
+  --border: #cbd5e1;
+
+  --varodd: #2563eb;
+  --varodd-hover: #1d4ed8;
+
+  --vagsbygd: #dc2626;
+  --vagsbygd-hover: #b91c1c;
+
+  --green: #10b981;
+  --orange: #f59e0b;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family:
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    Roboto,
+    Arial,
+    sans-serif;
+
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+}
+
+.app {
+  display: flex;
+  min-height: 100vh;
+}
+
+/* =========================
+   VENSTRE MENY
+   ========================= */
+
+.sidebar {
+  width: 270px;
+  background: var(--sidebar);
+  color: white;
+  padding: 1.2rem;
+  flex-shrink: 0;
+  box-shadow: 4px 0 15px rgba(0,0,0,.25);
+}
+
+.logo {
+  font-size: 1.3rem;
+  font-weight: 800;
+  text-align: center;
+  padding: 1rem 0 1.3rem;
+  border-bottom: 1px solid #334155;
+  margin-bottom: 1rem;
+}
+
+.menu {
+  display: flex;
+  flex-direction: column;
+  gap: .6rem;
+}
+
+.menu button {
+  border: none;
+  border-radius: .55rem;
+  padding: .9rem 1rem;
+  font-size: .95rem;
+  font-weight: 700;
+  color: white;
+  cursor: pointer;
+  text-align: left;
+  transition: .2s;
+}
+
+.menu button:hover {
+  transform: translateX(3px);
+}
+
+.btn-varodd {
+  background: #2563eb !important;
+}
+
+.btn-varodd:hover {
+  background: #1d4ed8 !important;
+}
+
+.btn-vagsbygd {
+  background: #dc2626 !important;
+}
+
+.btn-vagsbygd:hover {
+  background: #b91c1c !important;
+}
+
+.btn-normal {
+  background: #334155;
+}
+
+.btn-normal:hover {
+  background: #475569;
+}
+
+.menu button.active {
+  outline: 3px solid rgba(255,255,255,.25);
+}
+
+/* =========================
+   HOVEDINNHOLD
+   ========================= */
+
+.main {
+  flex: 1;
+  background: var(--content);
+  padding: 2rem;
+  min-width: 0;
+}
+
+.page {
+  display: none;
+}
+
+.page.active {
+  display: block;
+}
+
+h1 {
+  margin-bottom: .3rem;
+}
+
+.subtitle {
+  color: var(--muted);
+  margin-bottom: 1.5rem;
+}
+
+.card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: .7rem;
+  padding: 1.2rem;
+  margin-bottom: 1.2rem;
+  box-shadow: 0 3px 8px rgba(0,0,0,.04);
+}
+
+.controls {
+  display: flex;
+  gap: .7rem;
+  flex-wrap: wrap;
+  margin-bottom: 1rem;
+}
+
+input,
+select {
+  padding: .7rem .8rem;
+  border: 1px solid var(--border);
+  border-radius: .45rem;
+  font-size: .95rem;
+  background: white;
+}
+
+input {
+  min-width: 220px;
+}
+
+button.primary {
+  background: #0284c7;
+  color: white;
+  border: none;
+  border-radius: .45rem;
+  padding: .7rem 1rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+button.primary:hover {
+  background: #0369a1;
+}
+
+button.danger {
+  background: #dc2626;
+  color: white;
+  border: none;
+  border-radius: .4rem;
+  padding: .4rem .7rem;
+  cursor: pointer;
+}
+
+button.small {
+  padding: .45rem .7rem;
+  border-radius: .4rem;
+  border: none;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+th {
+  background: #f1f5f9;
+  color: var(--muted);
+  text-align: left;
+  padding: .75rem;
+  border-bottom: 1px solid var(--border);
+}
+
+td {
+  padding: .75rem;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.table-wrapper {
+  overflow-x: auto;
+}
+
+.badge {
+  display: inline-block;
+  padding: .2rem .55rem;
+  border-radius: .3rem;
+  color: white;
+  font-size: .75rem;
+  font-weight: 700;
+}
+
+.badge-25 {
+  background: #0284c7;
+}
+
+.badge-50 {
+  background: #7c3aed;
+}
+
+.club-varodd {
+  color: #2563eb;
+  font-weight: 800;
+}
+
+.club-vagsbygd {
+  color: #dc2626;
+  font-weight: 800;
+}
+
+/* =========================
+   STATISTIKK
+   ========================= */
+
+.stats {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: .8rem;
+  margin-bottom: 1rem;
+}
+
+.stat {
+  background: white;
+  border: 1px solid var(--border);
+  border-radius: .6rem;
+  padding: 1rem;
+}
+
+.stat-label {
+  color: var(--muted);
+  font-size: .8rem;
+}
+
+.stat-value {
+  font-size: 1.4rem;
+  font-weight: 800;
+  margin-top: .2rem;
+}
+
+/* =========================
+   SVØMMERKORT
+   ========================= */
+
+.swimmer-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill,minmax(250px,1fr));
+  gap: 1rem;
+}
+
+.swimmer-card {
+  background: white;
+  border: 1px solid var(--border);
+  border-radius: .7rem;
+  padding: 1rem;
+}
+
+.swimmer-name {
+  font-size: 1.1rem;
+  font-weight: 800;
+}
+
+.swimmer-meta {
+  color: var(--muted);
+  margin: .3rem 0 .8rem;
+}
+
+/* =========================
+   GRAFER
+   ========================= */
+
+.chart-box {
+  height: 400px;
+  margin-top: 1rem;
+}
+
+/* =========================
+   IMPORT
+   ========================= */
+
+.drop-zone {
+  border: 2px dashed #94a3b8;
+  border-radius: .7rem;
+  padding: 2.5rem;
+  text-align: center;
+  background: #f8fafc;
+  cursor: pointer;
+}
+
+.drop-zone:hover {
+  border-color: #0284c7;
+  background: #f0f9ff;
+}
+
+.import-summary {
+  margin-top: 1rem;
+  padding: 1rem;
+  border-radius: .5rem;
+  background: #f0fdf4;
+  border: 1px solid #86efac;
+}
+
+.warning {
+  background: #fff7ed;
+  border: 1px solid #fdba74;
+  padding: 1rem;
+  border-radius: .5rem;
+  margin-top: 1rem;
+}
+
+.hidden {
+  display: none;
+}
+
+/* =========================
+   KALKULATOR
+   ========================= */
+
+.calculator-grid {
+  display: grid;
+  grid-template-columns: repeat(2,1fr);
+  gap: 1rem;
+}
+
+.result-box {
+  background: #f8fafc;
+  border: 1px solid var(--border);
+  border-radius: .6rem;
+  padding: 1rem;
+}
+
+.result-number {
+  font-size: 1.4rem;
+  font-weight: 800;
+}
+
+/* =========================
+   MOBIL
+   ========================= */
+
+@media(max-width:800px) {
+
+  .app {
+    flex-direction: column;
+  }
+
+  .sidebar {
+    width: 100%;
+  }
+
+  .menu {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .main {
+    padding: 1rem;
+  }
+
+  .stats {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .calculator-grid {
+    grid-template-columns: 1fr;
+  }
+}
+</style>
 </head>
-
 
 <body>
 
-<div class="app-layout">
+<div class="app">
 
+<!-- =====================================================
+     VENSTRE MENY
+     ===================================================== -->
 
-  <!-- ===================================================
-       HOVEDINNHOLD
-       =================================================== -->
+<aside class="sidebar">
 
-  <main class="main-content">
+  <div class="logo">
+    🏊‍♂️ SvømmeHub
+  </div>
 
+  <div class="menu">
 
-    <!-- =================================================
-         VARODD
-         ================================================= -->
+    <button
+      class="btn-varodd active"
+      onclick="visSide('varodd',this)">
+      🔵 Varodd SK
+    </button>
 
-    <div id="view-varodd">
+    <button
+      class="btn-vagsbygd"
+      onclick="visSide('vagsbygd',this)">
+      🔴 Vågsbygd SLK
+    </button>
 
-      <h1 class="page-title">
-        Varodd Svømmeklubb
-      </h1>
+    <button
+      class="btn-normal"
+      onclick="visSide('svommere',this)">
+      👤 Svømmere
+    </button>
 
-      <p class="page-subtitle">
-        Resultater for Varodd Svømmeklubb siste 12 måneder.
-      </p>
+    <button
+      class="btn-normal"
+      onclick="visSide('resultater',this)">
+      📊 Resultater
+    </button>
 
+    <button
+      class="btn-normal"
+      onclick="visSide('grafer',this)">
+      📈 Grafer & utvikling
+    </button>
 
-      <div class="controls">
+    <button
+      class="btn-normal"
+      onclick="visSide('import',this)">
+      📥 Importer Excel
+    </button>
 
-        <input
-          type="text"
-          id="searchVarodd"
-          class="search-input"
-          placeholder="Søk utøver eller øvelse..."
-          oninput="oppdaterVisning()"
-        >
+    <button
+      class="btn-normal"
+      onclick="visSide('kalkulator',this)">
+      🧮 Treningskalkulator
+    </button>
 
-      </div>
+    <button
+      class="btn-normal"
+      onclick="visSide('programmer',this)">
+      📋 Treningsprogrammer
+    </button>
 
+  </div>
 
-      <div class="table-card">
+</aside>
 
-        <table>
 
-          <thead>
+<!-- =====================================================
+     HOVEDINNHOLD
+     ===================================================== -->
 
-            <tr>
-              <th>Dato</th>
-              <th>Navn</th>
-              <th>Øvelse</th>
-              <th>Bane</th>
-              <th>Tid</th>
-              <th>FINA</th>
-            </tr>
+<main class="main">
 
-          </thead>
 
-          <tbody id="varoddTableBody"></tbody>
+<!-- =====================================================
+     VARODD
+     ===================================================== -->
 
-        </table>
+<section id="page-varodd" class="page active">
 
-      </div>
+<h1>Varodd SK</h1>
 
-    </div>
+<p class="subtitle">
+  Svømmere og resultater for Varodd Svømmeklubb.
+</p>
 
+<div id="varoddStats"></div>
 
-    <!-- =================================================
-         VÅGSBYGD
-         ================================================= -->
+<div class="card">
 
-    <div
-      id="view-vagsbygd"
-      style="display:none;"
-    >
+<div class="controls">
 
-      <h1 class="page-title">
-        Vågsbygd SLK
-      </h1>
+<input
+  id="searchVarodd"
+  placeholder="Søk etter svømmer..."
+  oninput="visKlubb('Varodd SK')">
 
-      <p class="page-subtitle">
-        Resultater for Vågsbygd SLK siste 12 måneder.
-      </p>
+</div>
 
+<div id="varoddList"></div>
 
-      <div class="controls">
+</div>
 
-        <input
-          type="text"
-          id="searchVagsbygd"
-          class="search-input"
-          placeholder="Søk utøver eller øvelse..."
-          oninput="oppdaterVisning()"
-        >
+</section>
 
-      </div>
 
+<!-- =====================================================
+     VÅGSBYGD
+     ===================================================== -->
 
-      <div class="table-card">
+<section id="page-vagsbygd" class="page">
 
-        <table>
+<h1>Vågsbygd SLK</h1>
 
-          <thead>
+<p class="subtitle">
+  Svømmere og resultater for Vågsbygd SLK.
+</p>
 
-            <tr>
-              <th>Dato</th>
-              <th>Navn</th>
-              <th>Øvelse</th>
-              <th>Bane</th>
-              <th>Tid</th>
-              <th>FINA</th>
-            </tr>
+<div id="vagsbygdStats"></div>
 
-          </thead>
+<div class="card">
 
-          <tbody id="vagsbygdTableBody"></tbody>
+<div class="controls">
 
-        </table>
+<input
+  id="searchVagsbygd"
+  placeholder="Søk etter svømmer..."
+  oninput="visKlubb('Vågsbygd SLK')">
 
-      </div>
+</div>
 
-    </div>
+<div id="vagsbygdList"></div>
 
+</div>
 
-    <!-- =================================================
-         GRAFER OG MÅLINGER
-         ================================================= -->
+</section>
 
-    <div
-      id="view-grafer"
-      style="display:none;"
-    >
 
-      <h1 class="page-title">
-        Grafer & Målinger (12 mnd)
-      </h1>
+<!-- =====================================================
+     SVØMMERE
+     ===================================================== -->
 
-      <p class="page-subtitle">
+<section id="page-svommere" class="page">
 
-        Oversikt over beste, dårligste og første
-        registrerte tider siste 12 måneder.
-        Forbedring beregnes separat for hver
-        øvelse og bassenglengde.
+<h1>Svømmere</h1>
 
-      </p>
+<p class="subtitle">
+  Legg inn og administrer svømmerne.
+</p>
 
+<div class="card">
 
-      <div class="data-status">
+<h2>Legg til svømmer</h2>
 
-        <span class="status-dot"></span>
+<br>
 
-        Data fra siste 12 måneder
+<div class="controls">
 
-      </div>
+<input
+  id="swimmerName"
+  placeholder="Navn">
 
+<select id="swimmerClub">
 
-      <div class="controls">
+<option value="Varodd SK">
+Varodd SK
+</option>
 
-        <input
-          type="text"
-          id="searchGrafer"
-          class="search-input"
-          placeholder="Søk på svømmer..."
-          oninput="oppdaterVisning()"
-        >
+<option value="Vågsbygd SLK">
+Vågsbygd SLK
+</option>
 
+</select>
 
-        <select
-          id="klubbFilterGrafer"
-          class="select-input"
-          onchange="oppdaterVisning()"
-        >
+<input
+  id="swimmerYear"
+  type="number"
+  placeholder="Årsklasse">
 
-          <option value="alle">
-            Klubb: Alle
-          </option>
+<button
+  class="primary"
+  onclick="leggTilSvommer()">
+  + Legg til
+</button>
 
-          <option value="Varodd Svømmeklubb">
-            Varodd Svømmeklubb
-          </option>
+</div>
 
-          <option value="Vågsbygd SLK">
-            Vågsbygd SLK
-          </option>
+</div>
 
-        </select>
 
-      </div>
+<div class="card">
 
+<h2>Registrerte svømmere</h2>
 
-      <div class="table-card">
+<br>
 
-        <table>
+<div id="allSwimmers"></div>
 
-          <thead>
+</div>
 
-            <tr>
+</section>
 
-              <th style="width:30px;"></th>
 
-              <th>
-                Svømmer
-              </th>
+<!-- =====================================================
+     RESULTATER
+     ===================================================== -->
 
-              <th>
-                Klubb
-              </th>
+<section id="page-resultater" class="page">
 
-              <th>
-                Øvelser
-              </th>
+<h1>Resultater</h1>
 
-              <th>
-                Beste forbedring
-              </th>
+<p class="subtitle">
+  Alle importerte resultater fra siste 12 måneder.
+</p>
 
-            </tr>
+<div class="card">
 
-          </thead>
+<div class="controls">
 
-          <tbody
-            id="graferTableBody"
-          ></tbody>
+<input
+  id="searchResults"
+  placeholder="Søk svømmer eller øvelse..."
+  oninput="visResultater()">
 
-        </table>
+<select
+  id="resultClub"
+  onchange="visResultater()">
 
-      </div>
+<option value="alle">Alle klubber</option>
+<option value="Varodd SK">Varodd SK</option>
+<option value="Vågsbygd SLK">Vågsbygd SLK</option>
 
-    </div>
+</select>
 
+<select
+  id="resultPool"
+  onchange="visResultater()">
 
-    <!-- =================================================
-         TRENINGSPROGRAMMER
-         ================================================= -->
+<option value="alle">Alle basseng</option>
+<option value="25m">25 meter</option>
+<option value="50m">50 meter</option>
 
-    <div
-      id="view-programmer"
-      style="display:none;"
-    >
+</select>
 
-      <h1 class="page-title">
-        Treningsprogrammer
-      </h1>
+</div>
 
-      <p class="page-subtitle">
-        Planlagte økter, serier og treningsuker.
-      </p>
+<div id="resultTable"></div>
 
+</div>
 
-      <div
-        class="table-card"
-        style="padding:1.5rem;"
-      >
+</section>
 
-        <p>
-          Her kan du legge inn øktplaner,
-          pacer-skjemaer og treningsfokus framover.
-        </p>
 
-      </div>
+<!-- =====================================================
+     GRAFER
+     ===================================================== -->
 
-    </div>
+<section id="page-grafer" class="page">
 
+<h1>Grafer & utvikling</h1>
 
-  </main>
+<p class="subtitle">
+  Beste og dårligste tid siste 12 måneder.
+</p>
 
+<div class="card">
 
-  <!-- ===================================================
-       HØYRE MENY
-       =================================================== -->
+<div class="controls">
 
-  <aside class="right-sidebar">
+<select id="graphSwimmer" onchange="visGrafvalg()">
+<option value="">Velg svømmer</option>
+</select>
 
+<select id="graphEvent" onchange="visGraf()">
+<option value="">Velg øvelse</option>
+</select>
 
-    <div class="brand-header">
+<select id="graphPool" onchange="visGraf()">
+<option value="25m">25m</option>
+<option value="50m">50m</option>
+</select>
 
-      🏊‍♂️ SvømmeHub
+</div>
 
-    </div>
+<div id="graphStats"></div>
 
+<div class="chart-box">
+<canvas id="progressChart"></canvas>
+</div>
 
-    <nav class="nav-menu">
+</div>
 
+</section>
 
-      <button
-        class="nav-btn btn-varodd active"
-        onclick="byttFane('varodd', event)"
-      >
 
-        <img
-          src="assets/varodd-logo.png"
-          alt="Varodd Logo"
-          class="club-logo"
-          onerror="this.style.display='none'"
-        >
+<!-- =====================================================
+     IMPORT EXCEL
+     ===================================================== -->
 
-        <span>
-          Varodd SK
-        </span>
+<section id="page-import" class="page">
 
-      </button>
+<h1>Importer Excel</h1>
 
+<p class="subtitle">
+  Last opp resultatlisten fra Excel.
+</p>
 
-      <button
-        class="nav-btn btn-vagsbygd"
-        onclick="byttFane('vagsbygd', event)"
-      >
+<div class="card">
 
-        <img
-          src="assets/vagsbygd-logo.png"
-          alt="Vågsbygd Logo"
-          class="club-logo"
-          onerror="this.style.display='none'"
-        >
+<div
+  class="drop-zone"
+  onclick="document.getElementById('excelFile').click()">
 
-        <span>
-          Vågsbygd SLK
-        </span>
+<h2>📥 Last opp Excel-fil</h2>
 
-      </button>
+<br>
 
+<p>
+Klikk her og velg .xlsx-filen
+</p>
 
-      <button
-        class="nav-btn"
-        onclick="byttFane('grafer', event)"
-      >
+</div>
 
-        📊 Grafer & Målinger
+<input
+  id="excelFile"
+  type="file"
+  accept=".xlsx,.xls"
+  class="hidden"
+  onchange="importerExcel(event)">
 
-      </button>
+<div id="importResult"></div>
 
+</div>
 
-      <button
-        class="nav-btn"
-        onclick="byttFane('programmer', event)"
-      >
+<div class="card">
 
-        📋 Treningsprogrammer
+<h2>Hvordan importen fungerer</h2>
 
-      </button>
+<br>
 
+<p>
+Systemet leser navnene fra linjer som:
+</p>
 
-    </nav>
+<br>
 
-  </aside>
+<strong>
+Navn: Amundsen, Sophie
+</strong>
 
+<br><br>
+
+<p>
+Alle resultatene under navnet kobles til denne svømmeren
+frem til neste "Navn:"-linje.
+</p>
+
+<br>
+
+<p>
+Gamle resultater blir ikke slettet når du importerer en ny fil.
+</p>
+
+</div>
+
+</section>
+
+
+<!-- =====================================================
+     KALKULATOR
+     ===================================================== -->
+
+<section id="page-kalkulator" class="page">
+
+<h1>Treningskalkulator</h1>
+
+<p class="subtitle">
+  Beregn fart, tak per lengde, takfrekvens og SWOLF.
+</p>
+
+<div class="card">
+
+<div class="calculator-grid">
+
+<div>
+
+<label>Basseng</label>
+
+<br><br>
+
+<select id="calcPool">
+
+<option value="25">
+25 meter
+</option>
+
+<option value="50">
+50 meter
+</option>
+
+</select>
+
+</div>
+
+
+<div>
+
+<label>Distanse</label>
+
+<br><br>
+
+<input
+  id="calcDistance"
+  type="number"
+  placeholder="100">
+
+</div>
+
+
+<div>
+
+<label>Tid</label>
+
+<br><br>
+
+<input
+  id="calcTime"
+  placeholder="1:05.40">
+
+</div>
+
+
+<div>
+
+<label>Totalt antall tak</label>
+
+<br><br>
+
+<input
+  id="calcStrokes"
+  type="number"
+  placeholder="72">
+
+</div>
+
+</div>
+
+<br>
+
+<button
+  class="primary"
+  onclick="beregnKalkulator()">
+
+Beregn
+
+</button>
+
+</div>
+
+<div id="calculatorResults"></div>
+
+</section>
+
+
+<!-- =====================================================
+     PROGRAMMER
+     ===================================================== -->
+
+<section id="page-programmer" class="page">
+
+<h1>Treningsprogrammer</h1>
+
+<p class="subtitle">
+  Her bygger vi senere øktplaner og treningsprogrammer.
+</p>
+
+<div class="card">
+
+<h2>Kommer</h2>
+
+<br>
+
+<p>
+Her kan vi senere lage økter, serier, pauser,
+pacer, intensitetssoner og treningsuker.
+</p>
+
+</div>
+
+</section>
+
+</main>
 
 </div>
 
 
 <script>
 
+/* =========================================================
+   DATA
+   ========================================================= */
 
-  /* =====================================================
-     GLOBALE DATA
-     ===================================================== */
+let svommere = JSON.parse(
+  localStorage.getItem("svommehub_svommere") || "[]"
+);
 
-  let alleResultater = [];
+let resultater = JSON.parse(
+  localStorage.getItem("svommehub_resultater") || "[]"
+);
 
-  let aktivFane = 'varodd';
+let chartInstance = null;
 
 
-  /* =====================================================
-     HTML-SIKKERHET
-     ===================================================== */
+/* =========================================================
+   LAGRING
+   ========================================================= */
 
-  function escapeHtml(value) {
+function lagreData() {
 
-    if (
-      value === null ||
-      value === undefined
-    ) {
-      return '';
-    }
+  localStorage.setItem(
+    "svommehub_svommere",
+    JSON.stringify(svommere)
+  );
 
-    return String(value)
+  localStorage.setItem(
+    "svommehub_resultater",
+    JSON.stringify(resultater)
+  );
+}
 
-      .replace(
-        /&/g,
-        '&amp;'
-      )
 
-      .replace(
-        /</g,
-        '&lt;'
-      )
+/* =========================================================
+   NAVIGASJON
+   ========================================================= */
 
-      .replace(
-        />/g,
-        '&gt;'
-      )
+function visSide(side, knapp) {
 
-      .replace(
-        /"/g,
-        '&quot;'
-      )
+  document
+    .querySelectorAll(".page")
+    .forEach(p => p.classList.remove("active"));
 
-      .replace(
-        /'/g,
-        '&#039;'
-      );
+  document
+    .getElementById("page-" + side)
+    .classList.add("active");
+
+  document
+    .querySelectorAll(".menu button")
+    .forEach(b => b.classList.remove("active"));
+
+  if (knapp) {
+    knapp.classList.add("active");
   }
 
+  if (side === "varodd") {
+    visKlubb("Varodd SK");
+  }
 
-  /* =====================================================
-     TID TIL SEKUNDER
-     ===================================================== */
+  if (side === "vagsbygd") {
+    visKlubb("Vågsbygd SLK");
+  }
 
-  function tidTilSekunder(tid) {
+  if (side === "svommere") {
+    visSvommere();
+  }
 
-    if (!tid) {
-      return null;
+  if (side === "resultater") {
+    visResultater();
+  }
+
+  if (side === "grafer") {
+    fyllGrafSvommere();
+  }
+}
+
+
+/* =========================================================
+   SVØMMERE
+   ========================================================= */
+
+function normaliserNavn(navn) {
+
+  return String(navn || "")
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/g, " ");
+}
+
+
+function leggTilSvommer() {
+
+  const navn =
+    document
+      .getElementById("swimmerName")
+      .value
+      .trim();
+
+  const klubb =
+    document
+      .getElementById("swimmerClub")
+      .value;
+
+  const arsklasse =
+    document
+      .getElementById("swimmerYear")
+      .value;
+
+  if (!navn) {
+    alert("Skriv inn navn.");
+    return;
+  }
+
+  if (!arsklasse) {
+    alert("Skriv inn årsklasse.");
+    return;
+  }
+
+  const finnes =
+    svommere.some(
+      s =>
+        normaliserNavn(s.navn) ===
+        normaliserNavn(navn)
+    );
+
+  if (finnes) {
+    alert("Denne svømmeren finnes allerede.");
+    return;
+  }
+
+  svommere.push({
+
+    id:
+      "swimmer_" +
+      Date.now(),
+
+    navn,
+    klubb,
+    arsklasse
+
+  });
+
+  lagreData();
+
+  document.getElementById("swimmerName").value = "";
+  document.getElementById("swimmerYear").value = "";
+
+  visSvommere();
+
+  alert("Svømmeren er lagt til.");
+}
+
+
+function slettSvommer(id) {
+
+  if (
+    !confirm(
+      "Er du sikker på at du vil slette svømmeren?"
+    )
+  ) {
+    return;
+  }
+
+  svommere =
+    svommere.filter(
+      s => s.id !== id
+    );
+
+  lagreData();
+
+  visSvommere();
+}
+
+
+function visSvommere() {
+
+  const container =
+    document.getElementById("allSwimmers");
+
+  if (!svommere.length) {
+
+    container.innerHTML =
+      "<p>Ingen svømmere er registrert ennå.</p>";
+
+    return;
+  }
+
+  const sortert =
+    [...svommere].sort(
+      (a,b) =>
+        a.klubb.localeCompare(b.klubb) ||
+        a.navn.localeCompare(b.navn)
+    );
+
+  container.innerHTML = `
+
+<table>
+
+<thead>
+
+<tr>
+<th>Navn</th>
+<th>Klubb</th>
+<th>Årsklasse</th>
+<th></th>
+</tr>
+
+</thead>
+
+<tbody>
+
+${sortert.map(s => `
+
+<tr>
+
+<td>
+<strong>${escapeHtml(s.navn)}</strong>
+</td>
+
+<td class="${
+  s.klubb === "Varodd SK"
+    ? "club-varodd"
+    : "club-vagsbygd"
+}">
+${escapeHtml(s.klubb)}
+</td>
+
+<td>
+${escapeHtml(s.arsklasse)}
+</td>
+
+<td>
+<button
+  class="danger"
+  onclick="slettSvommer('${s.id}')">
+  Slett
+</button>
+</td>
+
+</tr>
+
+`).join("")}
+
+</tbody>
+
+</table>
+
+`;
+
+}
+
+
+/* =========================================================
+   KLUBBSIDER
+   ========================================================= */
+
+function visKlubb(klubb) {
+
+  const searchId =
+    klubb === "Varodd SK"
+      ? "searchVarodd"
+      : "searchVagsbygd";
+
+  const containerId =
+    klubb === "Varodd SK"
+      ? "varoddList"
+      : "vagsbygdList";
+
+  const statsId =
+    klubb === "Varodd SK"
+      ? "varoddStats"
+      : "vagsbygdStats";
+
+  const sok =
+    document
+      .getElementById(searchId)
+      .value
+      .toLowerCase();
+
+  const klubbSvommere =
+    svommere
+      .filter(s => s.klubb === klubb)
+      .filter(s =>
+        s.navn
+          .toLowerCase()
+          .includes(sok)
+      );
+
+  const resultaterKlubb =
+    resultater.filter(
+      r => r.klubb === klubb &&
+           erSiste12Maneder(r.dato)
+    );
+
+  document.getElementById(statsId).innerHTML = `
+
+<div class="stats">
+
+<div class="stat">
+
+<div class="stat-label">
+Svømmere
+</div>
+
+<div class="stat-value">
+${klubbSvommere.length}
+</div>
+
+</div>
+
+<div class="stat">
+
+<div class="stat-label">
+Resultater siste 12 mnd
+</div>
+
+<div class="stat-value">
+${resultaterKlubb.length}
+</div>
+
+</div>
+
+<div class="stat">
+
+<div class="stat-label">
+25m resultater
+</div>
+
+<div class="stat-value">
+${resultaterKlubb.filter(r => r.basseng === "25m").length}
+</div>
+
+</div>
+
+<div class="stat">
+
+<div class="stat-label">
+50m resultater
+</div>
+
+<div class="stat-value">
+${resultaterKlubb.filter(r => r.basseng === "50m").length}
+</div>
+
+</div>
+
+</div>
+
+`;
+
+  const container =
+    document.getElementById(containerId);
+
+  if (!klubbSvommere.length) {
+
+    container.innerHTML =
+      "<p>Ingen svømmere registrert.</p>";
+
+    return;
+  }
+
+  container.innerHTML = `
+
+<div class="swimmer-grid">
+
+${klubbSvommere.map(s => {
+
+  const antall =
+    resultaterKlubb.filter(
+      r =>
+        normaliserNavn(r.navn) ===
+        normaliserNavn(s.navn)
+    ).length;
+
+  return `
+
+<div class="swimmer-card">
+
+<div class="swimmer-name">
+${escapeHtml(s.navn)}
+</div>
+
+<div class="swimmer-meta">
+
+Årsklasse:
+${escapeHtml(s.arsklasse)}
+
+<br>
+
+Resultater:
+${antall}
+
+</div>
+
+<button
+  class="primary"
+  onclick="åpneSvømmerGraf('${s.id}')">
+
+📈 Se utvikling
+
+</button>
+
+</div>
+
+`;
+
+}).join("")}
+
+</div>
+
+`;
+
+}
+
+
+function åpneSvømmerGraf(id) {
+
+  visSide(
+    "grafer",
+    document.querySelector(
+      '.menu button[onclick*="grafer"]'
+    )
+  );
+
+  document.getElementById(
+    "graphSwimmer"
+  ).value = id;
+
+  fyllGrafOvrelser();
+
+}
+
+
+/* =========================================================
+   RESULTATER
+   ========================================================= */
+
+function visResultater() {
+
+  const sok =
+    document
+      .getElementById("searchResults")
+      .value
+      .toLowerCase();
+
+  const klubb =
+    document
+      .getElementById("resultClub")
+      .value;
+
+  const basseng =
+    document
+      .getElementById("resultPool")
+      .value;
+
+  let data =
+    resultater
+      .filter(r => erSiste12Maneder(r.dato))
+      .filter(r =>
+        klubb === "alle" ||
+        r.klubb === klubb
+      )
+      .filter(r =>
+        basseng === "alle" ||
+        r.basseng === basseng
+      )
+      .filter(r =>
+        normaliserNavn(r.navn)
+          .includes(normaliserNavn(sok)) ||
+        String(r.ovelse || "")
+          .toLowerCase()
+          .includes(sok)
+      );
+
+  data.sort(
+    (a,b) =>
+      String(b.dato).localeCompare(
+        String(a.dato)
+      )
+  );
+
+  const container =
+    document.getElementById("resultTable");
+
+  if (!data.length) {
+
+    container.innerHTML =
+      "<p>Ingen resultater funnet.</p>";
+
+    return;
+  }
+
+  container.innerHTML = `
+
+<div class="table-wrapper">
+
+<table>
+
+<thead>
+
+<tr>
+<th>Dato</th>
+<th>Navn</th>
+<th>Klubb</th>
+<th>Øvelse</th>
+<th>Basseng</th>
+<th>Tid</th>
+<th>Poeng</th>
+<th>Sted</th>
+</tr>
+
+</thead>
+
+<tbody>
+
+${data.map(r => `
+
+<tr>
+
+<td>${escapeHtml(r.dato)}</td>
+
+<td>
+<strong>${escapeHtml(r.navn)}</strong>
+</td>
+
+<td>
+${escapeHtml(r.klubb)}
+</td>
+
+<td>
+${escapeHtml(r.ovelse)}
+</td>
+
+<td>
+
+<span class="badge ${
+  r.basseng === "50m"
+    ? "badge-50"
+    : "badge-25"
+}">
+${escapeHtml(r.basseng)}
+</span>
+
+</td>
+
+<td>
+<strong>${escapeHtml(r.tid)}</strong>
+</td>
+
+<td>
+${escapeHtml(r.poeng || "0")}
+</td>
+
+<td>
+${escapeHtml(r.sted || "")}
+</td>
+
+</tr>
+
+`).join("")}
+
+</tbody>
+
+</table>
+
+</div>
+
+`;
+
+}
+
+
+/* =========================================================
+   EXCEL-IMPORT
+   ========================================================= */
+
+function importerExcel(event) {
+
+  const file =
+    event.target.files[0];
+
+  if (!file) return;
+
+  const output =
+    document.getElementById(
+      "importResult"
+    );
+
+  output.innerHTML =
+    "<p>Leser Excel-filen...</p>";
+
+  const reader =
+    new FileReader();
+
+  reader.onload = function(e) {
+
+    try {
+
+      const workbook =
+        XLSX.read(
+          e.target.result,
+          {
+            type: "array",
+            cellDates: true
+          }
+        );
+
+      const sheet =
+        workbook.Sheets[
+          workbook.SheetNames[0]
+        ];
+
+      const rows =
+        XLSX.utils.sheet_to_json(
+          sheet,
+          {
+            header: 1,
+            defval: ""
+          }
+        );
+
+      behandleExcelRader(rows);
+
+    } catch (error) {
+
+      console.error(error);
+
+      output.innerHTML = `
+
+<div class="warning">
+
+<strong>Feil ved import</strong>
+
+<br><br>
+
+${escapeHtml(error.message)}
+
+</div>
+
+`;
+
     }
 
-    const value =
-      String(tid)
-        .trim()
-        .replace(',', '.');
+  };
+
+  reader.readAsArrayBuffer(file);
+}
+
+
+function behandleExcelRader(rows) {
+
+  let currentName = "";
+  let header = null;
+
+  const nye = [];
+  const ukjente = new Set();
+
+  for (let i = 0; i < rows.length; i++) {
+
+    const row = rows[i];
+
+    const first =
+      String(row[0] || "")
+        .trim();
+
+    /* ---------------------------------------
+       FINN SVØMMER
+       --------------------------------------- */
+
+    if (
+      first
+        .toLowerCase()
+        .startsWith("navn:")
+    ) {
+
+      currentName =
+        first
+          .substring(5)
+          .trim();
+
+      continue;
+    }
+
+    /* ---------------------------------------
+       FINN KOLONNEOVERSKRIFTER
+       --------------------------------------- */
+
+    const rowText =
+      row
+        .map(x =>
+          String(x || "")
+            .toLowerCase()
+            .trim()
+        );
+
+    if (
+      rowText.includes("nr") &&
+      rowText.includes("distanse") &&
+      rowText.includes("tid")
+    ) {
+
+      header = rowText;
+
+      continue;
+    }
+
+    if (!currentName) {
+      continue;
+    }
+
+    if (!header) {
+      continue;
+    }
+
+    const distanceIndex =
+      header.indexOf("distanse");
+
+    const timeIndex =
+      header.indexOf("tid");
+
+    const pointsIndex =
+      header.indexOf("poeng");
+
+    const dateIndex =
+      header.indexOf("dato");
+
+    const placeIndex =
+      header.indexOf("sted");
+
+    const poolIndex =
+      header.indexOf("basseng");
+
+    if (
+      distanceIndex < 0 ||
+      timeIndex < 0
+    ) {
+      continue;
+    }
+
+    const distance =
+      String(
+        row[distanceIndex] || ""
+      ).trim();
+
+    const time =
+      String(
+        row[timeIndex] || ""
+      ).trim();
+
+    if (!distance || !time) {
+      continue;
+    }
+
+    /* ---------------------------------------
+       KUN RESULTATRADER
+       --------------------------------------- */
+
+    if (
+      !/^\d/.test(distance)
+    ) {
+      continue;
+    }
+
+    const bassin =
+      normaliserBasseng(
+        row[poolIndex]
+      );
+
+    const dato =
+      normaliserExcelDato(
+        row[dateIndex]
+      );
+
+    const seconds =
+      parseSvommeTid(time);
+
+    if (
+      seconds === null ||
+      seconds <= 0
+    ) {
+      continue;
+    }
+
+    const eksisterer =
+      resultater.some(r =>
+        normaliserNavn(r.navn) ===
+          normaliserNavn(currentName) &&
+        r.ovelse === distance &&
+        r.dato === dato &&
+        Math.abs(
+          Number(r.sekunder) - seconds
+        ) < 0.001 &&
+        r.basseng === bassin
+      );
+
+    if (eksisterer) {
+      continue;
+    }
+
+    const swimmer =
+      finnSvommer(currentName);
+
+    if (!swimmer) {
+      ukjente.add(currentName);
+    }
+
+    nye.push({
+
+      id:
+        "result_" +
+        Date.now() +
+        "_" +
+        i,
+
+      navn: currentName,
+
+      klubb:
+        swimmer
+          ? swimmer.klubb
+          : "",
+
+      arsklasse:
+        swimmer
+          ? swimmer.arsklasse
+          : "",
+
+      ovelse: distance,
+
+      tid: formatTid(seconds),
+
+      sekunder:
+        Number(seconds.toFixed(3)),
+
+      basseng: bassin,
+
+      poeng:
+        row[pointsIndex] !== undefined
+          ? String(row[pointsIndex])
+          : "",
+
+      dato,
+
+      sted:
+        row[placeIndex] !== undefined
+          ? String(row[placeIndex])
+          : "",
+
+      importert:
+        new Date()
+          .toISOString()
+
+    });
+
+  }
+
+  resultater.push(...nye);
+
+  lagreData();
+
+  visImportResultat(
+    nye.length,
+    ukjente
+  );
+
+  visResultater();
+
+}
+
+
+function finnSvommer(navn) {
+
+  const normal =
+    normaliserNavn(navn);
+
+  return svommere.find(
+    s =>
+      normaliserNavn(s.navn) ===
+      normal
+  );
+
+}
+
+
+/* =========================================================
+   DATO
+   ========================================================= */
+
+function normaliserExcelDato(value) {
+
+  if (!value) {
+    return "";
+  }
+
+  if (value instanceof Date) {
+
+    return value
+      .toISOString()
+      .substring(0,10);
+
+  }
+
+  const text =
+    String(value).trim();
+
+  let match =
+    text.match(
+      /^(\d{1,2})\.(\d{1,2})\.(\d{4})$/
+    );
+
+  if (match) {
+
+    return (
+      match[3] +
+      "-" +
+      match[2].padStart(2,"0") +
+      "-" +
+      match[1].padStart(2,"0")
+    );
+
+  }
+
+  return text;
+}
+
+
+/* =========================================================
+   BASSENG
+   ========================================================= */
+
+function normaliserBasseng(value) {
+
+  const text =
+    String(value || "")
+      .toLowerCase()
+      .replace(/\s/g,"");
+
+  if (
+    text.includes("50")
+  ) {
+    return "50m";
+  }
+
+  return "25m";
+}
+
+
+/* =========================================================
+   SVØMMETID
+   ========================================================= */
+
+function parseSvommeTid(value) {
+
+  if (
+    value === null ||
+    value === undefined
+  ) {
+    return null;
+  }
+
+  let text =
+    String(value)
+      .trim()
+      .replace(/\s/g,"");
+
+  if (!text) {
+    return null;
+  }
+
+  /*
+     Excel-listen bruker blant annet:
+
+     28,37
+     1.01,53
+     2.32,96
+
+     1.01,53 betyr:
+     1 minutt + 1,53 sekunder
+  */
+
+  text =
+    text.replace(",", ".");
+
+  /* mm.ss */
+
+  const mmss =
+    text.match(
+      /^(\d+)\.(\d{2})$/
+    );
+
+  if (mmss) {
+
+    return (
+      Number(mmss[1]) * 60 +
+      Number(
+        mmss[2]
+      )
+    );
+
+  }
+
+  /* minutter:sekunder */
+
+  if (text.includes(":")) {
 
     const parts =
-      value.split(':');
+      text.split(":");
 
-    try {
-
-      if (parts.length === 3) {
-
-        return (
-          Number(parts[0]) * 3600 +
-          Number(parts[1]) * 60 +
-          Number(parts[2])
-        );
-      }
-
-
-      if (parts.length === 2) {
-
-        return (
-          Number(parts[0]) * 60 +
-          Number(parts[1])
-        );
-      }
-
-
-      return Number(parts[0]);
-
-    } catch {
-
-      return null;
-    }
-  }
-
-
-  /* =====================================================
-     FORMATER TID
-     ===================================================== */
-
-  function formaterTid(sekunder) {
-
-    if (
-      sekunder === null ||
-      sekunder === undefined ||
-      isNaN(sekunder)
-    ) {
-      return '-';
-    }
-
-    const total =
-      Number(sekunder);
-
-    const minutter =
-      Math.floor(total / 60);
-
-    const sek =
-      total - minutter * 60;
-
-
-    if (minutter > 0) {
+    if (parts.length === 2) {
 
       return (
-        minutter +
-        ':' +
-        sek.toFixed(2).padStart(5, '0')
+        Number(parts[0]) * 60 +
+        Number(parts[1])
       );
+
     }
 
+    if (parts.length === 3) {
 
-    return sek.toFixed(2);
-  }
-
-
-  /* =====================================================
-     LAST DATA
-     ===================================================== */
-
-  async function lastData() {
-
-    try {
-
-      const response =
-        await fetch(
-          'data/resultater.json?ts=' +
-          Date.now()
-        );
-
-
-      if (!response.ok) {
-
-        throw new Error(
-          'Kunne ikke laste data/resultater.json'
-        );
-      }
-
-
-      const data =
-        await response.json();
-
-
-      if (!Array.isArray(data)) {
-
-        throw new Error(
-          'resultater.json inneholder ikke en liste'
-        );
-      }
-
-
-      alleResultater = data;
-
-
-      console.log(
-        'Lastet resultatgrupper:',
-        alleResultater.length
+      return (
+        Number(parts[0]) * 3600 +
+        Number(parts[1]) * 60 +
+        Number(parts[2])
       );
 
+    }
 
-      oppdaterVisning();
+  }
+
+  const number =
+    Number(text);
+
+  return Number.isFinite(number)
+    ? number
+    : null;
+}
 
 
-    } catch (err) {
+function formatTid(seconds) {
 
-      console.error(err);
+  if (
+    seconds === null ||
+    !Number.isFinite(seconds)
+  ) {
+    return "";
+  }
+
+  if (seconds >= 60) {
+
+    const min =
+      Math.floor(
+        seconds / 60
+      );
+
+    const sec =
+      seconds - min * 60;
+
+    return (
+      min +
+      ":" +
+      sec
+        .toFixed(2)
+        .padStart(5,"0")
+    );
+
+  }
+
+  return seconds.toFixed(2);
+}
 
 
-      const feilMelding = `
+/* =========================================================
+   12 MÅNEDER
+   ========================================================= */
 
-        <tr>
+function erSiste12Maneder(dato) {
 
-          <td
-            colspan="6"
-            class="error-state"
-          >
+  if (!dato) {
+    return false;
+  }
 
-            Kunne ikke laste resultatdat
+  const date =
+    new Date(dato);
+
+  if (
+    Number.isNaN(
+      date.getTime()
+    )
+  ) {
+    return false;
+  }
+
+  const now =
+    new Date();
+
+  const grense =
+    new Date();
+
+  grense.setMonth(
+    grense.getMonth() - 12
+  );
+
+  return (
+    date >= grense &&
+    date <= now
+  );
+}
+
+
+/* =========================================================
+   GRAFER
+   ========================================================= */
+
+function fyllGrafSvommere() {
+
+  const select =
+    document.getElementById(
+      "graphSwimmer"
+    );
+
+  const current =
+    select.value;
+
+  const sortert =
+    [...svommere].sort(
+      (a,b) =>
+        a.klubb.localeCompare(b.klubb) ||
+        a.navn.localeCompare(b.navn)
+    );
+
+  select.innerHTML =
+    '<option value="">Velg svømmer</option>' +
+
+    sortert.map(s => `
+
+<option value="${s.id}">
+${escapeHtml(s.navn)}
+ – ${escapeHtml(s.klubb)}
+</option>
+
+`).join("");
+
+  if (current) {
+    select.value = current;
+  }
+
+  fyllGrafOvrelser();
+}
+
+
+function fyllGrafOvrelser() {
+
+  const id =
+    document
+      .getElementById(
+        "graphSwimmer"
+      )
+      .value;
+
+  const select =
+    document.getElementById(
+      "graphEvent"
+    );
+
+  select.innerHTML =
+    '<option value="">Velg øvelse</option>';
+
+  if (!id) {
+    return;
+  }
+
+  const swimmer =
+    svommere.find(
+      s => s.id === id
+    );
+
+  if (!swimmer) {
+    return;
+  }
+
+  const events =
+    [
+      ...new Set(
+        resultater
+          .filter(r =>
+            normaliserNavn(r.navn) ===
+            normaliserNavn(swimmer.navn)
+          )
+          .filter(r =>
+            erSiste12Maneder(r.dato)
+          )
+          .map(r => r.ovelse)
+      )
+    ].sort();
+
+  select.innerHTML +=
+    events.map(e => `
+
+<option value="${escapeHtml(e)}">
+${escapeHtml(e)}
+</option>
+
+`).join("");
+
+  visGraf();
+}
+
+
+function visGrafvalg() {
+  fyllGrafOvrelser();
+}
+
+
+function visGraf() {
+
+  const id =
+    document
+      .getElementById(
+        "graphSwimmer"
+      )
+      .value;
+
+  const event =
+    document
+      .getElementById(
+        "graphEvent"
+      )
+      .value;
+
+  const pool =
+    document
+      .getElementById(
+        "graphPool"
+      )
+      .value;
+
+  if (!id || !event) {
+    return;
+  }
+
+  const swimmer =
+    svommere.find(
+      s => s.id === id
+    );
+
+  if (!swimmer) {
+    return;
+  }
+
+  const data =
+    resultater
+      .filter(r =>
+        normaliserNavn(r.navn) ===
+        normaliserNavn(swimmer.navn)
+      )
+      .filter(r =>
+        r.ovelse === event
+      )
+      .filter(r =>
+        r.basseng === pool
+      )
+      .filter(r =>
+        erSiste12Maneder(r.dato)
+      )
+      .sort(
+        (a,b) =>
+          String(a.dato)
+            .localeCompare(
+              String(b.dato)
+            )
+      );
+
+  const stats =
+    document.getElementById(
+      "graphStats"
+    );
+
+  if (!data.length) {
+
+    stats.innerHTML =
+      "<p>Ingen resultater for dette valget.</p>";
+
+    if (chartInstance) {
+      chartInstance.destroy();
+      chartInstance = null;
+    }
+
+    return;
+  }
+
+  const times =
+    data.map(
+      r => Number(r.sekunder)
+    );
+
+  const best =
+    Math.min(...times);
+
+  const worst =
+    Math.max(...times);
+
+  const improvement =
+    worst > 0
+      ? (
+          (worst - best) /
+          worst
+        ) * 100
+      : 0;
+
+  stats.innerHTML = `
+
+<div class="stats">
+
+<div class="stat">
+
+<div class="stat-label">
+Dårligste tid
+</div>
+
+<div class="stat-value">
+${formatTid(worst)}
+</div>
+
+</div>
+
+<div class="stat">
+
+<div class="stat-label">
+Beste tid
+</div>
+
+<div class="stat-value">
+${formatTid(best)}
+</div>
+
+</div>
+
+<div class="stat">
+
+<div class="stat-label">
+Forbedring
+</div>
+
+<div
+  class="stat-value"
+  style="color:#10b981">
+
+${improvement.toFixed(2)} %
+
+</div>
+
+</div>
+
+<div class="stat">
+
+<div class="stat-label">
+Antall resultater
+</div>
+
+<div class="stat-value">
+${data.length}
+</div>
+
+</div>
+
+</div>
+
+`;
+
+  const canvas =
+    document.getElementById(
+      "progressChart"
+    );
+
+  if (chartInstance) {
+    chartInstance.destroy();
+  }
+
+  chartInstance =
+    new Chart(
+      canvas,
+      {
+
+        type: "line",
+
+        data: {
+
+          labels:
+            data.map(
+              r => r.dato
+            ),
+
+          datasets: [
+
+            {
+
+              label:
+                event +
+                " – " +
+                pool,
+
+              data:
+                data.map(
+                  r =>
+                    Number(
+                      r.sekunder
+                    )
+                ),
+
+              tension: .25,
+
+              fill: false
+
+            }
+
+          ]
+
+        },
+
+        options: {
+
+          responsive: true,
+
+          maintainAspectRatio: false,
+
+          scales: {
+
+            y: {
+
+              reverse: true,
+
+              title: {
+                display: true,
+                text: "Tid i sekunder"
+              }
+
+            }
+
+          }
+
+        }
+
+      }
+    );
+
+}
+
+
+/* =========================================================
+   KALKULATOR
+   ========================================================= */
+
+function beregnKalkulator() {
+
+  const pool =
+    Number(
+      document
+        .getElementById(
+          "calcPool"
+        )
+        .value
+    );
+
+  const distance =
+    Number(
+      document
+        .getElementById(
+          "calcDistance"
+        )
+        .value
+    );
+
+  const timeText =
+    document
+      .getElementById(
+        "calcTime"
+      )
+      .value;
+
+  const strokes =
+    Number(
+      document
+        .getElementById(
+          "calcStrokes"
+        )
+        .value
+    );
+
+  const seconds =
+    parseKalkulatorTid(
+      timeText
+    );
+
+  if (
+    !distance ||
+    !seconds ||
+    !strokes
+  ) {
+
+    alert(
+      "Fyll inn distanse, tid og antall tak."
+    );
+
+    return;
+  }
+
+  const lengths =
+    distance / pool;
+
+  const timePerLength =
+    seconds / lengths;
+
+  const strokesPerLength =
+    strokes / lengths;
+
+  const speed =
+    distance / seconds;
+
+  const strokeRate =
+    strokes /
+    (seconds / 60);
+
+  /*
+     SWOLF:
+     tid per lengde + tak per lengde
+  */
+
+  const swolf =
+    timePerLength +
+    strokesPerLength;
+
+  document.getElementById(
+    "calculatorResults"
+  ).innerHTML = `
+
+<div class="stats">
+
+<div class="result-box">
+
+<div>
+Basseng
+</div>
+
+<div class="result-number">
+${pool} m
+</div>
+
+</div>
+
+<div class="result-box">
+
+<div>
+Tid per lengde
+</div>
+
+<div class="result-number">
+${timePerLength.toFixed(2)} sek
+</div>
+
+</div>
+
+<div class="result-box">
+
+<div>
+Tak per lengde
+</div>
+
+<div class="result-number">
+${strokesPerLength.toFixed(2)}
+</div>
+
+</div>
+
+<div class="result-box">
+
+<div>
+Takfrekvens
+</div>
+
+<div class="result-number">
+${strokeRate.toFixed(2)}
+</div>
+
+</div>
+
+<div class="result-box">
+
+<div>
+Gjennomsnittsfart
+</div>
+
+<div class="result-number">
+${speed.toFixed(2)} m/s
+</div>
+
+</div>
+
+<div class="result-box">
+
+<div>
+SWOLF
+</div>
+
+<div class="result-number">
+${swolf.toFixed(2)}
+</div>
+
+</div>
+
+</div>
+
+`;
+
+}
+
+
+function parseKalkulatorTid(text) {
+
+  text =
+    String(text)
+      .trim()
+      .replace(",", ".");
+
+  if (text.includes(":")) {
+
+    const parts =
+      text.split(":");
+
+    if (parts.length === 2) {
+
+      return (
+        Number(parts[0]) * 60 +
+        Number(parts[1])
+      );
+
+    }
+
+  }
+
+  const mmss =
+    text.match(
+      /^(\d+)\.(\d{2})$/
+    );
+
+  if (mmss) {
+
+    return (
+      Number(mmss[1]) * 60 +
+      Number(mmss[2])
+    );
+
+  }
+
+  const number =
+    Number(text);
+
+  return Number.isFinite(number)
+    ? number
+    : null;
+}
+
+
+/* =========================================================
+   IMPORT-RESULTAT
+   ========================================================= */
+
+function visImportResultat(
+  antall,
+  ukjente
+) {
+
+  let html = `
+
+<div class="import-summary">
+
+<strong>Import ferdig.</strong>
+
+<br><br>
+
+Nye resultater lagt til:
+<strong>${antall}</strong>
+
+<br><br>
+
+Totalt lagrede resultater:
+<strong>${resultater.length}</strong>
+
+</div>
+
+`;
+
+  if (ukjente.size) {
+
+    html += `
+
+<div class="warning">
+
+<strong>
+Disse svømmerne finnes ikke i svømmerregisteret:
+</strong>
+
+<br><br>
+
+${[...ukjente]
+  .map(
+    n =>
+      "• " +
+      escapeHtml(n)
+  )
+  .join("<br>")}
+
+<br><br>
+
+Gå til <strong>Svømmere</strong> og registrer
+dem med klubb og årsklasse.
+
+Når de er registrert, kan vi senere lage
+en egen funksjon for å koble gamle importer
+automatisk.
+
+</div>
+
+`;
+
+  }
+
+  document.getElementById(
+    "importResult"
+  ).innerHTML = html;
+}
+
+
+/* =========================================================
+   SIKKER HTML
+   ========================================================= */
+
+function escapeHtml(value) {
+
+  return String(value ?? "")
+    .replace(
+      /&/g,
+      "&amp;"
+    )
+    .replace(
+      /</g,
+      "&lt;"
+    )
+    .replace(
+      />/g,
+      "&gt;"
+    )
+    .replace(
+      /"/g,
+      "&quot;"
+    )
+    .replace(
+      /'/g,
+      "&#039;"
+    );
+
+}
+
+
+/* =========================================================
+   START
+   ========================================================= */
+
+document.addEventListener(
+  "DOMContentLoaded",
+  () => {
+
+    visKlubb("Varodd SK");
+
+  }
+);
+
+</script>
+
+</body>
+</html>
