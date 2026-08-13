@@ -1,15 +1,14 @@
-name: Hent svømmeresultater fra Medley
+name: Oppdater Svømmedata fra Medley
 
 on:
   workflow_dispatch:
 
   schedule:
-    # Kjører hver dag kl. 06:00 UTC
-    # = 08:00 norsk sommertid
-    - cron: "0 6 * * *"
+    - cron: "20 4 * * *"
 
   push:
     paths:
+      - "stevner.txt"
       - "hent_medley.py"
       - "parse_lenex.py"
       - ".github/workflows/medley-sync.yml"
@@ -17,123 +16,168 @@ on:
 permissions:
   contents: write
 
+
 jobs:
 
-  hent-resultater:
+  build:
 
     runs-on: ubuntu-latest
 
     steps:
 
-      # --------------------------------------------------
-      # Hent repoet
-      # --------------------------------------------------
+      # ------------------------------------------------------
+      # HENT REPO
+      # ------------------------------------------------------
 
-      - name: Sjekk ut repo
+      - name: Sjekk ut koden
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
 
 
-      # --------------------------------------------------
-      # Python
-      # --------------------------------------------------
+      # ------------------------------------------------------
+      # PYTHON
+      # ------------------------------------------------------
 
       - name: Sett opp Python
         uses: actions/setup-python@v5
+
         with:
-          python-version: "3.11"
+          python-version: "3.10"
 
 
-      # --------------------------------------------------
-      # Installer biblioteker
-      # --------------------------------------------------
+      # ------------------------------------------------------
+      # INSTALLER PAKKER
+      # ------------------------------------------------------
 
       - name: Installer Python-pakker
         run: |
+
           python -m pip install --upgrade pip
-          pip install requests beautifulsoup4 pdfplumber
+
+          pip install requests beautifulsoup4
 
 
-      # --------------------------------------------------
-      # Finn alle Medley-stevner siste 12 måneder
-      # --------------------------------------------------
+      # ------------------------------------------------------
+      # FINN STEVNER
+      # ------------------------------------------------------
 
-      - name: Finn Medley-stevner
+      - name: Finn Medley-stevner siste 12 måneder
         run: |
+
           python hent_medley.py
 
 
-      # --------------------------------------------------
-      # Hent og behandle resultatene
-      # --------------------------------------------------
+      # ------------------------------------------------------
+      # HENT RESULTATER
+      # ------------------------------------------------------
 
-      - name: Parse resultater
+      - name: Hent og parse svømmeresultater
         run: |
+
           python parse_lenex.py
 
 
-      # --------------------------------------------------
-      # Vis litt informasjon i Actions-loggen
-      # --------------------------------------------------
+      # ------------------------------------------------------
+      # KONTROLLER DATA
+      # ------------------------------------------------------
 
       - name: Vis resultatstatistikk
         run: |
+
           python - <<'PY'
+
           import json
-          import os
 
-          path = "data/resultater.json"
+          from collections import Counter
 
-          if not os.path.exists(path):
-              print("FEIL: resultater.json finnes ikke")
-              raise SystemExit(1)
 
-          with open(path, encoding="utf-8") as f:
+          with open(
+              "data/resultater.json",
+              encoding="utf-8"
+          ) as f:
+
               data = json.load(f)
 
-          print("")
-          print("========================================")
-          print("SVØMMETRACKER RESULTATSTATISTIKK")
-          print("========================================")
-          print(f"Antall resultater: {len(data)}")
 
-          klubber = {}
+          print()
+          print("=" * 60)
+          print("RESULTATSTATISTIKK")
+          print("=" * 60)
 
-          for r in data:
-              klubb = r.get("klubb", "Ukjent")
-              klubber[klubb] = klubber.get(klubb, 0) + 1
+          print(
+              f"Totalt resultater: {len(data)}"
+          )
 
-          for klubb, antall in sorted(klubber.items()):
-              print(f"{klubb}: {antall}")
 
-          personer = set()
+          svommere = {
 
-          for r in data:
-              navn = r.get("navn")
+              (
+                  x.get("klubb", ""),
+                  x.get("navn", "")
+              )
 
-              if navn:
-                  personer.add(navn)
+              for x in data
+          }
 
-          print(f"Antall svømmere: {len(personer)}")
-          print("========================================")
+
+          print(
+              f"Antall svømmere: "
+              f"{len(svommere)}"
+          )
+
+
+          klubber = Counter(
+              x.get(
+                  "klubb",
+                  ""
+              )
+              for x in data
+          )
+
+
+          print()
+          print("KLUBBER:")
+
+          for klubb, antall in sorted(
+              klubber.items()
+          ):
+
+              print(
+                  f"  {klubb}: "
+                  f"{antall} resultater"
+              )
+
+
+          print()
+          print("=" * 60)
+
           PY
 
 
-      # --------------------------------------------------
-      # Lagre resultatene i GitHub
-      # --------------------------------------------------
+      # ------------------------------------------------------
+      # LAGRE DATA
+      # ------------------------------------------------------
 
       - name: Lagre oppdaterte data
         run: |
-          git config user.name "GitHub Action Bot"
-          git config user.email "actions@github.com"
 
-          git add stevner.txt
-          git add data/resultater.json
+          git config --global user.name \
+            "GitHub Action Bot"
 
-          git diff --cached --quiet || git commit -m "Oppdater svømmeresultater fra Medley"
+          git config --global user.email \
+            "bot@github.com"
+
+
+          git add \
+            stevner.txt \
+            data/resultater.json
+
+
+          git diff --cached --quiet || \
+            git commit \
+              -m "Auto-oppdatert svømmedata fra Medley"
+
 
           git pull --rebase origin main
+
 
           git push
