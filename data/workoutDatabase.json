@@ -1,0 +1,34 @@
+[
+  {
+    "id": "w_breakout_15m",
+    "category": "SLOW_BREAKOUT",
+    "title": "Eksplosiv 15m Start & Utgang",
+    "description": "Retter opp tidstap på de første 15 meterne. Fokus på pallreaksjon, streamlinje og overgang til første armtak uten hastighetstap.",
+    "sets": [
+      "8 x 15m Max fra pall w/ finner @ 1:15 (Nøyaktig tidtaking på 15m)",
+      "6 x 25m: 12.5m Max undervannskikk (uten pust) + 12.5m rolig overflate",
+      "4 x Start fra pall + 3 armtak ➔ Flyt ut og sjekk hydrodynamikk"
+    ]
+  },
+  {
+    "id": "w_lactate_drop",
+    "category": "LACTATE_DROP",
+    "title": "Broken 100s & Laktat-buffring",
+    "description": "Bygger kapasitet til å holde taktlengde (DPS) og frekvens på siste 25m/50m når mjølkesyren hoper seg opp.",
+    "sets": [
+      "4 x [50m Max + 10s pause + 25m Max + 10s pause + 25m Max] @ 4:00 min pause",
+      "8 x 50m @ 1:15 (25m Marsjfart + 25m ABSOLUTT MAX siste lengde)",
+      "100m A1 løs-svømming mellom hvert Hovedsett"
+    ]
+  },
+  {
+    "id": "w_turn_efficiency",
+    "category": "TURN_EFFICIENCY",
+    "title": "Wall-Speed & Vending under utmattelse",
+    "description": "Fikser tidstap inn mot og ut av veggen. Fokus på rotasjonshastighet og kraft i frasparket.",
+    "sets": [
+      "10 x 50m @ 1:10 (35m A2 marsjfart + SPRINT de siste 5m inn i veggen + 10m MAX undervannskikk ut)",
+      "6 x 25m Vendingstester: Start 10m før vegg, max vending, 10m ut."
+    ]
+  }
+]
