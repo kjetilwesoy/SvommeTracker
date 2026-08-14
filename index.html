@@ -1276,6 +1276,22 @@ tr:hover td {
 <script>
 
 // === GLOBAL DATA ===
+// Initialiserer default svømmere ved første besøk
+const DEFAULT_SWIMMERS = [
+    { name: 'Mio Wesøy-Danielsen', club: 'Varodd Svømmeklubb', year: '2015', gender: 'Gutt' },
+    { name: 'Luca Wesøy-Danielsen', club: 'Varodd Svømmeklubb', year: '2018', gender: 'Gutt' }
+];
+
+function initializeStorage() {
+    if (!localStorage.getItem('swimmers')) {
+        localStorage.setItem('swimmers', JSON.stringify(DEFAULT_SWIMMERS));
+    }
+    if (!localStorage.getItem('results')) {
+        localStorage.setItem('results', JSON.stringify([]));
+    }
+}
+
+initializeStorage();
 
 let swimmers = JSON.parse(localStorage.getItem('swimmers')) || [];
 let results = JSON.parse(localStorage.getItem('results')) || [];
